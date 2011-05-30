@@ -22,12 +22,15 @@
 #include <stdio.h>
 #include "scanner.h"
 #include "token.h"
+#include "unicode/ustdio.h"
+
+UFILE *ustdout;
 
 static void tokenize(Scanner *s) {
     Token *t;
     t = (Token *)scanner_token(s);
     while (t) {
-        printf("Found %d %s\n", t->name, t->lexeme);
+        u_fprintf(ustdout, "Found %d %S\n", t->name, t->lexeme);
         token_free(t);
         t = (Token *)scanner_token(s);
     }
@@ -37,6 +40,8 @@ int main(int argc, char **argv)
 {
     Scanner *s;
     int i;
+
+    ustdout = u_finit(stdout, NULL, NULL);
 
     if (argc == 1) {
         s = scanner_init("stdin");

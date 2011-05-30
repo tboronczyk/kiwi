@@ -24,17 +24,17 @@
 
 #include <stdio.h>
 #include "token.h"
+#include "unicode/ustdio.h"
 
 typedef struct {
     int lineno,     // current line number of file (used for error reporting)
         name,       // name of token being scanned
         ti,         // current position of pointer in *tbuf
-        tlen,       // size of *tbuf
-        ui;         // current position of pointer in *ubuf
-    char *fname,    // name of file being scanned (used for error reporting)
-        *tbuf,      // buffer in which token values are accumulated
-        *ubuf;      // buffer for UTF-8 byte sequences
-    FILE *fp;       // open file descriptor of file at *fname
+        tlen;       // size of *tbuf
+    UChar c,        // current character read
+        *tbuf;      // buffer in which token values are accumulated
+    char *fname;    // name of file being scanned (used for error reporting)
+    UFILE *fp;      // open file descriptor of file at *fname
 } Scanner;
 
 Scanner *scanner_init(const char *);

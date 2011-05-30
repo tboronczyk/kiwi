@@ -22,6 +22,8 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
+#include "unicode/umachine.h"
+
 // operators
 #define T_ASSIGN                 1
 #define T_ADD                    2
@@ -70,7 +72,7 @@
 
 typedef struct {
     int name;
-    char *lexeme;
+    UChar *lexeme;
 } Token;
 
 void token_free(Token *t);

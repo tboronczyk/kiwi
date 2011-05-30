@@ -19,12 +19,15 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "scanner.h"
 #include "token.h"
-#include "uhelpers.h"
+#include "unicode/uchar.h"
+#include "unicode/ustdio.h"
+#include "unicode/ustring.h"
 
 #define BUFFER_SIZE_INIT 7
 #define BUFFER_SIZE_INCR 1.5
@@ -49,105 +52,96 @@
 
 #define set_double(s,x,t) \
     append_advance(s); \
-    if (strcmp(s->ubuf, x) == 0) { set_single(s,t); } else scan_error_exit(s)
+    if (s->c == x) { set_single(s, t); } else scan_error_exit(s)
 
 #define set_maybe_double(s,x,t1,t2) \
     append_advance(s); \
-    if (strcmp(s->ubuf, x) == 0) { set_single(s,t2); } else s->name = t1
+    if (s->c == x) { set_single(s, t2); } else s->name = t1
 
-static void buffers_init(Scanner *s) {
+static void buffer_init(Scanner *s) {
     // initialize token buffer
     s->ti = 0;
     s->tlen = BUFFER_SIZE_INIT;
-    if ((s->tbuf = (char *)calloc(s->tlen, 1)) == NULL) {
-        perror_exit("calloc");
-    }
-    // initialize UTF-8 byte buffer
-    s->ui = 0;
-    if ((s->ubuf = (char *)calloc(U_MAX_BYTES, sizeof(char))) == NULL) {
+    if ((s->tbuf = (UChar *)calloc(s->tlen, sizeof(UChar))) == NULL) {
         perror_exit("calloc");
     }
 }
 
-static void token_buffer_reset(Scanner *s) {
+static void buffer_reset(Scanner *s) {
     // clear token buffer
     s->ti = 0;
-    memset(s->tbuf, 0, s->tlen);
+    memset(s->tbuf, 0, sizeof(UChar) * s->tlen);
 }
 
-static void token_buffer_grow(Scanner *s) {
+static void buffer_grow(Scanner *s) {
     // increase storage of token buffer
     s->tlen = (int)((double)s->tlen * BUFFER_SIZE_INCR);
-    if ((s->tbuf = (char *)realloc(s->tbuf, s->tlen)) == NULL) {
+    if ((s->tbuf = (UChar *)realloc(s->tbuf, sizeof(UChar) * s->tlen)) == NULL) {
         perror_exit("realloc");
     }
     // ensure new buffer space is clear
-    memset(s->tbuf + s->ti, 0, s->tlen - s->ti);
+    memset(&s->tbuf[s->ti], 0, sizeof(UChar) * (s->tlen - s->ti));
 }
 
-static void token_buffer_append(Scanner *s) {
-    // enough space to append UTF-8 bytes to token buffer?
-    while (s->ti + s->ui >= s->tlen) {
-        token_buffer_grow(s);
+static void buffer_append(Scanner *s) {
+    s->tbuf[s->ti] = s->c;
+    s->ti++;
+    // increase token buffer size if necessary
+    if (s->ti == s->tlen) {
+        buffer_grow(s);
     }
-    // append buffer
-    memcpy(&s->tbuf[s->ti], s->ubuf, s->ui);
-    s->ti += s->ui;
 }
 
-static void buffers_free(Scanner *s) {
+static void buffer_free(Scanner *s) {
     // free buffer memory
     free(s->tbuf);
-    free(s->ubuf);
 }
 
 static void stream_advance(Scanner *s) {
-    // obtain next UTF-8 byte sequence
-    s->ui = u_getc(s->fp, s->ubuf);
-    if (ferror(s->fp)) {
-        perror_exit("u_getc");
-    }
+    // obtain next character
+    s->c = u_fgetc(s->fp);
+
     // update file position
-    if (u_isnewline(s->ubuf)) {
+    if (s->c == '\n') {
         s->lineno++;
     }
 }
 
 static void append_advance(Scanner *s) {
-    // append the current UTF-8 byte buffer to the token buffer and
-    // advance the stream to the next byte sequence
-    token_buffer_append(s);
+    // append the current character to the token buffer and advance the stream
+    // to the next character
+    buffer_append(s);
     stream_advance(s);
 }
 
 static void stream_skip_whitespace(Scanner *s) {
-    // advance stream to first non-whitespace byte sequence
-    while (u_isspace(s->ubuf)) {
+    // advance stream to first non-whitespace character
+    while (u_isWhitespace(s->c)) {
         stream_advance(s);
     }
 }
 
 static void stream_init(Scanner *s) {
     // set file position and advance through stream to first non-whitespace
-    // byte sequence
+    // character
     s->lineno = 1;
     stream_advance(s);
     stream_skip_whitespace(s);
 }
 
 static void read_comment_multi_inner(Scanner *s) {
-    // need to keep track of previous byte sequence
-    char prev[U_MAX_BYTES];
-    memcpy(prev, s->ubuf, U_MAX_BYTES);
+    // need to keep track of previous character
+    UChar prev;
+    prev = s->c;
 
-    // read bytes until end of comment is seen
+    // read characters until end of comment is seen
     append_advance(s);
-    while (!(strcmp(prev, "*") == 0 && strcmp(s->ubuf, "/") == 0)) {
+    while (!(prev == '*' && s->c == '/')) {
         // support nested comments
-        if (strcmp(prev, "/") == 0 && strcmp(s->ubuf, "*") == 0) {
+        if (prev == '/' && s->c == '*') {
             read_comment_multi_inner(s);
         }
-        memcpy(prev, s->ubuf, U_MAX_BYTES);
+        prev = s->c;
         append_advance(s);
     }
     append_advance(s);
@@ -156,20 +150,20 @@ static void read_comment_multi_inner(Scanner *s) {
 static void read_slash(Scanner *s) {
     append_advance(s);
     // match single-line comment
-    if (strcmp(s->ubuf, "/") == 0) {
+    if (s->c == '/') {
         s->name = T_COMMENT;
-        while (!u_isnewline(s->ubuf)) {
+        while (s->c != '\n') {
             append_advance(s);
         }
     }
     // match multi-line comment
-    else if (strcmp(s->ubuf, "*") == 0) {
+    else if (s->c == '*') {
         s->name = T_COMMENT_MULTI;
         append_advance(s);
         read_comment_multi_inner(s);
     }
     // match shorthand divide assign operator
-    else if (strcmp(s->ubuf, "=") == 0) {
+    else if (s->c == '=') {
         set_single(s, T_DIVIDE_ASSIGN);
     }
     // assumed match division operator
@@ -179,56 +173,59 @@ static void read_slash(Scanner *s) {
 }
 
 static void read_number(Scanner *s) {
-    long base = 10;
+    // string literals for comparison
+    U_STRING_DECL(ustr_base2, "2", 1);
+    U_STRING_DECL(ustr_base8, "8", 1);
+    U_STRING_DECL(ustr_base16, "16", 2);
+    U_STRING_DECL(ustr_octvals, "01234567", 8);
+    static int init = 1;
+    if (init) {
+        U_STRING_INIT(ustr_base2, "2", 1);
+        U_STRING_INIT(ustr_base8, "8", 1);
+        U_STRING_INIT(ustr_base16, "16", 2);
+        U_STRING_INIT(ustr_octvals, "01234567", 8);
+        init = 0;
+    }
+
     int j = 0;
     // append digits, initially assuming a base-10 number
     s->name = T_NUMBER;
-    while (u_isdigit(s->ubuf)) {
+    while (u_isdigit(s->c)) {
         append_advance(s);
     }
 
     // read value for non base-10 numbers
-    if (strcmp(s->ubuf, "#") == 0) {
-        // assume hexadecimal if there is no leading radix
-        if (s->ti == 0) {
-            base = 16;
+    if (s->c == '#') {
+        // read hexadecimal number, assume hex if there is no leading radix
+        if (s->ti == 0 || u_strcmp(s->tbuf, ustr_base16) == 0) {
+            append_advance(s);
+            s->name = T_NUMBER_INT_16;
+            while (u_isxdigit(s->c)) {
+                j++;
+                append_advance(s);
+            }
         }
+        // read binary number
+        else if (u_strcmp(s->tbuf, ustr_base2) == 0) {
+            append_advance(s);
+            s->name = T_NUMBER_INT_2;
+            while (s->c == '0' || s->c == '1') {
+                j++;
+                append_advance(s);
+            }
+        }
+        // read octal number
+        else if (u_strcmp(s->tbuf, ustr_base8) == 0) {
+            append_advance(s);
+            s->name = T_NUMBER_INT_8;
+            while (u_memchr(ustr_octvals, s->c, u_strlen(ustr_octvals)) != NULL) {
+                j++;
+                append_advance(s);
+            }
+        }
+        // only bases 2, 8, and 16 are supported
         else {
-            base = strtol(s->tbuf, NULL, 10);
-        }
-        // only base 2, 8 and 16 are supported
-        if (base != 2 && base != 8 && base != 16) {
             scan_error_exit(s);
-        }
-        append_advance(s);
-
-        switch (base) {
-            // read binary number
-            case 2:
-                s->name = T_NUMBER_INT_2;
-                while (u_is2digit(s->ubuf)) {
-                    j++;
-                    append_advance(s);
-                }
-                break;
-
-                // read octal number
-            case 8:
-                s->name = T_NUMBER_INT_8;
-                while (u_is8digit(s->ubuf)) {
-                    j++;
-                    append_advance(s);
-                }
-                break;
-
-                // read hexadecimal number
-            case 16:
-                s->name = T_NUMBER_INT_16;
-                while (u_is16digit(s->ubuf)) {
-                    j++;
-                    append_advance(s);
-                }
-                break;
         }
 
         // radix with no number part is invalid
@@ -238,14 +235,26 @@ static void read_number(Scanner *s) {
     }
 }
 
-static void read_alpha(Scanner *s) {
-    while (u_isalnum(s->ubuf) || strcmp(s->ubuf, "_") == 0) {
+static void read_identifier(Scanner *s) {
+    // string literals for comparison
+    U_STRING_DECL(ustr_else, "else", 4);
+    U_STRING_DECL(ustr_if, "if", 2);
+    U_STRING_DECL(ustr_is, "is", 2);
+    static int init = 1;
+    if (init) {
+        U_STRING_INIT(ustr_else, "else", 4);
+        U_STRING_INIT(ustr_if, "if", 2);
+        U_STRING_INIT(ustr_is, "is", 2);
+        init = 0;
+    }
+    
+    while (u_isIDPart(s->c) || s->c == '_') {
         append_advance(s);
     }
     // match keywords
-    if (strcmp(s->tbuf, "else") == 0) { s->name = T_ELSE; }
-    else if (strcmp(s->tbuf, "if") == 0) { s->name = T_IF; }
-    else if (strcmp(s->tbuf, "is") == 0) { s->name = T_IS; }
+    if (u_strcmp(s->tbuf, ustr_else) == 0) { s->name = T_ELSE; }
+    else if (u_strcmp(s->tbuf, ustr_if) == 0) { s->name = T_IF; }
+    else if (u_strcmp(s->tbuf, ustr_is) == 0) { s->name = T_IS; }
     // ...
     // assign token as identifier
     else {
@@ -254,29 +263,36 @@ static void read_alpha(Scanner *s) {
 }
 
 static void stream_read_token(Scanner *s) {
-    // the first byte sequence will determine the parsing logic for various
-    // tokens
-    if (strcmp(s->ubuf, ":") == 0) { set_double(s, "=", T_ASSIGN); }
-    else if (strcmp(s->ubuf, "+") == 0) { set_maybe_double(s, "=", T_ADD, T_ADD_ASSIGN); }
-    else if (strcmp(s->ubuf, "-") == 0) { set_maybe_double(s, "=", T_SUBTRACT, T_SUBTRACT_ASSIGN); }
-    else if (strcmp(s->ubuf, "*") == 0) { set_maybe_double(s, "=", T_MULTIPLY, T_MULTIPLY_ASSIGN); }
-    else if (strcmp(s->ubuf, "/") == 0) { read_slash(s); }
-    else if (strcmp(s->ubuf, "=") == 0) { set_double(s, "=", T_EQUAL); }
-    else if (strcmp(s->ubuf, "~") == 0) { set_maybe_double(s, "=", T_LOG_NOT, T_NOT_EQUAL); }
-    else if (strcmp(s->ubuf, "<") == 0) { set_maybe_double(s, "=", T_LESS, T_LESS_EQUAL); }
-    else if (strcmp(s->ubuf, ">") == 0) { set_maybe_double(s, "=", T_GREATER, T_GREATER_EQUAL); }
-    else if (strcmp(s->ubuf, "&") == 0) { set_double(s, "&", T_LOG_AND); }
-    else if (strcmp(s->ubuf, "|") == 0) { set_double(s, "&", T_LOG_NOT); }
-    else if (strcmp(s->ubuf, "^") == 0) { set_double(s, "^", T_LOG_XOR); }
-    else if (strcmp(s->ubuf, "{") == 0) { set_single(s, T_BRACE_LEFT); }
-    else if (strcmp(s->ubuf, "}") == 0) { set_single(s, T_BRACE_RIGHT); }
-    else if (strcmp(s->ubuf, "(") == 0) { set_single(s, T_PAREN_LEFT); }
-    else if (strcmp(s->ubuf, ")") == 0) { set_single(s, T_PAREN_RIGHT); }
-    else if (u_isdigit(s->ubuf) || strcmp(s->ubuf, "#") == 0) { read_number(s); }
-    else if (u_isalpha(s->ubuf) || strcmp(s->ubuf, "_") == 0) {
-        read_alpha(s);
+    // string literals for comparison
+    U_STRING_DECL(ustr_wildcard, "_", 1);
+    static int init = 1;
+    if (init) {
+        U_STRING_INIT(ustr_wildcard, "_", 1);
+        init = 0;
+    }
+
+    // the first character will determine the parsing logic for various tokens
+    if (s->c == ':') { set_double(s, '=', T_ASSIGN); }
+    else if (s->c == '+') { set_maybe_double(s, '=', T_ADD, T_ADD_ASSIGN); }
+    else if (s->c == '-') { set_maybe_double(s, '=', T_SUBTRACT, T_SUBTRACT_ASSIGN); }
+    else if (s->c == '*') { set_maybe_double(s, '=', T_MULTIPLY, T_MULTIPLY_ASSIGN); }
+    else if (s->c == '/') { read_slash(s); }
+    else if (s->c == '=') { set_double(s, '=', T_EQUAL); }
+    else if (s->c == '~') { set_maybe_double(s, '=', T_LOG_NOT, T_NOT_EQUAL); }
+    else if (s->c == '<') { set_maybe_double(s, '=', T_LESS, T_LESS_EQUAL); }
+    else if (s->c == '>') { set_maybe_double(s, '=', T_GREATER, T_GREATER_EQUAL); }
+    else if (s->c == '&') { set_double(s, '&', T_LOG_AND); }
+    else if (s->c == '|') { set_double(s, '&', T_LOG_NOT); }
+    else if (s->c == '^') { set_double(s, '^', T_LOG_XOR); }
+    else if (s->c == '{') { set_single(s, T_BRACE_LEFT); }
+    else if (s->c == '}') { set_single(s, T_BRACE_RIGHT); }
+    else if (s->c == '(') { set_single(s, T_PAREN_LEFT); }
+    else if (s->c == ')') { set_single(s, T_PAREN_RIGHT); }
+    else if (u_isdigit(s->c) || s->c == '#') { read_number(s); }
+    else if (u_isIDStart(s->c) || s->c == '_') {
+        read_identifier(s);
         // single _ is wildcard token
-        if (strcmp(s->tbuf, "_") == 0) {
+        if (u_strcmp(s->tbuf, ustr_wildcard) == 0) {
             s->name = T_WILDCARD;
         }
     }
@@ -296,16 +312,16 @@ Scanner *scanner_init(const char *fname) {
     if ((s->fname = (char *)calloc(strlen(fname) + 1, sizeof(char))) == NULL) {
         perror_exit("calloc");
     }
-    memcpy(s->fname, fname, strlen(fname));
+    memcpy(s->fname, fname, sizeof(char) * strlen(fname));
     // open stream to file
     if (strcmp("stdin", fname) == 0) {
-        s->fp = stdin;
+        s->fp = u_finit(stdin, NULL, NULL);
     }
-    else if ((s->fp = fopen(fname, "rb")) == NULL) {
-        perror_exit("fopen");
+    else if ((s->fp = u_fopen(fname, "r", NULL, NULL)) == NULL) {
+        perror_exit("u_fopen");
     }
     // initialize scanner
-    buffers_init(s);
+    buffer_init(s);
     stream_init(s);
 
     return s;
@@ -314,14 +330,14 @@ Scanner *scanner_init(const char *fname) {
 Token *scanner_token(Scanner *s) {
     // allocate token
     Token *t = (Token *)calloc(1, sizeof(Token));
-    token_buffer_reset(s);
+    buffer_reset(s);
 
     // advance stream past whitespace
     stream_skip_whitespace(s);
 
 
     // end of file was reached or an error was encountered
-    if (s->ui == 0 && s->ubuf[0]== EOF) {
+    if (s->c == U_EOF) {
         free(t);
         return 0;
     }
@@ -329,22 +345,21 @@ Token *scanner_token(Scanner *s) {
     else {
         stream_read_token(s);
         t->name = s->name;
-        if ((t->lexeme = (char *)calloc(s->ti + 1, 1)) == NULL) {
+        if ((t->lexeme = (UChar *)calloc(s->ti + 1, sizeof(UChar))) == NULL) {
             perror_exit("calloc");
         }
-        memmove(t->lexeme, s->tbuf, s->ti);
+        memmove(t->lexeme, s->tbuf, sizeof(UChar) * s->ti);
 
         return t;
     }
 }
 
 void scanner_free(Scanner *s) {
-    // close file stream and free memory
-    if (s->fp != stdin) {
-        fclose(s->fp);
-    }
+    // close file stream
+    u_fclose(s->fp);
+    // free used memory
     free(s->fname);
-    buffers_free(s);
+    buffer_free(s);
     free(s);
 }
 
