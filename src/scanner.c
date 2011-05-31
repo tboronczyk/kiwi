@@ -172,6 +172,35 @@ static void read_slash(Scanner *s) {
     }
 }
 
+static void read_string(Scanner *s) {
+    UChar tmp;
+    s->name = T_STRING;
+
+    // do not include initial quote in string value
+    stream_advance(s);
+
+    while (s->c != '"') {
+        // handle escaped literals
+        if (s->c == '\\') {
+            stream_advance(s);
+            if (s->c == '"') { }
+            else if (s->c == 'r') { s->c = '\r'; }
+            else if (s->c == 'n') { s->c = '\n'; }
+            else if (s->c == 't') { s->c = '\t'; }
+            else if (s->c == '\\') { s->c = '\\'; }
+            else {
+                tmp = s->c;
+                s->c = '\\';
+                buffer_append(s);
+                s->c = tmp;
+            }
+        }
+        append_advance(s);
+    }
+    // do not include final quote in string value
+    stream_advance(s);
+}
+
 static void read_number(Scanner *s) {
     // string literals for comparison
     U_STRING_DECL(ustr_base2, "2", 1);
@@ -240,14 +269,31 @@ static void read_identifier(Scanner *s) {
     U_STRING_DECL(ustr_else, "else", 4);
     U_STRING_DECL(ustr_if, "if", 2);
     U_STRING_DECL(ustr_is, "is", 2);
+    U_STRING_DECL(ustr_var, "var", 3);
+    U_STRING_DECL(ustr_while, "while", 5);
+    U_STRING_DECL(ustr_number, "number", 6);
+    U_STRING_DECL(ustr_string, "string", 6);
+    U_STRING_DECL(ustr_bool, "bool", 4);
+    U_STRING_DECL(ustr_true, "T", 1);
+    U_STRING_DECL(ustr_false, "F", 1);
+    U_STRING_DECL(ustr_backtick, "`", 1);
     static int init = 1;
     if (init) {
         U_STRING_INIT(ustr_else, "else", 4);
         U_STRING_INIT(ustr_if, "if", 2);
         U_STRING_INIT(ustr_is, "is", 2);
+        U_STRING_INIT(ustr_var, "var", 3);
+        U_STRING_INIT(ustr_while, "while", 5);
+        U_STRING_INIT(ustr_number, "number", 6);
+        U_STRING_INIT(ustr_string, "string", 6);
+        U_STRING_INIT(ustr_bool, "bool", 4);
+        U_STRING_INIT(ustr_true, "T", 1);
+        U_STRING_INIT(ustr_false, "F", 1);
+        U_STRING_INIT(ustr_backtick, "`", 1);
         init = 0;
     }
     
+    append_advance(s);
     while (u_isIDPart(s->c) || s->c == '_') {
         append_advance(s);
     }
@@ -255,10 +301,23 @@ static void read_identifier(Scanner *s) {
     if (u_strcmp(s->tbuf, ustr_else) == 0) { s->name = T_ELSE; }
     else if (u_strcmp(s->tbuf, ustr_if) == 0) { s->name = T_IF; }
     else if (u_strcmp(s->tbuf, ustr_is) == 0) { s->name = T_IS; }
+    else if (u_strcmp(s->tbuf, ustr_var) == 0) { s->name = T_VAR; }
+    else if (u_strcmp(s->tbuf, ustr_while) == 0) { s->name = T_WHILE; }
+    else if (u_strcmp(s->tbuf, ustr_number) == 0) { s->name = T_NUMBER_TYPE; }
+    else if (u_strcmp(s->tbuf, ustr_number) == 0) { s->name = T_NUMBER_TYPE; }
+    else if (u_strcmp(s->tbuf, ustr_bool) == 0) { s->name = T_BOOLEAN_TYPE; }
+    else if (u_strcmp(s->tbuf, ustr_true) == 0) { s->name = T_TRUE; }
+    else if (u_strcmp(s->tbuf, ustr_false) == 0) { s->name = T_FALSE; }
     // ...
     // assign token as identifier
     else {
         s->name = T_IDENTIFIER;
+    }
+
+    // backtick is a convenience to allow a programmer to use a reserved-keyword
+    // as an identifier, a single backtick itself is not considered valid
+    if (u_strcmp(s->tbuf, ustr_backtick) == 0) {
+        scan_error_exit(s);
     }
 }
 
@@ -272,7 +331,7 @@ static void stream_read_token(Scanner *s) {
     }
 
     // the first character will determine the parsing logic for various tokens
-    if (s->c == ':') { set_double(s, '=', T_ASSIGN); }
+    if (s->c == ':') { set_maybe_double(s, '=', T_COLON, T_ASSIGN); }
     else if (s->c == '+') { set_maybe_double(s, '=', T_ADD, T_ADD_ASSIGN); }
     else if (s->c == '-') { set_maybe_double(s, '=', T_SUBTRACT, T_SUBTRACT_ASSIGN); }
     else if (s->c == '*') { set_maybe_double(s, '=', T_MULTIPLY, T_MULTIPLY_ASSIGN); }
@@ -282,14 +341,16 @@ static void stream_read_token(Scanner *s) {
     else if (s->c == '<') { set_maybe_double(s, '=', T_LESS, T_LESS_EQUAL); }
     else if (s->c == '>') { set_maybe_double(s, '=', T_GREATER, T_GREATER_EQUAL); }
     else if (s->c == '&') { set_double(s, '&', T_LOG_AND); }
-    else if (s->c == '|') { set_double(s, '&', T_LOG_NOT); }
+    else if (s->c == '|') { set_double(s, '|', T_LOG_NOT); }
     else if (s->c == '^') { set_double(s, '^', T_LOG_XOR); }
     else if (s->c == '{') { set_single(s, T_BRACE_LEFT); }
     else if (s->c == '}') { set_single(s, T_BRACE_RIGHT); }
     else if (s->c == '(') { set_single(s, T_PAREN_LEFT); }
     else if (s->c == ')') { set_single(s, T_PAREN_RIGHT); }
+    else if (s->c == ',') { set_single(s, T_COMMA); }
+    else if (s->c == '"') { read_string(s); }
     else if (u_isdigit(s->c) || s->c == '#') { read_number(s); }
-    else if (u_isIDStart(s->c) || s->c == '_') {
+    else if (u_isIDStart(s->c) || s->c == '_' || s->c == '`') {
         read_identifier(s);
         // single _ is wildcard token
         if (u_strcmp(s->tbuf, ustr_wildcard) == 0) {
@@ -362,4 +423,3 @@ void scanner_free(Scanner *s) {
     buffer_free(s);
     free(s);
 }
-

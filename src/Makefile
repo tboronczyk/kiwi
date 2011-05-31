@@ -17,7 +17,7 @@ all: scanner
 	$(CC) $(LDFLAGS) $(CFLAGS) -o kiwi token.o scanner.o main.c
 
 debug: scanner-debug
-	$(CC) $(LDFLAGS_DBG) $(CFLAGS_DBG) -o kiwi token.o scanner.o main.c
+	$(CC) $(LDFLAGS_DBG) $(CFLAGS_DBG) -o kiwi-debug token.o scanner.o main.c
 
 scanner: 
 	$(CC) $(CFLAGS) -c token.c scanner.c
@@ -26,5 +26,4 @@ scanner-debug:
 	$(CC) $(CFLAGS_DBG) -c token.c scanner.c
 
 clean: 
-	rm -Rf *.o kiwi
-
+	rm -Rf *.o kiwi kiwi-debug

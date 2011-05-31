@@ -14,9 +14,9 @@ and end with "*/". Nested multi-line comments are supported.
 
 Assignment, Equality, and Identity
 ==================================
-The assignment operator in Kiwi is ":=". The equality operator is "==".  The 
-keyword "is" is used for identity tests (strong equality). See the Variable 
-Declaration and Boolean Logic sections for more information.
+The assignment operator is ":=". The equality operator is "==".  The  keyword
+"is" is used for identity tests (strong equality). See the Variable Declaration
+and Boolean Logic sections for more information.
 
 Numeric Literals
 ================
@@ -31,14 +31,59 @@ value forty-two is thus written in binary as 2#101010 (valid digits are 0 and
 1), in octal as 8#52 (valid digits are 0 through 7), and hexadecimal as either 
 16#2A or #2A (valid digits are 0 through 9, and case-insensitive A through F).  
 
-Wildcard Identifier
-====================
+String Literals
+===============
+String literals are enclosed by double quotation marks. Within a string, the
+following escape sequences are recognized:
+
+    \n          newline
+    \r          carriage return
+    \t          horizontal tab
+    \\          backslash
+    \"          double quote
+
+
+Identifiers
+===========
+Valid identifiers start with a letter or underscore and may contain a mix of
+letters, underscores, and numbers. If the programmer wishes to use an identifier
+that is the same as a reserved word he may preface the identifier with a
+backtick.
+
 The wildcard identifier "_" is used when one wishes to specify the value is 
 unknown or to be discarded. In Boolean tests its value is considered true.
 
 Variable Declaration
 ====================
-...
+Variables must be declared before they are used. They are declared using the
+keyword "var". Explicitly providing the variable's data type is optional when
+the type can be unambiguously determined by the compiler. When provided, the
+type name is appended to the identifier with a colon.
+
+// declares variable i for use, the type is inferred
+var i
+
+// declares variable j with explicit type
+var j:number
+
+Values may be assigned to variables at the same time they are declared.
+
+var x := 42
+var s:string := "Hello World"
+
+Kiwi also allows multiple variables to be declared with one "var" with the
+variables being separated by commas. NOTE: Any data type annotations are
+affect preceding identifiers.
+
+// three variables declared and assigned numbers, the type is inferred
+var x, y, z := 1, 2, 3
+
+// three variables declared, each are explicitly typed
+var a, b, c:number;
+
+// three variables, the first is assigned a number and the type inferred,
+// the second two are assigned strings and are explicitly typed  
+var foo, (bar, zip:string) := 42, "abc", "xyz"
 
 Conditional Branching
 =====================
@@ -64,5 +109,11 @@ else _ {
 
 Boolean Logic
 =============
-...
+The operators "&&", "||", and "^^" are logical-and, logical-or, and logical-xor
+respectively. They return the Boolean values "T" or "F" and their behavior is
+short-circuiting.
 
+The "==" operator tests for equality between values, and "is" is used for
+identity tests. They too return Boolean "T" or "F".
+
+...

@@ -51,24 +51,34 @@
 #define T_NUMBER_INT_2           22
 #define T_NUMBER_INT_8           23
 #define T_NUMBER_INT_16          24
+#define T_STRING                 25
+#define T_TRUE                   26
+#define T_FALSE                  27
 
 // punctuators
-#define T_BRACE_LEFT             25
-#define T_BRACE_RIGHT            26
-#define T_PAREN_LEFT             27
-#define T_PAREN_RIGHT            28
+#define T_BRACE_LEFT             28
+#define T_BRACE_RIGHT            29
+#define T_PAREN_LEFT             30
+#define T_PAREN_RIGHT            31
+#define T_COLON                  32
+#define T_COMMA                  33
 
 // comments
-#define T_COMMENT                29
-#define T_COMMENT_MULTI          30
+#define T_COMMENT                34
+#define T_COMMENT_MULTI          35
 
 // identifier
-#define T_IDENTIFIER             31 
+#define T_IDENTIFIER             36
 
 // keywords
-#define T_IF                     32
-#define T_ELSE                   33
-#define T_IS                     34
+#define T_IF                     37
+#define T_ELSE                   38
+#define T_IS                     39
+#define T_VAR                    40
+#define T_WHILE                  41
+#define T_NUMBER_TYPE            42
+#define T_STRING_TYPE            43
+#define T_BOOLEAN_TYPE           44
 
 typedef struct {
     int name;
@@ -78,4 +88,3 @@ typedef struct {
 void token_free(Token *t);
 
 #endif
-
