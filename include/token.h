@@ -61,24 +61,25 @@
 #define T_PAREN_LEFT             30
 #define T_PAREN_RIGHT            31
 #define T_COLON                  32
-#define T_COMMA                  33
+#define T_SEMICOLON              33
+#define T_COMMA                  34
 
 // comments
-#define T_COMMENT                34
-#define T_COMMENT_MULTI          35
+#define T_COMMENT                35
+#define T_COMMENT_MULTI          36
 
 // identifier
-#define T_IDENTIFIER             36
+#define T_IDENTIFIER             37
 
 // keywords
-#define T_IF                     37
-#define T_ELSE                   38
-#define T_IS                     39
-#define T_VAR                    40
-#define T_WHILE                  41
-#define T_NUMBER_TYPE            42
-#define T_STRING_TYPE            43
-#define T_BOOLEAN_TYPE           44
+#define T_IF                     38
+#define T_ELSE                   39
+#define T_IS                     40
+#define T_VAR                    41
+#define T_WHILE                  42
+#define T_NUMBER_TYPE            43
+#define T_STRING_TYPE            44
+#define T_BOOLEAN_TYPE           45
 
 typedef struct {
     int name;

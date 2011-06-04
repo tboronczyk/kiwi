@@ -304,7 +304,7 @@ static void read_identifier(Scanner *s) {
     else if (u_strcmp(s->tbuf, ustr_var) == 0) { s->name = T_VAR; }
     else if (u_strcmp(s->tbuf, ustr_while) == 0) { s->name = T_WHILE; }
     else if (u_strcmp(s->tbuf, ustr_number) == 0) { s->name = T_NUMBER_TYPE; }
-    else if (u_strcmp(s->tbuf, ustr_number) == 0) { s->name = T_NUMBER_TYPE; }
+    else if (u_strcmp(s->tbuf, ustr_string) == 0) { s->name = T_STRING_TYPE; }
     else if (u_strcmp(s->tbuf, ustr_bool) == 0) { s->name = T_BOOLEAN_TYPE; }
     else if (u_strcmp(s->tbuf, ustr_true) == 0) { s->name = T_TRUE; }
     else if (u_strcmp(s->tbuf, ustr_false) == 0) { s->name = T_FALSE; }
@@ -332,6 +332,7 @@ static void stream_read_token(Scanner *s) {
 
     // the first character will determine the parsing logic for various tokens
     if (s->c == ':') { set_maybe_double(s, '=', T_COLON, T_ASSIGN); }
+    else if (s->c == ';') { set_single(s, T_SEMICOLON); }
     else if (s->c == '+') { set_maybe_double(s, '=', T_ADD, T_ADD_ASSIGN); }
     else if (s->c == '-') { set_maybe_double(s, '=', T_SUBTRACT, T_SUBTRACT_ASSIGN); }
     else if (s->c == '*') { set_maybe_double(s, '=', T_MULTIPLY, T_MULTIPLY_ASSIGN); }
