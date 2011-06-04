@@ -10,14 +10,21 @@ WFLAGS=-Wall -Wextra -Winit-self -Wmissing-include-dirs -Wunused -Wfloat-equal \
 CFLAGS=-O2 -std=c99 $(INCLUDE)
 CFLAGS_DBG=-O2 -std=c99 -pedantic $(WFLAGS) -DDEBUG -g $(INCLUDE)
 
-LDFLAGS=-licuio
-LDFLAGS_DBG=-licuio
+LDFLAGS=-licuio -licuuc
+LDFLAGS_DBG=-licuio -licuuc
 
-all: scanner
-	$(CC) $(LDFLAGS) $(CFLAGS) -o kiwi token.o scanner.o main.c
+all: parser
+	$(CC) $(LDFLAGS) $(CFLAGS) -o kiwi  token.o scanner.o ast.o parser.o main.c
 
-debug: scanner-debug
-	$(CC) $(LDFLAGS_DBG) $(CFLAGS_DBG) -o kiwi-debug token.o scanner.o main.c
+debug: parser-debug
+	$(CC) $(LDFLAGS_DBG) $(CFLAGS_DBG) -o kiwi-debug token.o scanner.o ast.o \
+ parser.o main.c
+
+parser: scanner
+	$(CC) $(CFLAGS) -c ast.c parser.c
+
+parser-debug: scanner-debug
+	$(CC) $(CFLAGS_DBG) -c ast.c parser.c
 
 scanner: 
 	$(CC) $(CFLAGS) -c token.c scanner.c

@@ -19,47 +19,19 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include "parser.h"
-#include "unicode/ustdio.h"
+#ifndef PARSER_H
+#define PARSER_H
 
-UFILE *ustdout;
+#include "ast.h"
+#include "scanner.h"
 
-static void parse(Parser *p) {
-    AST *ast;
-    while (1) {
-        ast = parser_stmt(p);
-        if (ast->count) {
-            ast_dump(ast);
-            ast_free(ast);
-        }
-        else {
-            break;
-        }
-    }
-    ast_free(ast);
-}
+typedef struct _Parser {
+    Scanner *s;
+    // @TODO: there will be more members to this struct
+} Parser;
 
-int main(int argc, char **argv)
-{
-    Parser *p;
-    int i;
+Parser *parser_init(const char *);
+AST *parser_stmt(Parser *);
+void parser_free(Parser *);
 
-    ustdout = u_finit(stdout, NULL, NULL);
-
-    if (argc == 1) {
-        p = parser_init("stdin");
-        parse(p);
-        parser_free(p);
-    }
-    else {
-        for (i = 1; i < argc; i++) {
-            p = parser_init(argv[i]);
-            parse(p);
-            parser_free(p);
-        }
-    }
-
-    u_fclose(ustdout);
-
-    return 0;
-}
+#endif

@@ -19,47 +19,32 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include "parser.h"
-#include "unicode/ustdio.h"
+#ifndef AST_H
+#define AST_H
 
-UFILE *ustdout;
+#include "token.h"
 
-static void parse(Parser *p) {
-    AST *ast;
-    while (1) {
-        ast = parser_stmt(p);
-        if (ast->count) {
-            ast_dump(ast);
-            ast_free(ast);
-        }
-        else {
-            break;
-        }
-    }
-    ast_free(ast);
-}
+// @TODO: TokenNode and AST are currently set up as linked list... this will
+// change as language grammar evolves and a proper tree is built
 
-int main(int argc, char **argv)
-{
-    Parser *p;
-    int i;
+typedef struct _TokenNode {
+    Token *data;              // Token structure
+    struct _TokenNode *next;  // pointer to next TokenNode in list
+} TokenNode;
 
-    ustdout = u_finit(stdout, NULL, NULL);
+typedef struct _AST {
+    int count;        // Number of TokenNodes contained in list
+    TokenNode *head;  // TokenNode at head of list
+    TokenNode *tail;  // TokenNode at tail
+} AST;
 
-    if (argc == 1) {
-        p = parser_init("stdin");
-        parse(p);
-        parser_free(p);
-    }
-    else {
-        for (i = 1; i < argc; i++) {
-            p = parser_init(argv[i]);
-            parse(p);
-            parser_free(p);
-        }
-    }
+TokenNode *tnode_init(Token *);
+void tnode_free(TokenNode *n);
 
-    u_fclose(ustdout);
+AST *ast_init(void);
+void ast_append(AST *, TokenNode *);
+void ast_free(AST *);
 
-    return 0;
-}
+void ast_dump(AST *);
+
+#endif

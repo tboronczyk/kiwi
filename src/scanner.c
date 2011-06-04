@@ -38,11 +38,11 @@
 
 #ifdef DEBUG
 #define scan_error_exit(s) \
-    fprintf(stderr, "%s:%d: Unexpected lexeme (%s)\n", s->fname, s->lineno, __func__), \
+    fprintf(stderr, "scanner:%s:%d: Unexpected lexeme (%s)\n", s->fname, s->lineno, __func__), \
     exit(EXIT_FAILURE)
 #else
 #define scan_error_exit(s) \
-    fprintf(stderr, "%s:%d: Unexpected lexeme\n", s->fname, s->lineno), \
+    fprintf(stderr, "scanner:%s:%d: Unexpected lexeme\n", s->fname, s->lineno), \
     exit(EXIT_FAILURE);
 #endif
 

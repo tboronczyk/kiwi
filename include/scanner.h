@@ -42,4 +42,3 @@ Token *scanner_token(Scanner *);
 void scanner_free(Scanner *);
 
 #endif
-

@@ -19,47 +19,47 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <stdlib.h>
 #include "parser.h"
-#include "unicode/ustdio.h"
 
-UFILE *ustdout;
+Parser *parser_init(const char *fname) {
+    // allocate parser
+    Parser *p = (Parser *)calloc(1, sizeof(Parser));
 
-static void parse(Parser *p) {
-    AST *ast;
-    while (1) {
-        ast = parser_stmt(p);
-        if (ast->count) {
-            ast_dump(ast);
-            ast_free(ast);
-        }
-        else {
-            break;
-        }
-    }
-    ast_free(ast);
+    // bind scanner to parser
+    p->s = scanner_init(fname);
+
+    return p;
 }
 
-int main(int argc, char **argv)
-{
-    Parser *p;
-    int i;
+AST *parser_stmt(Parser *p) {
+    AST *ast;
+    Token *t;
+    TokenNode *node;
 
-    ustdout = u_finit(stdout, NULL, NULL);
+    // initialize abstract syntax tree
+    ast = ast_init();
 
-    if (argc == 1) {
-        p = parser_init("stdin");
-        parse(p);
-        parser_free(p);
-    }
-    else {
-        for (i = 1; i < argc; i++) {
-            p = parser_init(argv[i]);
-            parse(p);
-            parser_free(p);
+    // @TESTING: for now just read in stream of tokens
+    do {
+        if ((t = scanner_token(p->s))) {
+            node = tnode_init(t);
+            ast_append(ast, node);
         }
     }
+    while (t != NULL && t->name != T_SEMICOLON);
 
-    u_fclose(ustdout);
+    // @TESTING: for now statements are expect to end with a semicolon
+    if (t == NULL && ast && ast->tail && ast->tail->data->name != T_SEMICOLON) {
+        fprintf(stderr, "parser:%s:%d: Incomplete statement\n", p->s->fname, p->s->lineno);
+        exit(EXIT_FAILURE);
+    }
 
-    return 0;
+    return ast; 
+}
+
+void parser_free(Parser *p) {
+    // free used memory
+    scanner_free(p->s);
+    free(p);
 }

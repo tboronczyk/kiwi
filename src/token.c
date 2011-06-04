@@ -27,4 +27,3 @@ void token_free(Token *t)
     free(t->lexeme);
     free(t);
 }
-
