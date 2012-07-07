@@ -14,11 +14,11 @@ LDFLAGS=-licuio -licuuc
 LDFLAGS_DBG=-licuio -licuuc
 
 all: parser
-	$(CC) $(LDFLAGS) $(CFLAGS) -o kiwi  token.o scanner.o ast.o parser.o main.c
+	$(CC) $(CFLAGS) -o kiwi  token.o scanner.o ast.o parser.o main.c $(LDFLAGS)
 
 debug: parser-debug
-	$(CC) $(LDFLAGS_DBG) $(CFLAGS_DBG) -o kiwi-debug token.o scanner.o ast.o \
- parser.o main.c
+	$(CC) $(CFLAGS_DBG) -o kiwi-debug token.o scanner.o ast.o \
+ parser.o main.c $(LDFLAGS_DBG)
 
 parser: scanner
 	$(CC) $(CFLAGS) -c ast.c parser.c
