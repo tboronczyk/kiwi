@@ -34,52 +34,52 @@
 #define T_MULTIPLY_ASSIGN        7
 #define T_DIVIDE                 8
 #define T_DIVIDE_ASSIGN          9
-#define T_EQUAL                  10
-#define T_NOT_EQUAL              11
-#define T_LESS                   12
-#define T_LESS_EQUAL             13
-#define T_GREATER                14
-#define T_GREATER_EQUAL          15
-#define T_LOG_AND                16
-#define T_LOG_OR                 17
-#define T_LOG_XOR                18
-#define T_LOG_NOT                19
+#define T_MODULO                 10 
+#define T_MODULO_ASSIGN          11 
+#define T_EQUAL                  12
+#define T_NOT_EQUAL              13
+#define T_LESS                   14
+#define T_LESS_EQUAL             15
+#define T_GREATER                16
+#define T_GREATER_EQUAL          17
+#define T_LOG_AND                18
+#define T_LOG_OR                 19
+#define T_LOG_XOR                20
+#define T_LOG_NOT                21
 
 // literals
-#define T_WILDCARD               20
-#define T_NUMBER                 21
-#define T_NUMBER_INT_2           22
-#define T_NUMBER_INT_8           23
-#define T_NUMBER_INT_16          24
-#define T_STRING                 25
-#define T_TRUE                   26
-#define T_FALSE                  27
+#define T_WILDCARD               22
+#define T_NUMBER                 23
+#define T_NUMBER_INT_2           24
+#define T_NUMBER_INT_8           25
+#define T_NUMBER_INT_16          26
+#define T_STRING                 27
+#define T_TRUE                   28
+#define T_FALSE                  29
 
 // punctuators
-#define T_BRACE_LEFT             28
-#define T_BRACE_RIGHT            29
-#define T_PAREN_LEFT             30
-#define T_PAREN_RIGHT            31
-#define T_COLON                  32
-#define T_SEMICOLON              33
-#define T_COMMA                  34
+#define T_BRACE_LEFT             30
+#define T_BRACE_RIGHT            31
+#define T_PAREN_LEFT             32
+#define T_PAREN_RIGHT            33
+#define T_COLON                  34
+#define T_SEMICOLON              35
+#define T_COMMA                  36
 
 // comments
-#define T_COMMENT                35
-#define T_COMMENT_MULTI          36
+#define T_COMMENT                37
+#define T_COMMENT_MULTI          38
 
 // identifier
-#define T_IDENTIFIER             37
+#define T_IDENTIFIER             39
 
 // keywords
-#define T_IF                     38
-#define T_ELSE                   39
-#define T_IS                     40
-#define T_VAR                    41
-#define T_WHILE                  42
-#define T_NUMBER_TYPE            43
-#define T_STRING_TYPE            44
-#define T_BOOLEAN_TYPE           45
+#define T_IF                     40
+#define T_ELSE                   41
+#define T_IS                     42
+#define T_VAR                    43
+#define T_WHILE                  44
+#define T_FUNC                   45
 
 typedef struct {
     int name;

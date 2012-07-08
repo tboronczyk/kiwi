@@ -271,11 +271,9 @@ static void read_identifier(Scanner *s) {
     U_STRING_DECL(ustr_is, "is", 2);
     U_STRING_DECL(ustr_var, "var", 3);
     U_STRING_DECL(ustr_while, "while", 5);
-    U_STRING_DECL(ustr_number, "number", 6);
-    U_STRING_DECL(ustr_string, "string", 6);
-    U_STRING_DECL(ustr_bool, "bool", 4);
-    U_STRING_DECL(ustr_true, "T", 1);
-    U_STRING_DECL(ustr_false, "F", 1);
+    U_STRING_DECL(ustr_true, "true", 4);
+    U_STRING_DECL(ustr_false, "false", 5);
+    U_STRING_DECL(ustr_func, "func", 4);
     U_STRING_DECL(ustr_backtick, "`", 1);
     static int init = 1;
     if (init) {
@@ -284,11 +282,9 @@ static void read_identifier(Scanner *s) {
         U_STRING_INIT(ustr_is, "is", 2);
         U_STRING_INIT(ustr_var, "var", 3);
         U_STRING_INIT(ustr_while, "while", 5);
-        U_STRING_INIT(ustr_number, "number", 6);
-        U_STRING_INIT(ustr_string, "string", 6);
-        U_STRING_INIT(ustr_bool, "bool", 4);
-        U_STRING_INIT(ustr_true, "T", 1);
-        U_STRING_INIT(ustr_false, "F", 1);
+        U_STRING_INIT(ustr_true, "true", 4);
+        U_STRING_INIT(ustr_false, "false", 5);
+        U_STRING_INIT(ustr_func, "func", 4);
         U_STRING_INIT(ustr_backtick, "`", 1);
         init = 0;
     }
@@ -303,11 +299,9 @@ static void read_identifier(Scanner *s) {
     else if (u_strcmp(s->tbuf, ustr_is) == 0) { s->name = T_IS; }
     else if (u_strcmp(s->tbuf, ustr_var) == 0) { s->name = T_VAR; }
     else if (u_strcmp(s->tbuf, ustr_while) == 0) { s->name = T_WHILE; }
-    else if (u_strcmp(s->tbuf, ustr_number) == 0) { s->name = T_NUMBER_TYPE; }
-    else if (u_strcmp(s->tbuf, ustr_string) == 0) { s->name = T_STRING_TYPE; }
-    else if (u_strcmp(s->tbuf, ustr_bool) == 0) { s->name = T_BOOLEAN_TYPE; }
     else if (u_strcmp(s->tbuf, ustr_true) == 0) { s->name = T_TRUE; }
     else if (u_strcmp(s->tbuf, ustr_false) == 0) { s->name = T_FALSE; }
+    else if (u_strcmp(s->tbuf, ustr_func) == 0) { s->name = T_FUNC; }
     // ...
     // assign token as identifier
     else {
@@ -336,6 +330,7 @@ static void stream_read_token(Scanner *s) {
     else if (s->c == '+') { set_maybe_double(s, '=', T_ADD, T_ADD_ASSIGN); }
     else if (s->c == '-') { set_maybe_double(s, '=', T_SUBTRACT, T_SUBTRACT_ASSIGN); }
     else if (s->c == '*') { set_maybe_double(s, '=', T_MULTIPLY, T_MULTIPLY_ASSIGN); }
+    else if (s->c == '%') { set_maybe_double(s, '=', T_MODULO, T_MODULO_ASSIGN); }
     else if (s->c == '/') { read_slash(s); }
     else if (s->c == '=') { set_double(s, '=', T_EQUAL); }
     else if (s->c == '~') { set_maybe_double(s, '=', T_LOG_NOT, T_NOT_EQUAL); }
