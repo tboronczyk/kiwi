@@ -1,4 +1,4 @@
-Copyright (c) 2011, Timothy Boronczyk
+Copyright (c) 2012, Timothy Boronczyk
 
 This is the file README for the Kiwi Programming Language distribution.
 
@@ -9,13 +9,13 @@ under the name LICENSE.
 Comments
 ========
 Kiwi has single-line and multi-line comment support. Single-line comments start 
-with "//" and go until the end of the line. Multi-line comments start with "/*" 
-and end with "*/". Nested multi-line comments are supported.  
+with `//` and go until the end of the line. Multi-line comments start with `/*`
+and end with `*/`. Nested multi-line comments are supported.  
 
 Assignment, Equality, and Identity
 ==================================
-The assignment operator is ":=". The equality operator is "==".  The  keyword
-"is" is used for identity tests (strong equality). See the Variable Declaration
+The assignment operator is `:=`. The equality operator is `==`.  The  keyword
+`is` is used for identity tests (strong equality). See the Variable Declaration
 and Boolean Logic sections for more information.
 
 Numeric Literals
@@ -24,7 +24,7 @@ Numeric literals may be specified in a variety of styles. Standard integers are
 written as bare literals, for example the integer value seven is 7, and the 
 value forty-two is 42. Kiwi makes available a unique notation for expressing 
 integers in non-decimal bases as well, such as base 2 (binary), base 8 (octal), 
-and base 16 (hexadecimal) -- the radix is written, followed by "#", and then 
+and base 16 (hexadecimal) -- the radix is written, followed by `#`, and then 
 the value observing valid digits for the selected radix.  The radix portion may 
 be omitted in which case the notation will default to hexadecimal. The integer 
 value forty-two is thus written in binary as 2#101010 (valid digits are 0 and 
@@ -36,11 +36,11 @@ String Literals
 String literals are enclosed by double quotation marks. Within a string, the
 following escape sequences are recognized:
 
-    \n          newline
-    \r          carriage return
-    \t          horizontal tab
-    \\          backslash
-    \"          double quote
+ - `\n`          newline
+ - `\r`          carriage return
+ - `\t`          horizontal tab
+ - `\\`          backslash
+ - `\"`          double quote
 
 
 Identifiers
@@ -50,70 +50,46 @@ letters, underscores, and numbers. If the programmer wishes to use an identifier
 that is the same as a reserved word he may preface the identifier with a
 backtick.
 
-The wildcard identifier "_" is used when one wishes to specify the value is 
+The wildcard identifier `_` is used when one wishes to specify the value is 
 unknown or to be discarded. In Boolean tests its value is considered true.
 
 Variable Declaration
 ====================
 Variables must be declared before they are used. They are declared using the
-keyword "var". Explicitly providing the variable's data type is optional when
-the type can be unambiguously determined by the compiler. When provided, the
-type name is appended to the identifier with a colon.
+keyword `var`. Kiwi allows multiple variables to be declared with one `var` with
+the variables being separated by commas.
 
-// declares variable i for use, the type is inferred
-var i
-
-// declares variable j with explicit type
-var j:number
-
-Values may be assigned to variables at the same time they are declared.
-
-var x := 42
-var s:string := "Hello World"
-
-Kiwi also allows multiple variables to be declared with one "var" with the
-variables being separated by commas. NOTE: Any data type annotations are
-affect preceding identifiers.
-
-// three variables declared and assigned numbers, the type is inferred
-var x, y, z := 1, 2, 3
-
-// three variables declared, each are explicitly typed
-var a, b, c:number;
-
-// three variables, the first is assigned a number and the type inferred,
-// the second two are assigned strings and are explicitly typed  
-var foo, (bar, zip:string) := 42, "abc", "xyz"
+...
 
 Conditional Branching
 =====================
-The keywords "if" and "else" are used to write conditional branches of code.  
-Both require a condition and body-- the condition are evaluated in order and 
-when the statements that make up the associated body to the first one 
-determined true are executed. The first branch is always marked with "if", and 
-any number of alternates are marked with "else". The _ wildcard may be used to 
-denote a default else case. Consider the following example:
+The keywords `if` and `else` are used to write conditional branches of code. Both
+require a condition and body-- the condition are evaluated in order and when the
+statements that make up the associated body to the first one determined true are
+executed. The first branch is always marked with `if`, and any number of
+alternates are marked with `else`. The `_` wildcard may be used to denote a default
+else case. Consider the following example:
 
-if i > 10 {
-    // this block will be executed if the value stored
-    // in i is greater than 10
-}
-else i < 0 {
-    // this block will be executed if the value is 
-    // negative
-}
-else _ {
-    // this block will be executed if the value is
-    // positive and less than or equal to 10
-}
+    if i > 10 {
+        // this block will be executed if the value stored
+        // in i is greater than 10
+    }
+    else i < 0 {
+        // this block will be executed if the value is 
+        // negative
+    }
+    else _ {
+        // this block will be executed if the value is
+        // positive and less than or equal to 10
+    }
 
 Boolean Logic
 =============
-The operators "&&", "||", and "^^" are logical-and, logical-or, and logical-xor
-respectively. They return the Boolean values "T" or "F" and their behavior is
-short-circuiting.
+The operators `&&`, `||`, and `^^` are logical-and, logical-or, and logical-xor
+respectively. They return the Boolean values `true` or `false` and their behavior
+is short-circuiting. `~` is logical-not, and `~=` is not-equals.
 
-The "==" operator tests for equality between values, and "is" is used for
-identity tests. They too return Boolean "T" or "F".
+The `==` operator tests for equality between values, and `is` is used for
+identity tests. They too return Boolean `true` or `false`.
 
 ...
