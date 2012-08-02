@@ -24,10 +24,10 @@
 
 UFILE *ustdout;
 
-static void parse(Parser *p) {
+static void parsefile(Parser *p) {
     AST *ast;
     while (1) {
-        ast = parser_stmt(p);
+        ast = parser_parse_stmt(p);
         if (ast->count) {
             ast_dump(ast);
             ast_free(ast);
@@ -48,13 +48,13 @@ int main(int argc, char **argv)
 
     if (argc == 1) {
         p = parser_init("stdin");
-        parse(p);
+        parsefile(p);
         parser_free(p);
     }
     else {
         for (i = 1; i < argc; i++) {
             p = parser_init(argv[i]);
-            parse(p);
+            parsefile(p);
             parser_free(p);
         }
     }

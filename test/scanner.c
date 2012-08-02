@@ -19,20 +19,42 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef PARSER_H
-#define PARSER_H
-
-#include "ast.h"
+#include <stdio.h>
 #include "scanner.h"
+#include "token.h"
+#include "unicode/ustdio.h"
 
-typedef struct _Parser {
+UFILE *ustdout;
+
+static void tokenize(Scanner *s) {
+    Token *t;
+    t = (Token *)scanner_token(s);
+    while (t->name != T_EOF) {
+        u_fprintf(ustdout, "Found %d %S\n", t->name, t->lexeme);
+        token_free(t);
+        t = (Token *)scanner_token(s);
+    }
+}
+
+int main(int argc, char **argv)
+{
     Scanner *s;
-    int atEOF;
-    // @TODO: there will be more members to this struct
-} Parser;
+    int i;
 
-Parser *parser_init(const char *);
-AST *parser_parse_stmt(Parser *);
-void parser_free(Parser *);
+    ustdout = u_finit(stdout, NULL, NULL);
 
-#endif
+    if (argc == 1) {
+        s = scanner_init("stdin");
+        tokenize(s);
+        scanner_free(s);
+    }
+    else {
+        for (i = 1; i < argc; i++) {
+            s = scanner_init(argv[i]);
+            tokenize(s);
+            scanner_free(s);
+        }
+    }
+
+    return 0;
+}

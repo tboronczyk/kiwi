@@ -24,6 +24,8 @@
 
 #include "unicode/umachine.h"
 
+#define T_EOF                    0
+
 // operators
 #define T_ASSIGN                 1
 #define T_ADD                    2

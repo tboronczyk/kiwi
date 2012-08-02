@@ -323,9 +323,9 @@ static void stream_read_token(Scanner *s) {
         U_STRING_INIT(ustr_wildcard, "_", 1);
         init = 0;
     }
-
     // the first character will determine the parsing logic for various tokens
-    if (s->c == ':') { set_maybe_double(s, '=', T_COLON, T_ASSIGN); }
+    if (s->c == U_EOF) { set_single(s, T_EOF); }
+    else if (s->c == ':') { set_maybe_double(s, '=', T_COLON, T_ASSIGN); }
     else if (s->c == ';') { set_single(s, T_SEMICOLON); }
     else if (s->c == '+') { set_maybe_double(s, '=', T_ADD, T_ADD_ASSIGN); }
     else if (s->c == '-') { set_maybe_double(s, '=', T_SUBTRACT, T_SUBTRACT_ASSIGN); }
@@ -392,23 +392,15 @@ Token *scanner_token(Scanner *s) {
     // advance stream past whitespace
     stream_skip_whitespace(s);
 
-
-    // end of file was reached or an error was encountered
-    if (s->c == U_EOF) {
-        free(t);
-        return 0;
-    }
     // obtain and return token
-    else {
-        stream_read_token(s);
-        t->name = s->name;
-        if ((t->lexeme = (UChar *)calloc(s->ti + 1, sizeof(UChar))) == NULL) {
-            perror_exit("calloc");
-        }
-        memmove(t->lexeme, s->tbuf, sizeof(UChar) * s->ti);
-
-        return t;
+    stream_read_token(s);
+    t->name = s->name;
+    if ((t->lexeme = (UChar *)calloc(s->ti + 1, sizeof(UChar))) == NULL) {
+        perror_exit("calloc");
     }
+    memmove(t->lexeme, s->tbuf, sizeof(UChar) * s->ti);
+
+    return t;
 }
 
 void scanner_free(Scanner *s) {

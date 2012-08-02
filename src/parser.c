@@ -32,7 +32,7 @@ Parser *parser_init(const char *fname) {
     return p;
 }
 
-AST *parser_stmt(Parser *p) {
+AST *parser_parse_stmt(Parser *p) {
     AST *ast;
     Token *t;
     TokenNode *node;
@@ -42,20 +42,21 @@ AST *parser_stmt(Parser *p) {
 
     // @TESTING: for now just read in stream of tokens
     do {
-        if ((t = scanner_token(p->s))) {
+        t = scanner_token(p->s);
+        if (t->name != T_EOF) {
             node = tnode_init(t);
             ast_append(ast, node);
         }
     }
-    while (t != NULL && t->name != T_SEMICOLON);
+    while (t->name != T_EOF && t->name != T_SEMICOLON);
 
-    // @TESTING: for now statements are expect to end with a semicolon
-    if (t == NULL && ast && ast->tail && ast->tail->data->name != T_SEMICOLON) {
+    // @TESTING: statements are expect to end with a semicolon
+    if (ast && ast->tail && ast->tail->data->name != T_SEMICOLON) {
         fprintf(stderr, "parser:%s:%d: Incomplete statement\n", p->s->fname, p->s->lineno);
         exit(EXIT_FAILURE);
     }
 
-    return ast; 
+    return ast;
 }
 
 void parser_free(Parser *p) {
