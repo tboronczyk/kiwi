@@ -1,0 +1,17 @@
+func fibonacci n {
+    var m, p, r.
+    if n < 2 {
+        return n.
+    }
+    m: fibonacci(n - 1).
+    p: fibonacci(n - 2).
+    r: m + p.
+    return r.
+}
+var fib, i: 1.
+while i <= 10 {
+    fib: fibonacci(i).
+    print(fib).
+    i: i + 1.
+}
+
