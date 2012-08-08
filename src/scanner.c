@@ -19,7 +19,6 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,6 +27,7 @@
 #include "unicode/uchar.h"
 #include "unicode/ustdio.h"
 #include "unicode/ustring.h"
+#include "y.tab.h"
 
 #define BUFFER_SIZE_INIT 7
 #define BUFFER_SIZE_INCR 1.5
@@ -158,7 +158,7 @@ static void read_slash(Scanner *s) {
     }
     // match multi-line comment
     else if (s->c == '*') {
-        s->name = T_COMMENT_MULTI;
+        s->name = T_COMMENT;
         append_advance(s);
         read_comment_multi_inner(s);
     }
@@ -228,7 +228,6 @@ static void read_number(Scanner *s) {
         // read hexadecimal number, assume hex if there is no leading radix
         if (s->ti == 0 || u_strcmp(s->tbuf, ustr_base16) == 0) {
             append_advance(s);
-            s->name = T_NUMBER_INT_16;
             while (u_isxdigit(s->c)) {
                 j++;
                 append_advance(s);
@@ -237,7 +236,6 @@ static void read_number(Scanner *s) {
         // read binary number
         else if (u_strcmp(s->tbuf, ustr_base2) == 0) {
             append_advance(s);
-            s->name = T_NUMBER_INT_2;
             while (s->c == '0' || s->c == '1') {
                 j++;
                 append_advance(s);
@@ -246,7 +244,6 @@ static void read_number(Scanner *s) {
         // read octal number
         else if (u_strcmp(s->tbuf, ustr_base8) == 0) {
             append_advance(s);
-            s->name = T_NUMBER_INT_8;
             while (u_memchr(ustr_octvals, s->c, u_strlen(ustr_octvals)) != NULL) {
                 j++;
                 append_advance(s);
@@ -316,6 +313,7 @@ static void read_identifier(Scanner *s) {
 }
 
 static void stream_read_token(Scanner *s) {
+/*
     // string literals for comparison
     U_STRING_DECL(ustr_wildcard, "_", 1);
     static int init = 1;
@@ -323,35 +321,37 @@ static void stream_read_token(Scanner *s) {
         U_STRING_INIT(ustr_wildcard, "_", 1);
         init = 0;
     }
+*/
     // the first character will determine the parsing logic for various tokens
     if (s->c == U_EOF) { set_single(s, T_EOF); }
-    else if (s->c == ':') { set_maybe_double(s, '=', T_COLON, T_ASSIGN); }
-    else if (s->c == ';') { set_single(s, T_SEMICOLON); }
-    else if (s->c == '+') { set_maybe_double(s, '=', T_ADD, T_ADD_ASSIGN); }
-    else if (s->c == '-') { set_maybe_double(s, '=', T_SUBTRACT, T_SUBTRACT_ASSIGN); }
-    else if (s->c == '*') { set_maybe_double(s, '=', T_MULTIPLY, T_MULTIPLY_ASSIGN); }
-    else if (s->c == '%') { set_maybe_double(s, '=', T_MODULO, T_MODULO_ASSIGN); }
+    else if (s->c == ':') { set_single(s, T_ASSIGN); }
+    else if (s->c == '.') { set_maybe_double(s, '.', T_DOT, T_CONCAT); }
+    else if (s->c == '+') { set_maybe_double(s, ':', T_ADD, T_ADD_ASSIGN); }
+    else if (s->c == '-') { set_maybe_double(s, ':', T_SUBTRACT, T_SUBTRACT_ASSIGN); }
+    else if (s->c == '*') { set_maybe_double(s, ':', T_MULTIPLY, T_MULTIPLY_ASSIGN); }
+    else if (s->c == '%') { set_maybe_double(s, ':', T_MODULO, T_MODULO_ASSIGN); }
     else if (s->c == '/') { read_slash(s); }
-    else if (s->c == '=') { set_double(s, '=', T_EQUAL); }
-    else if (s->c == '~') { set_maybe_double(s, '=', T_LOG_NOT, T_NOT_EQUAL); }
+    else if (s->c == '=') { set_single(s, T_EQUAL); }
+    else if (s->c == '~') { set_maybe_double(s, '=', T_NOT, T_NOT_EQUAL); }
     else if (s->c == '<') { set_maybe_double(s, '=', T_LESS, T_LESS_EQUAL); }
     else if (s->c == '>') { set_maybe_double(s, '=', T_GREATER, T_GREATER_EQUAL); }
-    else if (s->c == '&') { set_double(s, '&', T_LOG_AND); }
-    else if (s->c == '|') { set_double(s, '|', T_LOG_NOT); }
-    else if (s->c == '^') { set_double(s, '^', T_LOG_XOR); }
-    else if (s->c == '{') { set_single(s, T_BRACE_LEFT); }
-    else if (s->c == '}') { set_single(s, T_BRACE_RIGHT); }
-    else if (s->c == '(') { set_single(s, T_PAREN_LEFT); }
-    else if (s->c == ')') { set_single(s, T_PAREN_RIGHT); }
+    else if (s->c == '&') { set_double(s, '&', T_AND); }
+    else if (s->c == '|') { set_double(s, '|', T_NOT); }
+    else if (s->c == '{') { set_single(s, T_LBRACE); }
+    else if (s->c == '}') { set_single(s, T_RBRACE); }
+    else if (s->c == '(') { set_single(s, T_LPAREN); }
+    else if (s->c == ')') { set_single(s, T_RPAREN); }
     else if (s->c == ',') { set_single(s, T_COMMA); }
     else if (s->c == '"') { read_string(s); }
     else if (u_isdigit(s->c) || s->c == '#') { read_number(s); }
     else if (u_isIDStart(s->c) || s->c == '_' || s->c == '`') {
         read_identifier(s);
+/*
         // single _ is wildcard token
         if (u_strcmp(s->tbuf, ustr_wildcard) == 0) {
             s->name = T_WILDCARD;
         }
+*/
     }
     // invalid
     else {

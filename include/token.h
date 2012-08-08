@@ -23,7 +23,7 @@
 #define TOKEN_H
 
 #include "unicode/umachine.h"
-
+/*
 #define T_EOF                    0
 
 // operators
@@ -82,7 +82,7 @@
 #define T_VAR                    43
 #define T_WHILE                  44
 #define T_FUNC                   45
-
+*/
 typedef struct {
     int name;
     UChar *lexeme;

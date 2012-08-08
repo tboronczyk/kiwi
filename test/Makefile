@@ -1,14 +1,19 @@
 include ../Makefile.inc
 
-INCLUDE+=-I../include
+INCLUDE+=-I../include -I../src
 
 LDFLAGS_DBG=-licuio -licuuc
 
 all: scanner
 
-scanner:
+scanner: ytab
 	$(MAKE) -C ../src scanner-debug
 	$(CC) $(CFLAGS_DBG) -o scanner  ../src/token.o ../src/scanner.o scanner.c $(LDFLAGS_DBG)
 
+ytab:
+	$(MKE) -C ../src ytab-debug
+
 clean:
 	rm -Rf *.o scanner
+
+

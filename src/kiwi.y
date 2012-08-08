@@ -1,18 +1,24 @@
 %{
 #include <stdio.h>
-#include <string.h>
- 
+#include "unicode/uchar.h"
+#include "unicode/ustdio.h"
+#include "unicode/ustring.h"
+#include "y.tab.h"
 %}
 
 %token T_EOF T_IF T_AND T_OR T_NOT T_EQUAL T_ADD T_SUBTRACT T_CONCAT T_MULTIPLY
 %token T_DIVIDE T_NOT_EQUAL T_LESS T_LESS_EQUAL T_GREATER T_GREATER_EQUAL
 %token T_LBRACE T_RBRACE T_ELSE T_COMMA T_DOT T_ASSIGN T_RETURN T_VAR T_TRUE
-%token T_FALSE T_LPAREN T_RPAREN T_WHILE T_FUNC 
+%token T_FALSE T_LPAREN T_RPAREN T_WHILE T_FUNC T_IS T_MODULO T_ADD_ASSIGN
+%token T_SUBTRACT_ASSIGN T_MULTIPLY_ASSIGN T_DIVIDE_ASSIGN T_MODULO_ASSIGN 
+
+%token T_COMMENT
+
 
 %union
 {
 	int number;
-	char *string;
+	UChar *string;
 }
 
 %token <number> T_NUMBER
@@ -74,6 +80,7 @@ compop
 	| T_LESS_EQUAL
 	| T_GREATER
 	| T_GREATER_EQUAL
+        | T_IS
 	;
 
 minorexpr
@@ -87,6 +94,7 @@ term
 	: factor
 	| term T_MULTIPLY factor
 	| term T_DIVIDE factor
+        | term T_MODULO factor
 	;
 
 factor
@@ -153,8 +161,18 @@ simplestmt
 	;
 	
 assignstmt
-	: T_IDENTIFIER T_ASSIGN expression
+	: T_IDENTIFIER assignop expression
 	;
+
+assignop
+	: T_ASSIGN
+        | T_ADD_ASSIGN
+        | T_SUBTRACT_ASSIGN
+        | T_MULTIPLY_ASSIGN
+        | T_DIVIDE_ASSIGN
+        | T_MODULO_ASSIGN
+	;
+
 
 returnstmt
 	: T_RETURN expression
@@ -172,11 +190,56 @@ varstmtlist
 	;
 %%
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "scanner.h"
+#include "token.h"
+#include "unicode/ustdio.h"
+
 int yyerror(char *s) {
   printf("%s\n",s);
+  return 1;
 }
 
-int main(void) {
-  yyparse();
+#define perror_exit(f) \
+    perror(f); \
+    exit(EXIT_FAILURE)
+
+UFILE *ustdout;
+Scanner *s;
+
+int yylex() {
+    Token *t;
+    int i;
+
+    t = (Token *)scanner_token(s);
+
+    // force re-read on comments
+    if (t->name == T_COMMENT) {
+        token_free(t);
+        return yylex();
+    }
+    else {
+/*
+        if (t->name == T_NUMBER) {
+            yylval.number = ...
+        }
+        else if (t->name == T_IDENTIFIER || t->name == T_STRING) {
+            yylval.string = ...
+        }
+*/
+        i = t->name;
+        token_free(t);
+        return i;
+    }
 }
 
+int main(int argc, char **argv)
+{
+    ustdout = u_finit(stdout, NULL, NULL);
+    s = scanner_init("stdin");
+    yyparse();
+    scanner_free(s);
+    return 0;
+}

@@ -23,6 +23,7 @@
 #include "scanner.h"
 #include "token.h"
 #include "unicode/ustdio.h"
+#include "y.tab.h"
 
 UFILE *ustdout;
 
