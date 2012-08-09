@@ -271,6 +271,7 @@ static void read_identifier(Scanner *s) {
     U_STRING_DECL(ustr_true, "true", 4);
     U_STRING_DECL(ustr_false, "false", 5);
     U_STRING_DECL(ustr_func, "func", 4);
+    U_STRING_DECL(ustr_return, "return", 6);
     U_STRING_DECL(ustr_backtick, "`", 1);
     static int init = 1;
     if (init) {
@@ -282,6 +283,7 @@ static void read_identifier(Scanner *s) {
         U_STRING_INIT(ustr_true, "true", 4);
         U_STRING_INIT(ustr_false, "false", 5);
         U_STRING_INIT(ustr_func, "func", 4);
+        U_STRING_INIT(ustr_return, "return", 6);
         U_STRING_INIT(ustr_backtick, "`", 1);
         init = 0;
     }
@@ -299,6 +301,7 @@ static void read_identifier(Scanner *s) {
     else if (u_strcmp(s->tbuf, ustr_true) == 0) { s->name = T_TRUE; }
     else if (u_strcmp(s->tbuf, ustr_false) == 0) { s->name = T_FALSE; }
     else if (u_strcmp(s->tbuf, ustr_func) == 0) { s->name = T_FUNC; }
+    else if (u_strcmp(s->tbuf, ustr_return) == 0) { s->name = T_RETURN; }
     // ...
     // assign token as identifier
     else {
