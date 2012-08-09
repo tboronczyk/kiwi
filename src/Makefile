@@ -30,4 +30,4 @@ ytab-debug:
 	byacc -d -v -t kiwi.y
 
 clean: 
-	rm -Rf *.o y.tab.* kiwi kiwi-debug
+	rm -Rf *.o y.tab.* y.output kiwi kiwi-debug

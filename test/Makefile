@@ -11,7 +11,7 @@ scanner: ytab
 	$(CC) $(CFLAGS_DBG) -o scanner  ../src/token.o ../src/scanner.o scanner.c $(LDFLAGS_DBG)
 
 ytab:
-	$(MKE) -C ../src ytab-debug
+	$(MAKE) -C ../src ytab-debug
 
 clean:
 	rm -Rf *.o scanner
