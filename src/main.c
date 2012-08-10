@@ -5,10 +5,10 @@
 #include "y.tab.h"
 #include "unicode/ustdio.h"
 
-extern int yyparse(void);
+extern void scanner_parse(Scanner *s); // y.tab.c
 
-int yyerror(char *s) {
-  fprintf(stderr, "%s\n", s);
+int scanner_error(Scanner *s, const char *str) {
+  fprintf(stderr, "%s line %d\n", str, s->lineno);
   return 1;
 }
 
@@ -17,14 +17,13 @@ int yyerror(char *s) {
     exit(EXIT_FAILURE)
 
 UFILE *ustdout;
-Scanner *s;
 
-int yylex()
+int scanner_lex(YYSTYPE *lvalp, Scanner *s)
 {
     scanner_token(s);
     // force re-read on comments
     if (s->name == T_COMMENT) {
-        return yylex();
+        return scanner_lex(lvalp, s);
     }
     else {
 /*
@@ -39,12 +38,16 @@ int yylex()
     }
 }
 
-int main(int argc, char **argv)
+int main()
 {
+    Scanner *s;
+
     ustdout = u_finit(stdout, NULL, NULL);
-    s = scanner_init("stdin");
-    yyparse();
+
+    s = scanner_init();
+    scanner_parse(s);
     scanner_free(s);
+
     return 0;
 }
 

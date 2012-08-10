@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include "unicode/ustdio.h"
+#include "y.tab.h"
 
 typedef struct {
     int lineno,     // current line number of file (used for error reporting)
@@ -36,8 +37,12 @@ typedef struct {
     UFILE *fp;      // open file descriptor of file at *fname
 } Scanner;
 
-Scanner *scanner_init(const char *);
+Scanner *scanner_init(void);
 int scanner_token(Scanner *);
 void scanner_free(Scanner *);
+int scanner_error(Scanner *, const char *);
+int scanner_lex(YYSTYPE *lvalp, Scanner *s);
+
 
 #endif
+

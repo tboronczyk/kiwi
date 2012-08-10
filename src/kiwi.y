@@ -1,12 +1,14 @@
+%pure-parser
+%lex-param {Scanner *s}
+%parse-param { Scanner *s }
 %{
 #include <stdio.h>
 #include "unicode/uchar.h"
 #include "unicode/ustdio.h"
 #include "unicode/ustring.h"
+#include "scanner.h"
 #include "y.tab.h"
 
-extern int yylex(void);
-extern void yyerror(const char *s);
 %}
 
 %token T_EOF T_IF T_AND T_OR T_NOT T_EQUAL T_ADD T_SUBTRACT T_CONCAT T_MULTIPLY

@@ -24,10 +24,12 @@ scanner-debug:
 	$(CC) $(CFLAGS_DBG) -c scanner.c
 
 ytab:
-	byacc -d kiwi.y
+	byacc -P -d -p scanner_ kiwi.y
+	mv y.tab.h ../include/y.tab.h
 
 ytab-debug:
-	byacc -d -v -t kiwi.y
+	byacc -P -d -p scanner_ -v -t kiwi.y
+	mv y.tab.h ../include/y.tab.h
 
 clean: 
-	rm -Rf *.o y.tab.* y.output kiwi kiwi-debug
+	rm -Rf *.o y.tab.* y.output ../include/y.tab.h kiwi kiwi-debug

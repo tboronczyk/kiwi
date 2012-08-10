@@ -32,25 +32,15 @@ static void tokenize(Scanner *s) {
     }
 }
 
-int main(int argc, char **argv)
+int main()
 {
     Scanner *s;
-    int i;
 
     ustdout = u_finit(stdout, NULL, NULL);
 
-    if (argc == 1) {
-        s = scanner_init("stdin");
-        tokenize(s);
-        scanner_free(s);
-    }
-    else {
-        for (i = 1; i < argc; i++) {
-            s = scanner_init(argv[i]);
-            tokenize(s);
-            scanner_free(s);
-        }
-    }
+    s = scanner_init();
+    tokenize(s);
+    scanner_free(s);
 
     return 0;
 }

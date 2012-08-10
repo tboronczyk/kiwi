@@ -361,8 +361,10 @@ static void stream_read_token(Scanner *s) {
     }
 }
 
-Scanner *scanner_init(const char *fname) {
+Scanner* scanner_init(void) {
+    char *fname = "stdin";
     Scanner *s;
+    
     // allocate scanner
     if ((s = (Scanner *)calloc(1, sizeof(Scanner))) == NULL) {
         perror_exit("calloc");
@@ -382,7 +384,6 @@ Scanner *scanner_init(const char *fname) {
     // initialize scanner
     buffer_init(s);
     stream_init(s);
-
     return s;
 }
 
