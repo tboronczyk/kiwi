@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "scanner.h"
-#include "token.h"
 #include "unicode/uchar.h"
 #include "unicode/ustdio.h"
 #include "unicode/ustring.h"
@@ -387,9 +386,7 @@ Scanner *scanner_init(const char *fname) {
     return s;
 }
 
-Token *scanner_token(Scanner *s) {
-    // allocate token
-    Token *t = (Token *)calloc(1, sizeof(Token));
+int scanner_token(Scanner *s) {
     buffer_reset(s);
 
     // advance stream past whitespace
@@ -397,13 +394,8 @@ Token *scanner_token(Scanner *s) {
 
     // obtain and return token
     stream_read_token(s);
-    t->name = s->name;
-    if ((t->lexeme = (UChar *)calloc(s->ti + 1, sizeof(UChar))) == NULL) {
-        perror_exit("calloc");
-    }
-    memmove(t->lexeme, s->tbuf, sizeof(UChar) * s->ti);
 
-    return t;
+    return s->name;
 }
 
 void scanner_free(Scanner *s) {

@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "scanner.h"
-#include "token.h"
 #include "y.tab.h"
 #include "unicode/ustdio.h"
 
@@ -20,28 +19,23 @@ int yyerror(char *s) {
 UFILE *ustdout;
 Scanner *s;
 
-int yylex() {
-    Token *t;
-    int i;
-
-    t = (Token *)scanner_token(s);
+int yylex()
+{
+    scanner_token(s);
     // force re-read on comments
-    if (t->name == T_COMMENT) {
-        token_free(t);
+    if (s->name == T_COMMENT) {
         return yylex();
     }
     else {
 /*
-        if (t->name == T_NUMBER) {
+        if (s->name == T_NUMBER) {
             yylval.number = ...
         }
-        else if (t->name == T_IDENTIFIER || t->name == T_STRING) {
+        else if (s->name == T_IDENTIFIER || s->name == T_STRING) {
             yylval.string = ...
         }
 */
-        i = t->name;
-        token_free(t);
-        return i;
+        return s->name;
     }
 }
 

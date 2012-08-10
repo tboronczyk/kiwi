@@ -21,19 +21,14 @@
 
 #include <stdio.h>
 #include "scanner.h"
-#include "token.h"
 #include "unicode/ustdio.h"
 #include "y.tab.h"
 
 UFILE *ustdout;
 
 static void tokenize(Scanner *s) {
-    Token *t;
-    t = (Token *)scanner_token(s);
-    while (t->name != T_EOF) {
-        u_fprintf(ustdout, "Found %d %S\n", t->name, t->lexeme);
-        token_free(t);
-        t = (Token *)scanner_token(s);
+    while (scanner_token(s) != T_EOF) {
+        u_fprintf(ustdout, "Found %d %S\n", s->name, s->tbuf);
     }
 }
 

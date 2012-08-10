@@ -23,7 +23,6 @@
 #define SCANNER_H
 
 #include <stdio.h>
-#include "token.h"
 #include "unicode/ustdio.h"
 
 typedef struct {
@@ -38,7 +37,7 @@ typedef struct {
 } Scanner;
 
 Scanner *scanner_init(const char *);
-Token *scanner_token(Scanner *);
+int scanner_token(Scanner *);
 void scanner_free(Scanner *);
 
 #endif
