@@ -8,8 +8,8 @@
 extern void scanner_parse(Scanner *s); // y.tab.c
 
 int scanner_error(Scanner *s, const char *str) {
-  fprintf(stderr, "%s line %d\n", str, s->lineno);
-  return 1;
+    fprintf(stderr, "%s line %d\n", str, s->lineno);
+    return 1;
 }
 
 #define perror_exit(f) \

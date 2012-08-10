@@ -1,6 +1,7 @@
 %pure-parser
 %lex-param {Scanner *s}
 %parse-param { Scanner *s }
+
 %{
 #include <stdio.h>
 #include "unicode/uchar.h"
@@ -8,8 +9,16 @@
 #include "unicode/ustring.h"
 #include "scanner.h"
 #include "y.tab.h"
-
 %}
+
+%union
+{
+    int number;
+    UChar *string;
+}
+
+%token <number> T_NUMBER
+%token <string> T_IDENTIFIER T_STRING
 
 %token T_IF T_AND T_OR T_NOT T_EQUAL T_ADD T_SUBTRACT T_CONCAT T_MULTIPLY
 %token T_DIVIDE T_NOT_EQUAL T_LESS T_LESS_EQUAL T_GREATER T_GREATER_EQUAL
@@ -17,15 +26,6 @@
 %token T_FALSE T_LPAREN T_RPAREN T_WHILE T_FUNC T_IS T_MODULO T_ADD_ASSIGN
 %token T_SUBTRACT_ASSIGN T_MULTIPLY_ASSIGN T_DIVIDE_ASSIGN T_MODULO_ASSIGN 
 %token T_COMMENT 
-
-%union
-{
-	int number;
-	UChar *string;
-}
-
-%token <number> T_NUMBER
-%token <string> T_IDENTIFIER T_STRING
 
 %start program
 
