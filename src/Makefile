@@ -6,10 +6,10 @@ LDFLAGS=-licuio -licuuc
 LDFLAGS_DBG=-licuio -licuuc
 
 all: parser
-	$(CC) $(CFLAGS) -o kiwi token.o scanner.o y.tab.o $(LDFLAGS)
+	$(CC) $(CFLAGS) -o kiwi token.o scanner.o y.tab.o main.c $(LDFLAGS)
 
 debug: parser-debug
-	$(CC) $(CFLAGS_DBG) -o kiwi-debug token.o scanner.o y.tab.o $(LDFLAGS_DBG)
+	$(CC) $(CFLAGS_DBG) -o kiwi-debug token.o scanner.o y.tab.o main.c $(LDFLAGS_DBG)
 
 parser: scanner
 	$(CC) $(CFLAGS) -c y.tab.c

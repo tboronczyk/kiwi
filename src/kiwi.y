@@ -4,6 +4,9 @@
 #include "unicode/ustdio.h"
 #include "unicode/ustring.h"
 #include "y.tab.h"
+
+extern int yylex(void);
+extern void yyerror(const char *s);
 %}
 
 %token T_EOF T_IF T_AND T_OR T_NOT T_EQUAL T_ADD T_SUBTRACT T_CONCAT T_MULTIPLY
@@ -13,7 +16,6 @@
 %token T_SUBTRACT_ASSIGN T_MULTIPLY_ASSIGN T_DIVIDE_ASSIGN T_MODULO_ASSIGN 
 
 %token T_COMMENT
-
 
 %union
 {
@@ -190,56 +192,3 @@ varstmtlist
 	;
 %%
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "scanner.h"
-#include "token.h"
-#include "unicode/ustdio.h"
-
-int yyerror(char *s) {
-  printf("%s\n",s);
-  return 1;
-}
-
-#define perror_exit(f) \
-    perror(f); \
-    exit(EXIT_FAILURE)
-
-UFILE *ustdout;
-Scanner *s;
-
-int yylex() {
-    Token *t;
-    int i;
-
-    t = (Token *)scanner_token(s);
-
-    // force re-read on comments
-    if (t->name == T_COMMENT) {
-        token_free(t);
-        return yylex();
-    }
-    else {
-/*
-        if (t->name == T_NUMBER) {
-            yylval.number = ...
-        }
-        else if (t->name == T_IDENTIFIER || t->name == T_STRING) {
-            yylval.string = ...
-        }
-*/
-        i = t->name;
-        token_free(t);
-        return i;
-    }
-}
-
-int main(int argc, char **argv)
-{
-    ustdout = u_finit(stdout, NULL, NULL);
-    s = scanner_init("stdin");
-    yyparse();
-    scanner_free(s);
-    return 0;
-}
