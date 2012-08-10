@@ -27,7 +27,7 @@
 UFILE *ustdout;
 
 static void tokenize(Scanner *s) {
-    while (scanner_token(s) != T_EOF) {
+    while (scanner_token(s) != 0) {
         u_fprintf(ustdout, "Found %d %S\n", s->name, s->tbuf);
     }
 }
