@@ -326,7 +326,7 @@ static void stream_read_token(Scanner *s) {
 */
     // the first character will determine the parsing logic for various tokens
     if (s->c == U_EOF) { set_single(s, 0); }  // return 0 on EOF
-    else if (s->c == ':') { set_single(s, T_ASSIGN); }
+    else if (s->c == ':') { set_maybe_double(s, '=', T_COLON, T_ASSIGN); }
     else if (s->c == '.') { set_maybe_double(s, '.', T_DOT, T_CONCAT); }
     else if (s->c == '+') { set_maybe_double(s, ':', T_ADD, T_ADD_ASSIGN); }
     else if (s->c == '-') { set_maybe_double(s, ':', T_SUBTRACT, T_SUBTRACT_ASSIGN); }

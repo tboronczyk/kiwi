@@ -16,7 +16,7 @@ file.
 
 Assignment, Equality, and Identity
 ==================================
-The assignment operator is `:`. The equality operator is `=`.  The  keyword
+The assignment operator is `:=`. The equality operator is `=`.  The  keyword
 `is` is used for identity tests (strong equality). See the Variable Declaration
 and Boolean Logic sections for more information.
 
