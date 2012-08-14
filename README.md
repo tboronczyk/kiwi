@@ -79,26 +79,26 @@ identity tests. They too return Boolean `true` or `false`.
 Examples
 ========
     // generate the Nth Fibonacci number 
-    func fibonacci: n { 
+    func fibonacci n { 
         var m, p, r.
         if n < 2 { 
             return n.
         } 
-        m: fibonacci(n - 1).
-        p: fibonacci(n - 2).
-        r: m + p.
+        m := fibonacci(n - 1).
+        p := fibonacci(n - 2).
+        r := m + p.
         return r.
     }
-    var i: 1, fib.
+    var i := 1, fib.
     while i <= 10 { 
-        fib: fibonacci(i).
+        fib := fibonacci(i).
         print(fib).
-        i: i + 1.
+        i := i + 1.
     }
 
 
     // escaped identifier, binary literal, and nested comment
-    var `var: 2#100.
+    var `var := 2#100.
     if `var > 10 {
         /* greater than 10 */
         print("value is greater than 10").
