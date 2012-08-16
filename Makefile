@@ -1,25 +1,27 @@
-# build kiwi and tests
-all: kiwi test
+all: kiwi kiwi-vmclient
 
-# build kiwi for debugging
-debug: kiwi-debug
-
-# clean
-clean: kiwi-clean test-clean
+debug: kiwi-debug kiwi-vmclient-debug
 
 kiwi:
-	$(MAKE) -C src all
+	$(MAKE) -C src kiwi
+	$(MAKE) -C src kiwi-vmserver
 
 kiwi-debug:
-	$(MAKE) -C src debug
+	$(MAKE) -C src kiwi-debug
+	$(MAKE) -C src kiwi-vmserver-debug
 
-kiwi-clean: 
-	$(MAKE) -C src clean
+kiwi-vmclient:
+	$(MAKE) -C src kiwi-vmclient
+
+kiwi-vmclient-debug:
+	$(MAKE) -C src kiwi-vmclient-debug
 
 test: test-scanner
 
 test-scanner:
 	$(MAKE) -C test scanner
 
-test-clean:
+clean:
+	$(MAKE) -C src clean
 	$(MAKE) -C test clean
+

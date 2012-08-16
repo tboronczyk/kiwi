@@ -19,30 +19,18 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef SCANNER_H
-#define SCANNER_H
+#ifndef MYSOCKET_H
+#define MYSOCKET_H
 
-#include <stdio.h>
-#include "unicode/ustdio.h"
-#include "y.tab.h"
+#include <arpa/inet.h>
 
-typedef struct {
-    int lineno,     // current line number of file (used for error reporting)
-        name,       // name of token being scanned
-        ti,         // current position of pointer in *tbuf
-        tlen;       // size of *tbuf
-    UChar c,        // current character read
-        *tbuf;      // buffer in which token values are accumulated
-    char *fname;    // name of file being scanned (used for error reporting)
-    UFILE *fp;      // open file descriptor of file at *fname
-} Scanner;
+typedef struct sockaddr_in SocketAddress;
+typedef int Socket;
 
-Scanner *scanner_init(void);
-int scanner_token(Scanner *);
-void scanner_free(Scanner *);
-int scanner_error(Scanner *, const char *);
-int scanner_lex(YYSTYPE *lvalp, Scanner *s);
+SocketAddress *init_socketaddress(long int, unsigned short);
+void free_socketaddress(SocketAddress *);
 
+Socket init_socket(SocketAddress *, int);
 
 #endif
 

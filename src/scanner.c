@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Timothy Boronczyk
+ * Copyright (c) 2012, Timothy Boronczyk
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -31,10 +31,6 @@
 #define BUFFER_SIZE_INIT 7
 #define BUFFER_SIZE_INCR 1.5
 
-#define perror_exit(f) \
-    perror(f); \
-    exit(EXIT_FAILURE)
-
 #ifdef DEBUG
 #define scan_error_exit(s) \
     fprintf(stderr, "scanner:%s:%d: Unexpected lexeme (%s)\n", s->fname, s->lineno, __func__), \
@@ -62,7 +58,8 @@ static void buffer_init(Scanner *s) {
     s->ti = 0;
     s->tlen = BUFFER_SIZE_INIT;
     if ((s->tbuf = (UChar *)calloc(s->tlen, sizeof(UChar))) == NULL) {
-        perror_exit("calloc");
+        perror("calloc");
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -76,7 +73,8 @@ static void buffer_grow(Scanner *s) {
     // increase storage of token buffer
     s->tlen = (int)((double)s->tlen * BUFFER_SIZE_INCR);
     if ((s->tbuf = (UChar *)realloc(s->tbuf, sizeof(UChar) * s->tlen)) == NULL) {
-        perror_exit("realloc");
+        perror("realloc");
+        exit(EXIT_FAILURE);
     }
     // ensure new buffer space is clear
     memset(&s->tbuf[s->ti], 0, sizeof(UChar) * (s->tlen - s->ti));
@@ -367,11 +365,13 @@ Scanner* scanner_init(void) {
 
     // allocate scanner
     if ((s = (Scanner *)calloc(1, sizeof(Scanner))) == NULL) {
-        perror_exit("calloc");
+        perror("calloc");
+        exit(EXIT_FAILURE);
     }
     // set filename
     if ((s->fname = (char *)calloc(strlen(fname) + 1, sizeof(char))) == NULL) {
-        perror_exit("calloc");
+        perror("calloc");
+        exit(EXIT_FAILURE);
     }
     memcpy(s->fname, fname, sizeof(char) * strlen(fname));
     // open stream to file
@@ -379,7 +379,8 @@ Scanner* scanner_init(void) {
         s->fp = u_finit(stdin, NULL, NULL);
     }
     else if ((s->fp = u_fopen(fname, "r", NULL, NULL)) == NULL) {
-        perror_exit("u_fopen");
+        perror("u_fopen");
+        exit(EXIT_FAILURE);
     }
     // initialize scanner
     buffer_init(s);

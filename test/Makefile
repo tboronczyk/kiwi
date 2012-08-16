@@ -14,6 +14,6 @@ ytab:
 	$(MAKE) -C ../src ytab-debug
 
 clean:
-	rm -Rf *.o scanner
+	rm -Rf scanner
 
 

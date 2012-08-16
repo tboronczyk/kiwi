@@ -19,30 +19,47 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef SCANNER_H
-#define SCANNER_H
-
 #include <stdio.h>
-#include "unicode/ustdio.h"
-#include "y.tab.h"
+#include <stdlib.h>
+#include "mysocket.h"
 
-typedef struct {
-    int lineno,     // current line number of file (used for error reporting)
-        name,       // name of token being scanned
-        ti,         // current position of pointer in *tbuf
-        tlen;       // size of *tbuf
-    UChar c,        // current character read
-        *tbuf;      // buffer in which token values are accumulated
-    char *fname;    // name of file being scanned (used for error reporting)
-    UFILE *fp;      // open file descriptor of file at *fname
-} Scanner;
+SocketAddress *init_socketaddress(long int addr, unsigned short port) {
+    SocketAddress *sa;
 
-Scanner *scanner_init(void);
-int scanner_token(Scanner *);
-void scanner_free(Scanner *);
-int scanner_error(Scanner *, const char *);
-int scanner_lex(YYSTYPE *lvalp, Scanner *s);
+    if ((sa = (SocketAddress *)calloc(1, sizeof(SocketAddress))) == NULL) {
+        perror("calloc");
+        exit(EXIT_FAILURE);
+    }
 
+    sa->sin_family = AF_INET;
+    sa->sin_addr.s_addr = htonl(addr);
+    sa->sin_port = htons(port);
 
-#endif
+    return sa;
+}
+
+void free_socketaddress(SocketAddress *sa) {
+    free(sa);
+}
+
+Socket init_socket(SocketAddress *addr, int pending) {
+    Socket sock;
+
+    if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+        perror("socket");
+        exit(EXIT_FAILURE);
+    }
+
+    if (bind(sock, (struct sockaddr *)addr, sizeof(SocketAddress)) < 0) {
+        perror("bind");
+        exit(EXIT_FAILURE);
+    }
+
+    if (listen(sock, pending) < 0) {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+
+    return sock;
+}
 

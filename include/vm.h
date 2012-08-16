@@ -19,29 +19,8 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef SCANNER_H
-#define SCANNER_H
-
-#include <stdio.h>
-#include "unicode/ustdio.h"
-#include "y.tab.h"
-
-typedef struct {
-    int lineno,     // current line number of file (used for error reporting)
-        name,       // name of token being scanned
-        ti,         // current position of pointer in *tbuf
-        tlen;       // size of *tbuf
-    UChar c,        // current character read
-        *tbuf;      // buffer in which token values are accumulated
-    char *fname;    // name of file being scanned (used for error reporting)
-    UFILE *fp;      // open file descriptor of file at *fname
-} Scanner;
-
-Scanner *scanner_init(void);
-int scanner_token(Scanner *);
-void scanner_free(Scanner *);
-int scanner_error(Scanner *, const char *);
-int scanner_lex(YYSTYPE *lvalp, Scanner *s);
+#ifndef VM_H
+#define VM_H
 
 
 #endif
