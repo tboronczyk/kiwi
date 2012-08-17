@@ -32,9 +32,9 @@
 #define OP_VAR	3
 #define OP_LOAD	4
 #define OP_STOR	5
+*/
 #define OP_PUSH	6
 #define OP_POP	7
-*/
 
 #define OP_ADD	8
 #define OP_SUB	9
@@ -43,11 +43,13 @@
 #define OP_NEG	12
 /*
 #define OP_CCAT	13
+*/
 
 #define OP_AND	14
 #define OP_OR	15
 #define OP_NOT	16
 
+/*
 #define OP_CMP	17
 #define OP_JMP	18
 */

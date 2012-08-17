@@ -22,28 +22,73 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "opcodes.h"
-
 #include "vm.h"
+
+int *regs[NUM_REGS];
+int stack[SIZE_STACK];
+int sp;
+
+void op_noop(void);
+void op_move(void);
+void op_xchg(void);
+/*
+void op_var(void);
+void op_load(void);
+void op_stor(void);
+*/
+void op_push(void);
+void op_pop(void);
+
+void op_add(void);
+void op_sub(void);
+void op_mul(void);
+void op_div(void);
+void op_neg(void);
+/*
+void op_ccat(void);
+*/
+
+void op_and(void);
+void op_or(void);
+void op_not(void);
+/*
+void op_cmp(void);
+void op_jmp(void);
+*/
+
+int getmnem(void);
+int getreg(void);
+int getint(void);
 
 int getmnem() {
     int m;
-    scanf("%d", &m);
+    if (scanf("%d", &m) != 1) {
+        perror("scanf");
+        exit(EXIT_FAILURE);
+    }
+    // return -1 on unknown
     return (m >= 0 && m < NUM_OPS) ? m : -1;
 }
 
 int getreg() {
     int r;
-    scanf("%d", &r);
+    if (scanf("%d", &r) != 1) {
+        perror("scanf");
+        exit(EXIT_FAILURE);
+    }
+    // return -1 on invalid register
     return (r >= 0 && r < NUM_REGS) ? r : -1;
 }
 
 int getint() {
     int i;
-    scanf("%d", &i);
+    if (scanf("%d", &i) != 1) {
+        perror("scanf");
+        exit(EXIT_FAILURE);
+    }
     return i;
 }
 
-int *regs[NUM_REGS];
 
 void op_noop() {
     return;
@@ -51,47 +96,72 @@ void op_noop() {
 
 void op_move() {
     int dest = getreg();
-    int orig = getint();
-    *regs[dest] = orig;
+    int src = getint();
+    *regs[dest] = src;
 }
 
 void op_xchg() {
     int dest = getreg();
-    int orig = getreg();
-    *regs[dest] = *regs[orig];
+    int src = getreg();
+    int tmp1 = *regs[dest];
+    int tmp2 = *regs[src];
+    *regs[dest] = tmp2;
+    *regs[src] = tmp1;
 }
 
 /*
 void op_var();
 void op_load();
 void op_stor();
-void op_push();
-void op_pop();
 */
+void op_push() {
+    int src = getreg();
+
+    if (sp != SIZE_STACK - 1) {
+        sp++;
+        stack[sp] = *regs[src];
+    }
+    else {
+        fprintf(stderr, "PUSH: no room on stack");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void op_pop() {
+    int src = getreg();
+
+    if (sp != -1) {
+        *regs[src] = stack[sp];
+        sp--;
+    }
+    else {
+        fprintf(stderr, "POP: empty stack");
+        exit(EXIT_FAILURE);
+    }
+}
 
 void op_add() {
     int dest = getreg();
-    int orig = getreg();
-    *regs[dest] += *regs[orig];
+    int src = getreg();
+    *regs[dest] += *regs[src];
 }
-
 
 void op_sub() {
     int dest = getreg();
-    int orig = getreg();
-    *regs[dest] -= *regs[orig];
+    int src = getreg();
+    *regs[dest] -= *regs[src];
 }
 
 void op_mul() {
     int dest = getreg();
-    int orig = getreg();
-    *regs[dest] *= *regs[orig];
+    int src = getreg();
+    *regs[dest] *= *regs[src];
 }
 
 void op_div() {
     int dest = getreg();
-    int orig = getreg();
-    *regs[dest] /= *regs[orig];
+    int src = getreg();
+    *regs[dest] /= *regs[src];
 }
 
 void op_neg() {
@@ -101,8 +171,24 @@ void op_neg() {
 
 /*
 void op_ccat();
-void op_and();
-void op_or();
+*/
+void op_and() {
+    int dest = getreg();
+    int src = getreg();
+    *regs[dest] = *regs[dest] && *regs[src];
+}
+
+void op_or() {
+    int dest = getreg();
+    int src = getreg();
+    *regs[dest] = *regs[dest] || *regs[src];
+}
+
+void op_not() {
+    int dest = getreg();
+    *regs[dest] = !*regs[dest];
+}
+/*
 void op_cmp();
 void op_jmp();
 */
@@ -110,6 +196,8 @@ void op_jmp();
 int main() {
 
     int m, i;
+
+    sp = -1;
 
     void (*ops[NUM_OPS])();
     for (i = 0; i < NUM_OPS; i++) {
@@ -123,9 +211,9 @@ int main() {
     ops[OP_VAR] = op_var;
     ops[OP_LOAD] = op_load;
     ops[OP_STOR] = op_stor;
+*/
     ops[OP_PUSH] = op_push;
     ops[OP_POP] = op_pop;
-*/
     ops[OP_ADD] = op_add;
     ops[OP_SUB] = op_sub;
     ops[OP_MUL] = op_mul;
@@ -133,8 +221,11 @@ int main() {
     ops[OP_NEG] = op_neg;
 /*
     ops[OP_CCAT] = op_ccat;
+*/
     ops[OP_AND] = op_and;
     ops[OP_OR] = op_or;
+    ops[OP_NOT] = op_not;
+/*
     ops[OP_CMP] = op_cmp;
     ops[OP_JMP] = op_jmp;
 */
@@ -152,7 +243,7 @@ int main() {
             printf("not implemented");
         }
     }
-    
+
     for (i = 0; i < NUM_REGS; i++) {
         free(regs[i]);
     }

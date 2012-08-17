@@ -23,29 +23,7 @@
 #define VM_H
 
 #define NUM_REGS 3
-
-void op_noop();
-void op_move();
-void op_xchg();
-/*
-void op_var();
-void op_load();
-void op_stor();
-void op_push();
-void op_pop();
-*/
-void op_add();
-void op_sub();
-void op_mul();
-void op_div();
-void op_neg();
-/*
-void op_ccat();
-void op_and();
-void op_or();
-void op_cmp();
-void op_jmp();
-*/
+#define SIZE_STACK 80
 
 #endif
 
