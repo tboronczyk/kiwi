@@ -1,20 +1,20 @@
-all: kiwi kiwi-vmclient
+all: kiwi vmclient
 
-debug: kiwi-debug kiwi-vmclient-debug
+debug: kiwi-debug vmclient-debug
 
 kiwi:
 	$(MAKE) -C src kiwi
-	$(MAKE) -C src kiwi-vmserver
+	$(MAKE) -C src vmserver
 
 kiwi-debug:
 	$(MAKE) -C src kiwi-debug
-	$(MAKE) -C src kiwi-vmserver-debug
+	$(MAKE) -C src vmserver-debug
 
-kiwi-vmclient:
-	$(MAKE) -C src kiwi-vmclient
+vmclient:
+	$(MAKE) -C src vmclient
 
-kiwi-vmclient-debug:
-	$(MAKE) -C src kiwi-vmclient-debug
+vmclient-debug:
+	$(MAKE) -C src vmclient-debug
 
 test: test-scanner
 

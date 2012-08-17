@@ -19,33 +19,37 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef VM_H
-#define VM_H
+#ifndef OPCODES_H
+#define OPCODES_H
 
-#define NUM_REGS 3
+#define NUM_OPS 19
 
-void op_noop();
-void op_move();
-void op_xchg();
+#define OP_NOOP	0
+
+#define OP_MOVE	1
+#define OP_XCHG	2
 /*
-void op_var();
-void op_load();
-void op_stor();
-void op_push();
-void op_pop();
-*/
-void op_add();
-void op_sub();
-void op_mul();
-void op_div();
-void op_neg();
-/*
-void op_ccat();
-void op_and();
-void op_or();
-void op_cmp();
-void op_jmp();
+#define OP_VAR	3
+#define OP_LOAD	4
+#define OP_STOR	5
+#define OP_PUSH	6
+#define OP_POP	7
 */
 
+#define OP_ADD	8
+#define OP_SUB	9
+#define OP_MUL	10
+#define OP_DIV	11
+#define OP_NEG	12
+/*
+#define OP_CCAT	13
+
+#define OP_AND	14
+#define OP_OR	15
+#define OP_NOT	16
+
+#define OP_CMP	17
+#define OP_JMP	18
+*/
 #endif
 
