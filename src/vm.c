@@ -21,105 +21,127 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include "opcodes.h"
 #include "vm.h"
+
+#define UNUSED(x) (void)(x)
 
 int *regs[NUM_REGS];
 int stack[SIZE_STACK];
 int sp;
+void (*ops[1 << (NUM_OPS - 1)])();
 
-void op_noop(void);
-void op_move(void);
-void op_xchg(void);
-/*
-void op_var(void);
-void op_load(void);
-void op_stor(void);
-*/
-void op_push(void);
-void op_pop(void);
-
-void op_add(void);
-void op_sub(void);
-void op_mul(void);
-void op_div(void);
-void op_neg(void);
-/*
-void op_ccat(void);
-*/
-
-void op_and(void);
-void op_or(void);
-void op_not(void);
-/*
-void op_cmp(void);
-void op_jmp(void);
-*/
-
-int getmnem(void);
-int getreg(void);
-int getint(void);
-
-int getmnem() {
-    int m;
-    if (scanf("%d", &m) != 1) {
-        perror("scanf");
+Instruction *instr_init(int op, ...) {
+    Instruction *instr;
+    va_list ap;
+    if ((instr = (Instruction *)calloc(1, sizeof(Instruction))) == NULL) {
+        perror("calloc");
         exit(EXIT_FAILURE);
     }
-    // return -1 on unknown
-    return (m >= 0 && m < NUM_OPS) ? m : -1;
+
+    instr->op = op;
+
+    va_start(ap, op);
+    if ((SINGLE_OPS & op) == op) {
+        instr->dest = va_arg(ap, int);
+    }
+    else if ((DOUBLE_OPS & op) == op) {
+        instr->dest = va_arg(ap, int);
+        instr->src  = va_arg(ap, int);
+    }
+    va_end(ap);
+
+    return instr;
 }
 
-int getreg() {
-    int r;
-    if (scanf("%d", &r) != 1) {
-        perror("scanf");
+void instr_free(Instruction *instr) {
+    free(instr);
+}
+
+void instr_exec(ProgBuf *b, int i) {
+    int op = b->instr[i]->op;
+    ops[op](b->instr[i]);
+}
+    
+ProgBuf *progbuf_init(void) {
+    ProgBuf *b;
+    if ((b = (ProgBuf *)calloc(1, sizeof(ProgBuf))) == NULL) {
+        perror("calloc");
         exit(EXIT_FAILURE);
     }
-    // return -1 on invalid register
-    return (r >= 0 && r < NUM_REGS) ? r : -1;
+
+    b->tail = 0;
+    b->len = PROGBUF_SIZE_INIT;
+    if ((b->instr = (Instruction **)calloc(b->len, sizeof(Instruction *))) == NULL) {
+        perror("calloc");
+        exit(EXIT_FAILURE);
+    }
+
+    return b;
 }
 
-int getint() {
+void progbuf_free(ProgBuf *b) {
     int i;
-    if (scanf("%d", &i) != 1) {
-        perror("scanf");
-        exit(EXIT_FAILURE);
+    for (i = 0; i < b->tail; i++) {
+        instr_free(b->instr[i]);
     }
-    return i;
+    free(b->instr);
 }
 
+static void progbuf_grow(ProgBuf *b) {
+    // increase storage capacity of buffer
+    b->len += PROGBUF_SIZE_INCR;
+    if ((b->instr = (Instruction **)realloc(b->instr, sizeof(Instruction *) * b->len)) == NULL) {
+        perror("realloc");
+        exit(EXIT_FAILURE);
+    }
+}
 
-void op_noop() {
+static void progbuf_push(ProgBuf *b, Instruction *i) {
+    b->instr[b->tail] = i;
+    b->tail++;
+    // increase buffer size if necessary
+    if (b->tail == b->len) {
+        progbuf_grow(b);
+    }
+}
+
+void op_noop(Instruction *instr) {
+    UNUSED(instr);
     return;
 }
 
-void op_move() {
-    int dest = getreg();
-    int src = getint();
+void op_move(Instruction *instr) {
+    int dest = instr->dest;
+    int src = instr->src;
     *regs[dest] = src;
 }
 
-void op_xchg() {
-    int dest = getreg();
-    int src = getreg();
+void op_xchg(Instruction *instr) {
+    int dest = instr->dest;
+    int src = instr->src;
     int tmp1 = *regs[dest];
     int tmp2 = *regs[src];
     *regs[dest] = tmp2;
     *regs[src] = tmp1;
 }
-
 /*
-void op_var();
-void op_load();
-void op_stor();
+void op_var(Instruction *instr) {
+}
+
+void op_load(Instruction *instr) {
+}
+
+void op_stor(Instruction *instr) {
+}
 */
-void op_push() {
-    int src = getreg();
+void op_push(Instruction *instr) {
+    int dest = instr->dest;
 
     if (sp != SIZE_STACK - 1) {
         sp++;
-        stack[sp] = *regs[src];
+        stack[sp] = *regs[dest];
     }
     else {
         fprintf(stderr, "PUSH: no room on stack");
@@ -127,11 +149,11 @@ void op_push() {
     }
 }
 
-void op_pop() {
-    int src = getreg();
+void op_pop(Instruction *instr) {
+    int dest = instr->dest;
 
     if (sp != -1) {
-        *regs[src] = stack[sp];
+        *regs[dest] = stack[sp];
         sp--;
     }
     else {
@@ -140,69 +162,64 @@ void op_pop() {
     }
 }
 
-void op_add() {
-    int dest = getreg();
-    int src = getreg();
+void op_add(Instruction *instr) {
+    int dest = instr->dest;
+    int src = instr->src;
     *regs[dest] += *regs[src];
 }
-
-void op_sub() {
-    int dest = getreg();
-    int src = getreg();
+void op_sub(Instruction *instr) {
+    int dest = instr->dest;
+    int src = instr->src;
     *regs[dest] -= *regs[src];
 }
-
-void op_mul() {
-    int dest = getreg();
-    int src = getreg();
+void op_mul(Instruction *instr) {
+    int dest = instr->dest;
+    int src = instr->src;
     *regs[dest] *= *regs[src];
 }
-
-void op_div() {
-    int dest = getreg();
-    int src = getreg();
+void op_div(Instruction *instr) {
+    int dest = instr->dest;
+    int src = instr->src;
     *regs[dest] /= *regs[src];
 }
 
-void op_neg() {
-    int dest = getreg();
+void op_neg(Instruction *instr) {
+    int dest = instr->dest;
     *regs[dest] = -*regs[dest];
 }
-
 /*
-void op_ccat();
+void op_ccat(Instruction *instr) {
+}
 */
-void op_and() {
-    int dest = getreg();
-    int src = getreg();
+void op_and(Instruction *instr) {
+    int dest = instr->dest;
+    int src = instr->src;
     *regs[dest] = *regs[dest] && *regs[src];
 }
 
-void op_or() {
-    int dest = getreg();
-    int src = getreg();
+void op_or(Instruction *instr) {
+    int dest = instr->dest;
+    int src = instr->src;
     *regs[dest] = *regs[dest] || *regs[src];
 }
 
-void op_not() {
-    int dest = getreg();
+void op_not(Instruction *instr) {
+    int dest = instr->dest;
     *regs[dest] = !*regs[dest];
 }
 /*
-void op_cmp();
-void op_jmp();
+void op_cmp(Instruction *instr) {
+}
+
+void op_jmp(Instruction *instr) {
+}
 */
 
 int main() {
 
-    int m, i;
-
+    int i;
     sp = -1;
-
-    void (*ops[NUM_OPS])();
-    for (i = 0; i < NUM_OPS; i++) {
-        ops[i] = 0;
-    }
+    ProgBuf *b = progbuf_init();
 
     ops[OP_NOOP] = op_noop;
     ops[OP_MOVE] = op_move;
@@ -234,15 +251,17 @@ int main() {
         regs[i] = (int *)calloc(1, sizeof(int));
     }
 
-    while ((m = getmnem()) > -1) {
-        if (ops[m]) {
-            ops[m]();
-            printf(":%d %d %d\n", *regs[0], *regs[1], *regs[2]);
-        }
-        else {
-            printf("not implemented");
-        }
+    progbuf_push(b, instr_init(OP_NOOP));
+    progbuf_push(b, instr_init(OP_MOVE, 0, 1));
+    progbuf_push(b, instr_init(OP_MOVE, 1, 1));
+    progbuf_push(b, instr_init(OP_ADD, 0, 1));
+
+    for (i = 0; i < b->tail; i++) {
+        instr_exec(b, i);
+        printf(":%d %d %d\n", *regs[0], *regs[1], *regs[2]);
     }
+
+    progbuf_free(b);
 
     for (i = 0; i < NUM_REGS; i++) {
         free(regs[i]);
