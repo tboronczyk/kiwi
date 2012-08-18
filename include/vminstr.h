@@ -19,29 +19,21 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef SCANNER_H
-#define SCANNER_H
+#ifndef VMINSTR_H
+#define VMINSTR_H
 
-#include <stdio.h>
-#include "unicode/ustdio.h"
-#include "y.tab.h"
+#include "vmmach.h"
 
-typedef struct {
-    int lineno,     // current line number of file (used for error reporting)
-        name,       // name of token being scanned
-        ti,         // current position of pointer in *tbuf
-        tlen;       // size of *tbuf
-    UChar c,        // current character read
-        *tbuf;      // buffer in which token values are accumulated
-    char *fname;    // name of file being scanned (used for error reporting)
-    UFILE *fp;      // open file descriptor of file at *fname
-} Scanner;
+typedef struct _VM_Instr {
+    int op;
+    int dest;
+    int src;
+}
+VM_Instr;
 
-Scanner *scanner_init(void);
-void scanner_free(Scanner *);
+VM_Instr *vminstr_init(int, ...);
+void vminstr_free(VM_Instr *);
 
-int scanner_token(Scanner *);
-int scanner_error(Scanner *, const char *);
-int scanner_lex(YYSTYPE *lvalp, Scanner *s);
+void vminstr_exec(VM_Machine *, VM_Instr *);
 
 #endif

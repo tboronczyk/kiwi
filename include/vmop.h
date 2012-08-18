@@ -19,29 +19,38 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef SCANNER_H
-#define SCANNER_H
+#ifndef VMOP_H
+#define VMOP_H
 
-#include <stdio.h>
-#include "unicode/ustdio.h"
-#include "y.tab.h"
+#include "vmmach.h"
+#include "vminstr.h"
 
-typedef struct {
-    int lineno,     // current line number of file (used for error reporting)
-        name,       // name of token being scanned
-        ti,         // current position of pointer in *tbuf
-        tlen;       // size of *tbuf
-    UChar c,        // current character read
-        *tbuf;      // buffer in which token values are accumulated
-    char *fname;    // name of file being scanned (used for error reporting)
-    UFILE *fp;      // open file descriptor of file at *fname
-} Scanner;
+void vmop_noop(VM_Machine *, VM_Instr *);
+void vmop_move(VM_Machine *, VM_Instr *);
+void vmop_xchg(VM_Machine *, VM_Instr *);
+/*
+void vmop_var(VM_Machine *, VM_Instr *);
+void vmop_load(VM_Machine *, VM_Instr *);
+void vmop_stor(VM_Machine *, VM_Instr *);
+*/
+void vmop_push(VM_Machine *, VM_Instr *);
+void vmop_pop(VM_Machine *, VM_Instr *);
 
-Scanner *scanner_init(void);
-void scanner_free(Scanner *);
+void vmop_add(VM_Machine *, VM_Instr *);
+void vmop_sub(VM_Machine *, VM_Instr *);
+void vmop_mul(VM_Machine *, VM_Instr *);
+void vmop_div(VM_Machine *, VM_Instr *);
+void vmop_neg(VM_Machine *, VM_Instr *);
+/*
+void vmop_ccat(VM_Machine *, VM_Instr *);
+*/
 
-int scanner_token(Scanner *);
-int scanner_error(Scanner *, const char *);
-int scanner_lex(YYSTYPE *lvalp, Scanner *s);
+void vmop_and(VM_Machine *, VM_Instr *);
+void vmop_or(VM_Machine *, VM_Instr *);
+void vmop_not(VM_Machine *, VM_Instr *);
+/*
+void vmop_cmp(VM_Machine *, VM_Instr *);
+void vmop_jmp(VM_Machine *, VM_Instr *);
+*/
 
 #endif

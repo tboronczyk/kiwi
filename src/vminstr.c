@@ -23,19 +23,36 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include "opcodes.h"
-#include "vmprogbuf.h"
+#include "vminstr.h"
 
-int main() {
-    VM_ProgBuf *b = vmprogbuf_init();
-    VM_Machine *vm = vmmach_init();
+VM_Instr *vminstr_init(int op, ...) {
+    VM_Instr *instr;
+    va_list ap;
+    if ((instr = (VM_Instr *)calloc(1, sizeof(VM_Instr))) == NULL) {
+        perror("calloc");
+        exit(EXIT_FAILURE);
+    }
 
-    vmprogbuf_push(b, vminstr_init(OP_NOOP));
-    vmprogbuf_push(b, vminstr_init(OP_MOVE, 0, 1));
-    vmprogbuf_push(b, vminstr_init(OP_MOVE, 1, 1));
-    vmprogbuf_push(b, vminstr_init(OP_ADD, 0, 1));
+    instr->op = op;
 
-    vmprogbuf_exec(b, vm);
+    va_start(ap, op);
+    if ((SINGLE_OPS & op) == op) {
+        instr->dest = va_arg(ap, int);
+    }
+    else if ((DOUBLE_OPS & op) == op) {
+        instr->dest = va_arg(ap, int);
+        instr->src  = va_arg(ap, int);
+    }
+    va_end(ap);
 
-    vmprogbuf_free(b);
-    vmmach_free(vm);
+    return instr;
+}
+
+void vminstr_free(VM_Instr *instr) {
+    free(instr);
+}
+
+void vminstr_exec(VM_Machine *vm, VM_Instr *i) {
+    int op = i->op;
+    vm->ops[op](vm, i);
 }

@@ -19,29 +19,26 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef SCANNER_H
-#define SCANNER_H
+#ifndef VMMACH_H
+#define VMMACH_H
 
-#include <stdio.h>
-#include "unicode/ustdio.h"
-#include "y.tab.h"
+#include "opcodes.h"
 
-typedef struct {
-    int lineno,     // current line number of file (used for error reporting)
-        name,       // name of token being scanned
-        ti,         // current position of pointer in *tbuf
-        tlen;       // size of *tbuf
-    UChar c,        // current character read
-        *tbuf;      // buffer in which token values are accumulated
-    char *fname;    // name of file being scanned (used for error reporting)
-    UFILE *fp;      // open file descriptor of file at *fname
-} Scanner;
+#define VMMACH_NUM_REGS 3
+#define VMMACH_SIZE_STACK 80
 
-Scanner *scanner_init(void);
-void scanner_free(Scanner *);
+typedef struct _VM_Machine {
+    int sp,     // stack pointer
+        ip,     // instruction pointer
 
-int scanner_token(Scanner *);
-int scanner_error(Scanner *, const char *);
-int scanner_lex(YYSTYPE *lvalp, Scanner *s);
+        *regs[VMMACH_NUM_REGS],    // registers
+        stack[VMMACH_SIZE_STACK];  // stack
+
+    void (*ops[1 << (NUM_OPS - 1)])(); // operation functions
+}
+VM_Machine;
+
+VM_Machine *vmmach_init(void);
+void vmmach_free(VM_Machine *);
 
 #endif
