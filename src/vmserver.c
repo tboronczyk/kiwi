@@ -30,7 +30,8 @@
 void handle_client(Socket sock);
 void run_server(Socket sock);
 
-void handle_client(Socket sock) {
+void handle_client(Socket sock)
+{
     char buf[BUFSIZE];
     int len;
 
@@ -51,7 +52,8 @@ void handle_client(Socket sock) {
     close(sock);
 }
 
-void run_server(Socket sock) {
+void run_server(Socket sock)
+{
     Socket clientsock;
 
     while (1) {
@@ -63,7 +65,8 @@ void run_server(Socket sock) {
     }
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     unsigned short port = DEFAULT_PORT;
 
     if (argc > 2) {
@@ -85,4 +88,3 @@ int main(int argc, char *argv[]) {
 
     return EXIT_SUCCESS;
 }
-

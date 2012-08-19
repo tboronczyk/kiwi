@@ -13,35 +13,11 @@ kiwi: parser vm
 kiwi-debug: parser-debug vm-debug
 	$(CC) $(CFLAGS_DBG) -o kiwi-debug scanner.o y.tab.o main.c $(LDFLAGS_DBG)
 
-vm: vmprogbuf vmmach
-	$(CC) $(CFLAGS) -o vm vminstr.o vmprogbuf.o vmop.o vmmach.o vm.c $(LDFLAGS)
+vm:
+	$(CC) $(CFLAGS) -o vm vm.c $(LDFLAGS)
 
-vm-debug: vmprogbuf-debug vmmach-debug
-	$(CC) $(CFLAGS_DBG) -o vm-debug vminstr.o vmprogbuf.o vmop.o vmmach.o vm.c $(LDFLAGS_DBG)
-
-vmprogbuf: vminstr
-	$(CC) $(CFLAGS) -c vmprogbuf.c
-
-vmprogbuf-debug: vminstr-debug
-	$(CC) $(CFLAGS_DBG) -c vmprogbuf.c
-
-vminstr:
-	$(CC) $(CFLAGS) -c vminstr.c
-
-vminstr-debug:
-	$(CC) $(CFLAGS_DBG) -c vminstr.c
-
-vmmach: vmop
-	$(CC) $(CFLAGS) -c vmmach.c
-
-vmmach-debug: vmop-debug
-	$(CC) $(CFLAGS_DBG) -c vmmach.c
-
-vmop:
-	$(CC) $(CFLAGS) -c vmop.c
-
-vmop-debug:
-	$(CC) $(CFLAGS_DBG) -c vmop.c
+vm-debug:
+	$(CC) $(CFLAGS_DBG) -o vm-debug vm.c $(LDFLAGS_DBG)
 
 vmclient: mysocket
 	$(CC) $(CFLAGS) -o vmclient mysocket.o vmclient.c $(LDFLAGS)

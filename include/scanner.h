@@ -26,7 +26,8 @@
 #include "unicode/ustdio.h"
 #include "y.tab.h"
 
-typedef struct _Scanner {
+typedef struct _Scanner
+{
     int lineno,   /* current line number of file (used for error reporting) */
         name,     /* name of token being scanned */
         ti,       /* current position of pointer in *tbuf */
@@ -35,7 +36,8 @@ typedef struct _Scanner {
         *tbuf;    /* buffer in which token values are accumulated */
     char *fname;  /* name of file being scanned (used for error reporting) */
     UFILE *fp;    /* open file descriptor of file at *fname */
-} Scanner;
+}
+Scanner;
 
 Scanner *scanner_init(void);
 void scanner_free(Scanner *);
