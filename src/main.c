@@ -26,9 +26,10 @@
 #include "y.tab.h"
 #include "unicode/ustdio.h"
 
-extern void scanner_parse(Scanner *s); // y.tab.c
+extern void scanner_parse(Scanner *s); /* y.tab.c */
 
-int scanner_error(Scanner *s, const char *str) {
+int scanner_error(Scanner *s, const char *str)
+{
     fprintf(stderr, "%s line %d\n", str, s->lineno);
     return 1;
 }
@@ -38,7 +39,7 @@ UFILE *ustdout;
 int scanner_lex(YYSTYPE *lvalp, Scanner *s)
 {
     scanner_token(s);
-    // force re-read on comments
+    /* force re-read on comments */
     if (s->name == T_COMMENT) {
         return scanner_lex(lvalp, s);
     }
@@ -65,6 +66,5 @@ int main()
     scanner_parse(s);
     scanner_free(s);
 
-    return 0;
+    return EXIT_SUCCESS;
 }
-

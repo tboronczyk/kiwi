@@ -25,24 +25,29 @@
 
 static void vmprogbuf_grow(VM_ProgBuf *b);
 
-VM_ProgBuf *vmprogbuf_init(void) {
+VM_ProgBuf *vmprogbuf_init(void)
+{
     VM_ProgBuf *b;
+
+    /* allocate memory for program buffer */
     if ((b = (VM_ProgBuf *)calloc(1, sizeof(VM_ProgBuf))) == NULL) {
-        perror("calloc");
+        perror("Allocate program buffer failed");
         exit(EXIT_FAILURE);
     }
 
+    /* initialize buffer */
     b->tail = 0;
     b->len = VMPROGBUF_SIZE_INIT;
     if ((b->instr = (VM_Instr **)calloc(b->len, sizeof(VM_Instr *))) == NULL) {
-        perror("calloc");
+        perror("Allocate program buffer instruction storage failed");
         exit(EXIT_FAILURE);
     }
 
     return b;
 }
 
-void vmprogbuf_free(VM_ProgBuf *b) {
+void vmprogbuf_free(VM_ProgBuf *b)
+{
     int i;
     for (i = 0; i < b->tail; i++) {
         vminstr_free(b->instr[i]);
@@ -51,28 +56,31 @@ void vmprogbuf_free(VM_ProgBuf *b) {
     free(b);
 }
 
-void vmprogbuf_push(VM_ProgBuf *b, VM_Instr *i) {
+void vmprogbuf_push(VM_ProgBuf *b, VM_Instr *i)
+{
     b->instr[b->tail] = i;
     b->tail++;
-    // increase buffer size if necessary
+    /* increase buffer size if necessary */
     if (b->tail == b->len) {
         vmprogbuf_grow(b);
     }
 }
 
-void vmprogbuf_exec(VM_ProgBuf *b, VM_Machine *vm) {
-
+void vmprogbuf_exec(VM_ProgBuf *b, VM_Machine *vm)
+{
     for ( ; vm->ip < b->tail; vm->ip++) {
         vminstr_exec(vm, b->instr[vm->ip]);
         printf(":%d %d %d\n", *vm->regs[0], *vm->regs[1], *vm->regs[2]);
     }
 }
 
-static void vmprogbuf_grow(VM_ProgBuf *b) {
-    // increase storage capacity of buffer
+static void vmprogbuf_grow(VM_ProgBuf *b)
+{
+    /* increase storage capacity of buffer */
     b->len += VMPROGBUF_SIZE_INCR;
     if ((b->instr = (VM_Instr **)realloc(b->instr, sizeof(VM_Instr *) * b->len)) == NULL) {
-        perror("realloc");
+        perror("Reallocate program buffer instruction storage failed");
         exit(EXIT_FAILURE);
     }
 }
+

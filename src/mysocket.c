@@ -23,11 +23,12 @@
 #include <stdlib.h>
 #include "mysocket.h"
 
-SocketAddress *init_socketaddress(long int addr, unsigned short port) {
+SocketAddress *init_socketaddress(long int addr, unsigned short port)
+{
     SocketAddress *sa;
 
     if ((sa = (SocketAddress *)calloc(1, sizeof(SocketAddress))) == NULL) {
-        perror("calloc");
+        perror("Allocate socket address failed");
         exit(EXIT_FAILURE);
     }
 
@@ -38,25 +39,27 @@ SocketAddress *init_socketaddress(long int addr, unsigned short port) {
     return sa;
 }
 
-void free_socketaddress(SocketAddress *sa) {
+void free_socketaddress(SocketAddress *sa)
+{
     free(sa);
 }
 
-Socket init_socket(SocketAddress *addr, int pending) {
+Socket init_socket(SocketAddress *addr, int pending)
+{
     Socket sock;
 
     if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-        perror("socket");
+        perror("Create socket failed");
         exit(EXIT_FAILURE);
     }
 
     if (bind(sock, (struct sockaddr *)addr, sizeof(SocketAddress)) < 0) {
-        perror("bind");
+        perror("Bind socket failed");
         exit(EXIT_FAILURE);
     }
 
     if (listen(sock, pending) < 0) {
-        perror("listen");
+        perror("Enter listening state failed");
         exit(EXIT_FAILURE);
     }
 

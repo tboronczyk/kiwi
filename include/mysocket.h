@@ -1,3 +1,6 @@
+#ifndef MYSOCKET_H
+#define MYSOCKET_H
+
 /*
  * Copyright (c) 2012, Timothy Boronczyk
  *
@@ -19,9 +22,6 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef MYSOCKET_H
-#define MYSOCKET_H
-
 #include <arpa/inet.h>
 
 typedef struct sockaddr_in SocketAddress;
@@ -33,4 +33,3 @@ void free_socketaddress(SocketAddress *);
 Socket init_socket(SocketAddress *, int);
 
 #endif
-

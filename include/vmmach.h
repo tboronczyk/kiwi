@@ -1,3 +1,6 @@
+#ifndef VMMACH_H
+#define VMMACH_H
+
 /*
  * Copyright (c) 2012, Timothy Boronczyk
  *
@@ -19,22 +22,17 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef VMMACH_H
-#define VMMACH_H
-
 #include "opcodes.h"
 
 #define VMMACH_NUM_REGS 3
 #define VMMACH_SIZE_STACK 80
 
 typedef struct _VM_Machine {
-    int sp,     // stack pointer
-        ip,     // instruction pointer
-
-        *regs[VMMACH_NUM_REGS],    // registers
-        stack[VMMACH_SIZE_STACK];  // stack
-
-    void (*ops[1 << (NUM_OPS - 1)])(); // operation functions
+    int sp,                             /* stack pointer */
+        ip,                             /* instruction pointer */
+        *regs[VMMACH_NUM_REGS],         /* registers */
+        stack[VMMACH_SIZE_STACK];       /* stack */
+    void (*ops[1 << (NUM_OPS - 1)])();  /* operation functions */
 }
 VM_Machine;
 

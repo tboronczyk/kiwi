@@ -27,41 +27,43 @@
 #define DEFAULT_PORT 11040
 #define BUFSIZE 32
 
-void handle_client(Socket client) {
+void handle_client(Socket sock);
+void run_server(Socket sock);
+
+void handle_client(Socket sock) {
     char buf[BUFSIZE];
     int len;
 
     do {
-        if ((len = recv(client, buf, BUFSIZE, 0)) < 0) {
+        if ((len = recv(sock, buf, BUFSIZE, 0)) < 0) {
             perror("recv");
             exit(EXIT_FAILURE);
         }
 
-        // Just sent it back for now...
-        if (send(client, buf, len, 0) != len) {
+        /* Just send it back for now... */
+        if (send(sock, buf, len, 0) != len) {
             perror("send");
             exit(EXIT_FAILURE);
         }
     }
     while (len);
 
-    close(client);
+    close(sock);
 }
 
-void run_server(Socket socket) {
-    Socket client;
+void run_server(Socket sock) {
+    Socket clientsock;
 
     while (1) {
-        if ((client = accept(socket, NULL, NULL)) < 0) {
+        if ((clientsock = accept(sock, NULL, NULL)) < 0) {
              perror("accept");
              exit(EXIT_FAILURE);
         }
-        handle_client(client);
+        handle_client(clientsock);
     }
 }
 
 int main(int argc, char *argv[]) {
-    int c;
     unsigned short port = DEFAULT_PORT;
 
     if (argc > 2) {
@@ -79,6 +81,8 @@ int main(int argc, char *argv[]) {
     addr = init_socketaddress(INADDR_ANY, port);
     sock = init_socket(addr, limit);
     run_server(sock);
-    // free_socketaddress(addr);
+    /* free_socketaddress(addr); */
+
+    return EXIT_SUCCESS;
 }
 

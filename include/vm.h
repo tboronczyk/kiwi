@@ -1,3 +1,6 @@
+#ifndef VM_H
+#define VM_H
+
 /*
  * Copyright (c) 2012, Timothy Boronczyk
  *
@@ -18,9 +21,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF 
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifndef VM_H
-#define VM_H
 
 #endif
 

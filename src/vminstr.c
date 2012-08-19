@@ -25,16 +25,19 @@
 #include "opcodes.h"
 #include "vminstr.h"
 
-VM_Instr *vminstr_init(int op, ...) {
+VM_Instr *vminstr_init(int op, ...)
+{
     VM_Instr *instr;
     va_list ap;
+
+    /* allocate memory for instruction */
     if ((instr = (VM_Instr *)calloc(1, sizeof(VM_Instr))) == NULL) {
-        perror("calloc");
+        perror("Allocate instruction failed");
         exit(EXIT_FAILURE);
     }
 
+    /* initalize instruction */
     instr->op = op;
-
     va_start(ap, op);
     if ((SINGLE_OPS & op) == op) {
         instr->dest = va_arg(ap, int);
@@ -48,11 +51,15 @@ VM_Instr *vminstr_init(int op, ...) {
     return instr;
 }
 
-void vminstr_free(VM_Instr *instr) {
+void vminstr_free(VM_Instr *instr)
+{
     free(instr);
 }
 
-void vminstr_exec(VM_Machine *vm, VM_Instr *i) {
+void vminstr_exec(VM_Machine *vm, VM_Instr *i)
+{
+    /* execute instruction by calling appropriate machine function */
     int op = i->op;
     vm->ops[op](vm, i);
 }
+

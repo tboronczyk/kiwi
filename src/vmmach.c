@@ -25,20 +25,25 @@
 #include "vmprogbuf.h"
 #include "vmop.h"
 
-VM_Machine *vmmach_init(void) {
-	VM_Machine *vm;
-	int i;
-	if ((vm = (VM_Machine *)calloc(1, sizeof(VM_Machine))) == NULL) {
-		perror("calloc");
-		exit(EXIT_FAILURE);
-	}
-	vm->sp = -1;
-	vm->ip = 0;
+VM_Machine *vmmach_init(void)
+{
+    VM_Machine *vm;
+    int i;
 
+    /* allocate memory for machine */
+    if ((vm = (VM_Machine *)calloc(1, sizeof(VM_Machine))) == NULL) {
+        perror("Allocate machine failured");
+        exit(EXIT_FAILURE);
+    }
+
+    /* initialize machine */
+    vm->sp = -1;
+    vm->ip = 0;
     for (i = 0; i < VMMACH_NUM_REGS; i++) {
         vm->regs[i] = (int *)calloc(1, sizeof(int));
     }
 
+    /* bind machine functions to operators */
     vm->ops[OP_NOOP] = vmop_noop;
     vm->ops[OP_MOVE] = vmop_move;
     vm->ops[OP_XCHG] = vmop_xchg;
@@ -67,11 +72,11 @@ VM_Machine *vmmach_init(void) {
     return vm;
 }
 
-void vmmach_free(VM_Machine *vm) {
-	int i;
+void vmmach_free(VM_Machine *vm)
+{
+    int i;
     for (i = 0; i < VMMACH_NUM_REGS; i++) {
         free(vm->regs[i]);
     }
     free(vm);
-
 }

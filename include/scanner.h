@@ -1,3 +1,6 @@
+#ifndef SCANNER_H
+#define SCANNER_H
+
 /*
  * Copyright (c) 2012, Timothy Boronczyk
  *
@@ -19,22 +22,19 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef SCANNER_H
-#define SCANNER_H
-
 #include <stdio.h>
 #include "unicode/ustdio.h"
 #include "y.tab.h"
 
-typedef struct {
-    int lineno,     // current line number of file (used for error reporting)
-        name,       // name of token being scanned
-        ti,         // current position of pointer in *tbuf
-        tlen;       // size of *tbuf
-    UChar c,        // current character read
-        *tbuf;      // buffer in which token values are accumulated
-    char *fname;    // name of file being scanned (used for error reporting)
-    UFILE *fp;      // open file descriptor of file at *fname
+typedef struct _Scanner {
+    int lineno,   /* current line number of file (used for error reporting) */
+        name,     /* name of token being scanned */
+        ti,       /* current position of pointer in *tbuf */
+        tlen;     /* size of *tbuf */
+    UChar c,      /* current character read */
+        *tbuf;    /* buffer in which token values are accumulated */
+    char *fname;  /* name of file being scanned (used for error reporting) */
+    UFILE *fp;    /* open file descriptor of file at *fname */
 } Scanner;
 
 Scanner *scanner_init(void);

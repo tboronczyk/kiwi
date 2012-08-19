@@ -38,4 +38,6 @@ int main() {
 
     vmprogbuf_free(b);
     vmmach_free(vm);
+
+    return EXIT_SUCCESS;
 }

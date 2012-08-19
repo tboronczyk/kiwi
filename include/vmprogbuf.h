@@ -1,3 +1,6 @@
+#ifndef VMPROGBUF_H
+#define VMPROGBUF_H
+
 /*
  * Copyright (c) 2012, Timothy Boronczyk
  *
@@ -19,16 +22,13 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef VMPROGBUF_H
-#define VMPROGBUF_H
-
 #include "vminstr.h"
 #include "vmmach.h"
 
 #define VMPROGBUF_SIZE_INIT 5 
 #define VMPROGBUF_SIZE_INCR 5
 
-typedef struct _VM_ProgBuf{
+typedef struct _VM_ProgBuf {
     int len, tail;
     VM_Instr **instr;
 }

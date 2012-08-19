@@ -1,3 +1,6 @@
+#ifndef VMOP_H
+#define VMOP_H
+
 /*
  * Copyright (c) 2012, Timothy Boronczyk
  *
@@ -18,9 +21,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF 
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifndef VMOP_H
-#define VMOP_H
 
 #include "vmmach.h"
 #include "vminstr.h"
