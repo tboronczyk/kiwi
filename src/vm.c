@@ -26,36 +26,16 @@
 
 #define UNUSED(x) (void)(x)
 
-#define VMPROGBUF_SIZE_INIT 5 
+#define VMPROGBUF_SIZE_INIT 5
 #define VMPROGBUF_SIZE_INCR 5
 
-void vmop_noop(VM_Machine *, VM_Instr *);
-void vmop_move(VM_Machine *, VM_Instr *);
-void vmop_xchg(VM_Machine *, VM_Instr *);
-/*
-void vmop_var(VM_Machine *, VM_Instr *);
-void vmop_load(VM_Machine *, VM_Instr *);
-void vmop_stor(VM_Machine *, VM_Instr *);
-*/
-void vmop_push(VM_Machine *, VM_Instr *);
-void vmop_pop(VM_Machine *, VM_Instr *);
+VM_Instr *vminstr_init(OpCode, ...);
+void vminstr_free(VM_Instr *);
 
-void vmop_add(VM_Machine *, VM_Instr *);
-void vmop_sub(VM_Machine *, VM_Instr *);
-void vmop_mul(VM_Machine *, VM_Instr *);
-void vmop_div(VM_Machine *, VM_Instr *);
-void vmop_neg(VM_Machine *, VM_Instr *);
-/*
-void vmop_ccat(VM_Machine *, VM_Instr *);
-*/
-
-void vmop_and(VM_Machine *, VM_Instr *);
-void vmop_or(VM_Machine *, VM_Instr *);
-void vmop_not(VM_Machine *, VM_Instr *);
-/*
-void vmop_cmp(VM_Machine *, VM_Instr *);
-void vmop_jmp(VM_Machine *, VM_Instr *);
-*/
+VM_ProgBuf *vmprogbuf_init(void);
+void vmprogbuf_free(VM_ProgBuf *);
+void vmprogbuf_grow(VM_ProgBuf *);
+void vmprogbuf_push(VM_ProgBuf *, VM_Instr *);
 
 VM_Machine *vmmach_init(void)
 {
@@ -75,32 +55,6 @@ VM_Machine *vmmach_init(void)
         vm->regs[i] = (int *)calloc(1, sizeof(int));
     }
 
-    /* bind machine functions to operators */
-    vm->ops[OP_NOOP] = vmop_noop;
-    vm->ops[OP_MOVE] = vmop_move;
-    vm->ops[OP_XCHG] = vmop_xchg;
-/*
-    vm->ops[OP_VAR] = vmop_var;
-    vm->ops[OP_LOAD] = vmop_load;
-    vm->ops[OP_STOR] = vmop_stor;
-*/
-    vm->ops[OP_PUSH] = vmop_push;
-    vm->ops[OP_POP] = vmop_pop;
-    vm->ops[OP_ADD] = vmop_add;
-    vm->ops[OP_SUB] = vmop_sub;
-    vm->ops[OP_MUL] = vmop_mul;
-    vm->ops[OP_DIV] = vmop_div;
-    vm->ops[OP_NEG] = vmop_neg;
-/*
-    vm->ops[OP_CCAT] = vmop_ccat;
-*/
-    vm->ops[OP_AND] = vmop_and;
-    vm->ops[OP_OR] = vmop_or;
-    vm->ops[OP_NOT] = vmop_not;
-/*
-    vm->ops[OP_CMP] = vmop_cmp;
-    vm->ops[OP_JMP] = vmop_jmp;
-*/
     return vm;
 }
 
@@ -113,143 +67,7 @@ void vmmach_free(VM_Machine *vm)
     free(vm);
 }
 
-void vmop_noop(VM_Machine *vm, VM_Instr *instr)
-{
-    UNUSED(vm);
-    UNUSED(instr);
-    return;
-}
-
-void vmop_move(VM_Machine *vm, VM_Instr *instr)
-{
-    int dest = instr->dest;
-    int src = instr->src;
-    *vm->regs[dest] = src;
-}
-
-void vmop_xchg(VM_Machine *vm, VM_Instr *instr)
-{
-    int dest = instr->dest;
-    int src = instr->src;
-    int tmp1 = *vm->regs[dest];
-    int tmp2 = *vm->regs[src];
-    *vm->regs[dest] = tmp2;
-    *vm->regs[src] = tmp1;
-}
-/*
-void vmop_var(VM_Machine *vm, VM_Instr *instr)
-{
-}
-
-void vmop_load(VM_Machine *vm, VM_Instr *instr)
-{
-}
-
-void vmop_stor(VM_Machine *vm, VM_Instr *instr)
-{
-}
-*/
-void vmop_push(VM_Machine *vm, VM_Instr *instr)
-{
-    int dest = instr->dest;
-
-    if (vm->sp != VMMACH_SIZE_STACK - 1) {
-        vm->sp++;
-        vm->stack[vm->sp] = *vm->regs[dest];
-    }
-    else {
-        perror("Stack push failed");
-        exit(EXIT_FAILURE);
-    }
-}
-
-void vmop_pop(VM_Machine *vm, VM_Instr *instr)
-{
-    int dest = instr->dest;
-
-    if (vm->sp != -1) {
-        *vm->regs[dest] = vm->stack[vm->sp];
-        vm->sp--;
-    }
-    else {
-        perror("Stack pop failed");
-        exit(EXIT_FAILURE);
-    }
-}
-
-void vmop_add(VM_Machine *vm, VM_Instr *instr)
-{
-    int dest = instr->dest;
-    int src = instr->src;
-    *vm->regs[dest] += *vm->regs[src];
-} 
-
-void vmop_sub(VM_Machine *vm, VM_Instr *instr)
-{
-    int dest = instr->dest;
-    int src = instr->src;
-    *vm->regs[dest] -= *vm->regs[src];
-}
-
-void vmop_mul(VM_Machine *vm, VM_Instr *instr)
-{
-    int dest = instr->dest;
-    int src = instr->src;
-    *vm->regs[dest] *= *vm->regs[src];
-} 
-
-void vmop_div(VM_Machine *vm, VM_Instr *instr)
-{
-    int dest = instr->dest;
-    int src = instr->src;
-    *vm->regs[dest] /= *vm->regs[src];
-}
-
-void vmop_neg(VM_Machine *vm, VM_Instr *instr)
-{
-    int dest = instr->dest;
-    *vm->regs[dest] = -*vm->regs[dest];
-}
-/*
-void vmop_ccat(VM_Machine *vm, VM_Instr *instr)
-{
-}
-*/
-void vmop_and(VM_Machine *vm, VM_Instr *instr)
-{
-    int dest = instr->dest;
-    int src = instr->src;
-    *vm->regs[dest] = *vm->regs[dest] && *vm->regs[src];
-}
-
-void vmop_or(VM_Machine *vm, VM_Instr *instr)
-{
-    int dest = instr->dest;
-    int src = instr->src;
-    *vm->regs[dest] = *vm->regs[dest] || *vm->regs[src];
-}
-
-void vmop_not(VM_Machine *vm, VM_Instr *instr)
-{
-    int dest = instr->dest;
-    *vm->regs[dest] = !*vm->regs[dest];
-}
-/*
-void vmop_cmp(VM_Machine *vm, VM_Instr *instr)
-{
-}
-
-void vmop_jmp(VM_Machine *vm, VM_Instr *instr)
-{
-}
-*/
-
-VM_Instr *vminstr_init(int, ...);
-void vminstr_free(VM_Instr *);
-
-void vminstr_exec(VM_Machine *, VM_Instr *);
-
-VM_Instr *vminstr_init(int op, ...)
+VM_Instr *vminstr_init(OpCode op, ...)
 {
     VM_Instr *instr;
     va_list ap;
@@ -263,8 +81,33 @@ VM_Instr *vminstr_init(int op, ...)
     /* initalize instruction */
     instr->op = op;
     va_start(ap, op);
-    if (op_numargs[op] > 0) { instr->dest = va_arg(ap, int); }
-    if (op_numargs[op] > 1) { instr->src  = va_arg(ap, int); }
+    switch (op) {
+    case OP_NOOP: break;
+    case OP_MOVE: instr->dest = va_arg(ap, int); instr->src = va_arg(ap, int); break;
+    case OP_XCHG: instr->dest = va_arg(ap, int); instr->src = va_arg(ap, int); break;
+/*
+    case OP_VAR:
+    case OP_LOAD:
+    case OP_STOR:
+*/
+    case OP_PUSH: instr->dest = va_arg(ap, int); break;
+    case OP_POP:  instr->dest = va_arg(ap, int); break;
+    case OP_ADD:  instr->dest = va_arg(ap, int); instr->src = va_arg(ap, int); break;
+    case OP_SUB:  instr->dest = va_arg(ap, int); instr->src = va_arg(ap, int); break;
+    case OP_MUL:  instr->dest = va_arg(ap, int); instr->src = va_arg(ap, int); break;
+    case OP_DIV:  instr->dest = va_arg(ap, int); instr->src = va_arg(ap, int); break;
+    case OP_NEG:  instr->dest = va_arg(ap, int); break;
+/*
+    case OP_CCAT:
+*/
+    case OP_AND:  instr->dest = va_arg(ap, int); instr->src = va_arg(ap, int); break;
+    case OP_OR:   instr->dest = va_arg(ap, int); instr->src = va_arg(ap, int); break;
+    case OP_NOT:  instr->dest = va_arg(ap, int); break;
+/*
+    case OP_CMP:
+    case OP_JMP:
+*/
+    }
     va_end(ap);
 
     return instr;
@@ -275,19 +118,129 @@ void vminstr_free(VM_Instr *instr)
     free(instr);
 }
 
-void vminstr_exec(VM_Machine *vm, VM_Instr *i)
+void vmmach_exec(VM_Machine *vm, VM_ProgBuf *b)
 {
-    /* execute instruction by calling appropriate machine function */
-    int op = i->op;
-    vm->ops[op](vm, i);
+    int dest, src, tmp1, tmp2;
+    VM_Instr *instr;
+
+    for (vm->ip = 0 ; vm->ip < b->tail; vm->ip++) {
+        instr = b->instr[vm->ip];
+
+        switch (instr->op) {
+        case OP_NOOP:
+            break;
+
+        case OP_MOVE:
+            dest = instr->dest;
+            src = instr->src;
+            *vm->regs[dest] = src;
+            break;
+
+        case OP_XCHG:
+            dest = instr->dest;
+            src = instr->src;
+            tmp1 = *vm->regs[dest];
+            tmp2 = *vm->regs[src];
+            *vm->regs[dest] = tmp2;
+            *vm->regs[src] = tmp1;
+            break;
+/*
+        case OP_VAR:
+            break;
+
+        case OP_LOAD:
+            break;
+
+        case OP_STOR:
+            break;
+*/
+        case OP_PUSH:
+            dest = instr->dest;
+
+            if (vm->sp != VMMACH_SIZE_STACK - 1) {
+                vm->sp++;
+                vm->stack[vm->sp] = *vm->regs[dest];
+            }
+            else {
+                perror("Stack push failed");
+                exit(EXIT_FAILURE);
+            }
+            break;
+
+        case OP_POP:
+            dest = instr->dest;
+
+            if (vm->sp != -1) {
+                *vm->regs[dest] = vm->stack[vm->sp];
+                vm->sp--;
+            }
+            else {
+                perror("Stack pop failed");
+                exit(EXIT_FAILURE);
+            }
+            break;
+
+        case OP_ADD:
+            dest = instr->dest;
+            src = instr->src;
+            *vm->regs[dest] += *vm->regs[src];
+            break;
+
+        case OP_SUB:
+            dest = instr->dest;
+            src = instr->src;
+            *vm->regs[dest] -= *vm->regs[src];
+            break;
+
+        case OP_MUL:
+            dest = instr->dest;
+            src = instr->src;
+            *vm->regs[dest] *= *vm->regs[src];
+            break;
+
+        case OP_DIV:
+            dest = instr->dest;
+            src = instr->src;
+            *vm->regs[dest] /= *vm->regs[src];
+            break;
+
+        case OP_NEG:
+            dest = instr->dest;
+            *vm->regs[dest] = -*vm->regs[dest];
+            break;
+/*
+        case OP_CCAT:
+            break;
+*/
+        case OP_AND:
+            dest = instr->dest;
+            src = instr->src;
+            *vm->regs[dest] = *vm->regs[dest] && *vm->regs[src];
+            break;
+
+        case OP_OR:
+            dest = instr->dest;
+            src = instr->src;
+            *vm->regs[dest] = *vm->regs[dest] || *vm->regs[src];
+            break;
+
+        case OP_NOT:
+            dest = instr->dest;
+            *vm->regs[dest] = !*vm->regs[dest];
+            break;
+/*
+        case OP_CMP:
+            break;
+
+        case OP_JMP:
+            break;
+*/
+        }
+#ifdef DEBUG
+        printf(":%d %d %d\n", *vm->regs[0], *vm->regs[1], *vm->regs[2]);
+#endif
+    }
 }
-
-
-VM_ProgBuf *vmprogbuf_init(void);
-void vmprogbuf_free(VM_ProgBuf *);
-void vmprogbuf_grow(VM_ProgBuf *);
-void vmprogbuf_push(VM_ProgBuf *, VM_Instr *);
-void vmprogbuf_exec(VM_ProgBuf *, VM_Machine *);
 
 VM_ProgBuf *vmprogbuf_init(void)
 {
@@ -340,14 +293,6 @@ void vmprogbuf_push(VM_ProgBuf *b, VM_Instr *i)
     }
 }
 
-void vmprogbuf_exec(VM_ProgBuf *b, VM_Machine *vm)
-{
-    for ( ; vm->ip < b->tail; vm->ip++) {
-        vminstr_exec(vm, b->instr[vm->ip]);
-        printf(":%d %d %d\n", *vm->regs[0], *vm->regs[1], *vm->regs[2]);
-    }
-}
-
 int main()
 {
     VM_ProgBuf *b = vmprogbuf_init();
@@ -360,7 +305,7 @@ int main()
     vmprogbuf_push(b, vminstr_init(OP_SUB, 0, 1));
 
     /* execute program */
-    vmprogbuf_exec(b, vm);
+    vmmach_exec(vm, b);
 
     vmprogbuf_free(b);
     vmmach_free(vm);
