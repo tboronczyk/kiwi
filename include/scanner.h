@@ -42,7 +42,7 @@ Scanner;
 Scanner *scanner_init(void);
 void scanner_free(Scanner *);
 
-int scanner_token(Scanner *);
+void scanner_token(Scanner *);
 int scanner_error(Scanner *, const char *);
 int scanner_lex(YYSTYPE *lvalp, Scanner *s);
 

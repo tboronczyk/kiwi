@@ -102,7 +102,7 @@ static void stream_advance(Scanner *s)
     s->c = u_fgetc(s->fp);
 
     /* update file position */
-    if (s->c == '\n') {
+    if (s->c == (UChar)'\n') {
         s->lineno++;
     }
 }
@@ -115,7 +115,7 @@ static void append_advance(Scanner *s)
 
 static void stream_skip_whitespace(Scanner *s)
 {
-    while (u_isWhitespace(s->c)) {
+    while (u_isWhitespace(s->c) == TRUE) {
         stream_advance(s);
     }
 }
@@ -137,9 +137,9 @@ static void read_comment_multi_inner(Scanner *s)
 
     /* read characters until end of comment is seen */
     append_advance(s);
-    while (!(prev == '*' && s->c == '/')) {
+    while (!(prev == (UChar)'*' && s->c == (UChar)'/')) {
         /* support nested comments */
-        if (prev == '/' && s->c == '*') {
+        if (prev == (UChar)'/' && s->c == (UChar)'*') {
             read_comment_multi_inner(s);
         }
         prev = s->c;
@@ -152,20 +152,20 @@ static void read_slash(Scanner *s)
 {
     append_advance(s);
     /* match single-line comment */
-    if (s->c == '/') {
+    if (s->c == (UChar)'/') {
         s->name = T_COMMENT;
-        while (s->c != '\n') {
+        while (s->c != (UChar)'\n') {
             append_advance(s);
         }
     }
     /* match multi-line comment */
-    else if (s->c == '*') {
+    else if (s->c == (UChar)'*') {
         s->name = T_COMMENT;
         append_advance(s);
         read_comment_multi_inner(s);
     }
     /* match shorthand divide assign operator */
-    else if (s->c == '=') {
+    else if (s->c == (UChar)'=') {
         set_single(s, T_DIVIDE_ASSIGN);
     }
     /* assumed match division operator */
@@ -182,18 +182,18 @@ static void read_string(Scanner *s)
     /* do not include initial quote in string value */
     stream_advance(s);
 
-    while (s->c != '"') {
+    while (s->c != (UChar)'"') {
         /* handle escaped literals */
-        if (s->c == '\\') {
+        if (s->c == (UChar)'\\') {
             stream_advance(s);
-            if (s->c == '"') { }
-            else if (s->c == 'r') { s->c = '\r'; }
-            else if (s->c == 'n') { s->c = '\n'; }
-            else if (s->c == 't') { s->c = '\t'; }
-            else if (s->c == '\\') { s->c = '\\'; }
+            if (s->c == (UChar)'"') { }
+            else if (s->c == (UChar)'r') { s->c = (UChar)'\r'; }
+            else if (s->c == (UChar)'n') { s->c = (UChar)'\n'; }
+            else if (s->c == (UChar)'t') { s->c = (UChar)'\t'; }
+            else if (s->c == (UChar)'\\') { s->c =(UChar) '\\'; }
             else {
                 tmp = s->c;
-                s->c = '\\';
+                s->c = (UChar)'\\';
                 buffer_append(s);
                 s->c = tmp;
             }
@@ -206,13 +206,15 @@ static void read_string(Scanner *s)
 
 static void read_number(Scanner *s)
 {
+    static int init = 1;
+    int j;
+
     /* string literals for comparison */
     U_STRING_DECL(ustr_base2, "2", 1);
     U_STRING_DECL(ustr_base8, "8", 1);
     U_STRING_DECL(ustr_base16, "16", 2);
     U_STRING_DECL(ustr_octvals, "01234567", 8);
-    static int init = 1;
-    if (init) {
+    if (init == 1) {
         U_STRING_INIT(ustr_base2, "2", 1);
         U_STRING_INIT(ustr_base8, "8", 1);
         U_STRING_INIT(ustr_base16, "16", 2);
@@ -220,19 +222,19 @@ static void read_number(Scanner *s)
         init = 0;
     }
 
-    int j = 0;
+    j = 0;
     /* append digits, initially assuming a base-10 number */
     s->name = T_NUMBER;
-    while (u_isdigit(s->c)) {
+    while (u_isdigit(s->c) == TRUE) {
         append_advance(s);
     }
 
     /* read value for non base-10 numbers */
-    if (s->c == '#') {
+    if (s->c == (UChar)'#') {
         /* read hexadecimal number, assume hex if there is no leading radix */
         if (s->ti == 0 || u_strcmp(s->tbuf, ustr_base16) == 0) {
             append_advance(s);
-            while (u_isxdigit(s->c)) {
+            while (u_isxdigit(s->c) == TRUE) {
                 j++;
                 append_advance(s);
             }
@@ -240,7 +242,7 @@ static void read_number(Scanner *s)
         /* read binary number */
         else if (u_strcmp(s->tbuf, ustr_base2) == 0) {
             append_advance(s);
-            while (s->c == '0' || s->c == '1') {
+            while (s->c == (UChar)'0' || s->c == (UChar)'1') {
                 j++;
                 append_advance(s);
             }
@@ -267,6 +269,8 @@ static void read_number(Scanner *s)
 
 static void read_identifier(Scanner *s)
 {
+    static int init = 1;
+
     /* string literals for comparison */
     U_STRING_DECL(ustr_else, "else", 4);
     U_STRING_DECL(ustr_if, "if", 2);
@@ -278,8 +282,7 @@ static void read_identifier(Scanner *s)
     U_STRING_DECL(ustr_func, "func", 4);
     U_STRING_DECL(ustr_return, "return", 6);
     U_STRING_DECL(ustr_backtick, "`", 1);
-    static int init = 1;
-    if (init) {
+    if (init == 1) {
         U_STRING_INIT(ustr_else, "else", 4);
         U_STRING_INIT(ustr_if, "if", 2);
         U_STRING_INIT(ustr_is, "is", 2);
@@ -294,7 +297,7 @@ static void read_identifier(Scanner *s)
     }
 
     append_advance(s);
-    while (u_isIDPart(s->c) || s->c == '_') {
+    while (u_isIDPart(s->c) == TRUE || s->c == (UChar)'_') {
         append_advance(s);
     }
     /* match keywords */
@@ -323,37 +326,38 @@ static void read_identifier(Scanner *s)
 
 static void stream_read_token(Scanner *s) {
 /*
+    static int init = 1;
+
     // string literals for comparison
     U_STRING_DECL(ustr_wildcard, "_", 1);
-    static int init = 1;
-    if (init) {
+    if (init == 1) {
         U_STRING_INIT(ustr_wildcard, "_", 1);
         init = 0;
     }
 */
     /* the first character will determine the parsing logic for various tokens */
     if (s->c == U_EOF) { set_single(s, 0); }  // return 0 on EOF
-    else if (s->c == ':') { set_maybe_double(s, '=', T_COLON, T_ASSIGN); }
-    else if (s->c == '.') { set_maybe_double(s, '.', T_DOT, T_CONCAT); }
-    else if (s->c == '+') { set_maybe_double(s, ':', T_ADD, T_ADD_ASSIGN); }
-    else if (s->c == '-') { set_maybe_double(s, ':', T_SUBTRACT, T_SUBTRACT_ASSIGN); }
-    else if (s->c == '*') { set_maybe_double(s, ':', T_MULTIPLY, T_MULTIPLY_ASSIGN); }
-    else if (s->c == '%') { set_maybe_double(s, ':', T_MODULO, T_MODULO_ASSIGN); }
-    else if (s->c == '/') { read_slash(s); }
-    else if (s->c == '=') { set_single(s, T_EQUAL); }
-    else if (s->c == '~') { set_maybe_double(s, '=', T_NOT, T_NOT_EQUAL); }
-    else if (s->c == '<') { set_maybe_double(s, '=', T_LESS, T_LESS_EQUAL); }
-    else if (s->c == '>') { set_maybe_double(s, '=', T_GREATER, T_GREATER_EQUAL); }
-    else if (s->c == '&') { set_double(s, '&', T_AND); }
-    else if (s->c == '|') { set_double(s, '|', T_NOT); }
-    else if (s->c == '{') { set_single(s, T_LBRACE); }
-    else if (s->c == '}') { set_single(s, T_RBRACE); }
-    else if (s->c == '(') { set_single(s, T_LPAREN); }
-    else if (s->c == ')') { set_single(s, T_RPAREN); }
-    else if (s->c == ',') { set_single(s, T_COMMA); }
-    else if (s->c == '"') { read_string(s); }
-    else if (u_isdigit(s->c) || s->c == '#') { read_number(s); }
-    else if (u_isIDStart(s->c) || s->c == '_' || s->c == '`') {
+    else if (s->c == (UChar)':') { set_maybe_double(s, (UChar)'=', T_COLON, T_ASSIGN); }
+    else if (s->c == (UChar)'.') { set_maybe_double(s, (UChar)'.', T_DOT, T_CONCAT); }
+    else if (s->c == (UChar)'+') { set_maybe_double(s, (UChar)':', T_ADD, T_ADD_ASSIGN); }
+    else if (s->c == (UChar)'-') { set_maybe_double(s, (UChar)':', T_SUBTRACT, T_SUBTRACT_ASSIGN); }
+    else if (s->c == (UChar)'*') { set_maybe_double(s, (UChar)':', T_MULTIPLY, T_MULTIPLY_ASSIGN); }
+    else if (s->c == (UChar)'%') { set_maybe_double(s, (UChar)':', T_MODULO, T_MODULO_ASSIGN); }
+    else if (s->c == (UChar)'/') { read_slash(s); }
+    else if (s->c == (UChar)'=') { set_single(s, T_EQUAL); }
+    else if (s->c == (UChar)'~') { set_maybe_double(s, (UChar)'=', T_NOT, T_NOT_EQUAL); }
+    else if (s->c == (UChar)'<') { set_maybe_double(s, (UChar)'=', T_LESS, T_LESS_EQUAL); }
+    else if (s->c == (UChar)'>') { set_maybe_double(s, (UChar)'=', T_GREATER, T_GREATER_EQUAL); }
+    else if (s->c == (UChar)'&') { set_double(s, (UChar)'&', T_AND); }
+    else if (s->c == (UChar)'|') { set_double(s, (UChar)'|', T_NOT); }
+    else if (s->c == (UChar)'{') { set_single(s, T_LBRACE); }
+    else if (s->c == (UChar)'}') { set_single(s, T_RBRACE); }
+    else if (s->c == (UChar)'(') { set_single(s, T_LPAREN); }
+    else if (s->c == (UChar)')') { set_single(s, T_RPAREN); }
+    else if (s->c == (UChar)',') { set_single(s, T_COMMA); }
+    else if (s->c == (UChar)'"') { read_string(s); }
+    else if (u_isdigit(s->c) == TRUE || s->c == (UChar)'#') { read_number(s); }
+    else if (u_isIDStart(s->c) == TRUE || s->c == (UChar)'_' || s->c == (UChar)'`') {
         read_identifier(s);
 /*
         // single _ is wildcard token
@@ -397,17 +401,15 @@ Scanner* scanner_init(void) {
     return s;
 }
 
-int scanner_token(Scanner *s) 
+void scanner_token(Scanner *s) 
 {
     buffer_reset(s);
 
     /* advance stream past whitespace */
     stream_skip_whitespace(s);
 
-    /* obtain and return token */
+    /* obtain token */
     stream_read_token(s);
-
-    return s->name;
 }
 
 void scanner_free(Scanner *s) 

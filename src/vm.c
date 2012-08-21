@@ -29,14 +29,6 @@
 #define VMPROGBUF_SIZE_INIT 5
 #define VMPROGBUF_SIZE_INCR 5
 
-VM_Instr *vminstr_init(OpCode, ...);
-void vminstr_free(VM_Instr *);
-
-VM_ProgBuf *vmprogbuf_init(void);
-void vmprogbuf_free(VM_ProgBuf *);
-void vmprogbuf_grow(VM_ProgBuf *);
-void vmprogbuf_push(VM_ProgBuf *, VM_Instr *);
-
 VM_Machine *vmmach_init(void)
 {
     VM_Machine *vm;
@@ -67,7 +59,7 @@ void vmmach_free(VM_Machine *vm)
     free(vm);
 }
 
-VM_Instr *vminstr_init(OpCode op, ...)
+static VM_Instr *vminstr_init(OpCode op, ...)
 {
     VM_Instr *instr;
     va_list ap;
@@ -113,7 +105,7 @@ VM_Instr *vminstr_init(OpCode op, ...)
     return instr;
 }
 
-void vminstr_free(VM_Instr *instr)
+static void vminstr_free(VM_Instr *instr)
 {
     free(instr);
 }
@@ -215,18 +207,18 @@ void vmmach_exec(VM_Machine *vm, VM_ProgBuf *b)
         case OP_AND:
             dest = instr->dest;
             src = instr->src;
-            *vm->regs[dest] = *vm->regs[dest] && *vm->regs[src];
+            *vm->regs[dest] = (int)(*vm->regs[dest] != 0 && *vm->regs[src] != 0);
             break;
 
         case OP_OR:
             dest = instr->dest;
             src = instr->src;
-            *vm->regs[dest] = *vm->regs[dest] || *vm->regs[src];
+            *vm->regs[dest] = (int)(*vm->regs[dest] !=0 || *vm->regs[src] != 0);
             break;
 
         case OP_NOT:
             dest = instr->dest;
-            *vm->regs[dest] = !*vm->regs[dest];
+            *vm->regs[dest] = (int)(!(*vm->regs[dest] != 0));
             break;
 /*
         case OP_CMP:
@@ -242,7 +234,7 @@ void vmmach_exec(VM_Machine *vm, VM_ProgBuf *b)
     }
 }
 
-VM_ProgBuf *vmprogbuf_init(void)
+static VM_ProgBuf *vmprogbuf_init(void)
 {
     VM_ProgBuf *b;
 
@@ -263,7 +255,7 @@ VM_ProgBuf *vmprogbuf_init(void)
     return b;
 }
 
-void vmprogbuf_free(VM_ProgBuf *b)
+static void vmprogbuf_free(VM_ProgBuf *b)
 {
     int i;
     for (i = 0; i < b->tail; i++) {
@@ -273,7 +265,7 @@ void vmprogbuf_free(VM_ProgBuf *b)
     free(b);
 }
 
-void vmprogbuf_grow(VM_ProgBuf *b)
+static void vmprogbuf_grow(VM_ProgBuf *b)
 {
     /* increase storage capacity of buffer */
     b->len += VMPROGBUF_SIZE_INCR;
@@ -283,7 +275,7 @@ void vmprogbuf_grow(VM_ProgBuf *b)
     }
 }
 
-void vmprogbuf_push(VM_ProgBuf *b, VM_Instr *i)
+static void vmprogbuf_push(VM_ProgBuf *b, VM_Instr *i)
 {
     b->instr[b->tail] = i;
     b->tail++;
