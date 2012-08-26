@@ -5,7 +5,7 @@ INCLUDE+=-I../include
 LDFLAGS=-licuio -licuuc
 LDFLAGS_DBG=-licuio -licuuc
 
-all: kiwi vm vmclient vmserver
+all: kiwi vm
 
 kiwi: parser vm
 	$(CC) $(CFLAGS) -o kiwi scanner.o y.tab.o main.c $(LDFLAGS)
@@ -18,18 +18,6 @@ vm:
 
 vm-debug:
 	$(CC) $(CFLAGS_DBG) -o vm-debug vm.c $(LDFLAGS_DBG)
-
-vmclient: mysocket
-	$(CC) $(CFLAGS) -o vmclient mysocket.o vmclient.c $(LDFLAGS)
-
-vmclient-debug: mysocket-debug
-	$(CC) $(CFLAGS_DBG) -o vmclient mysocket.o vmclient.c $(LDFLAGS_DBG)
-
-vmserver: mysocket
-	$(CC) $(CFLAGS) -o vmserver mysocket.o vmserver.c $(LDFLAGS)
-
-vmserver-debug: mysocket-debug
-	$(CC) $(CFLAGS_DBG) -o vmserver mysocket.o vmserver.c $(LDFLAGS_DBG)
 
 parser: scanner
 	$(CC) $(CFLAGS) -c y.tab.c
@@ -51,13 +39,6 @@ ytab-debug:
 	byacc -P -d -p scanner_ -v -t kiwi.y
 	mv y.tab.h ../include/y.tab.h
 
-mysocket:
-	$(CC) $(CFLAGS) -c mysocket.c 
-
-mysocket-debug:
-	$(CC) $(CFLAGS_DBG) -c mysocket.c
-
 clean: 
 	rm -Rf  ../include/y.tab.h y.tab.c y.output *.o kiwi kiwi-debug \
-	 vm vm-debug vmserver vmserver-debug vmclient vmclient-debug
-
+	 vm vm-debug
