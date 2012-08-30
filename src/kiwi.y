@@ -20,8 +20,8 @@
  */
 
 %pure-parser
-%lex-param {Scanner *s}
-%parse-param { Scanner *s }
+%lex-param { scanner_t *s}
+%parse-param { scanner_t *s }
 
 %{
 #include <stdio.h>

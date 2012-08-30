@@ -55,38 +55,38 @@ typedef enum
     OP_JUMP
 */
 }
-OpCode;
+opcode_t;
 
-typedef struct _VM_Instr
+typedef struct _vminstr
 {
-    OpCode op;
+    opcode_t op;
     int dest;
     int src;
 }
-VM_Instr;
+vminstr_t;
 
-typedef struct _VM_ProgBuf
+typedef struct _vmprogbuf
 {
     int len, tail;
-    VM_Instr **instr;
+    vminstr_t **instr;
 }
-VM_ProgBuf;
+vmprogbuf_t;
 
-typedef struct _VM_Machine
+typedef struct _vmmach
 {
     int sp,                       /* stack pointer */
         ip,                       /* instruction pointer */
         *regs[VMMACH_NUM_REGS],   /* registers */
         stack[VMMACH_SIZE_STACK]; /* stack */
 }
-VM_Machine;
+vmmach_t;
 
-VM_Machine *vmmach_init(void);
+vmmach_t *vmmach_init(void);
 /*
-void vmmach_load(VM_Machine *);
+void vmmach_load(vmmach_t *);
 */
-void vmmach_exec(VM_Machine *, VM_ProgBuf *);
-void vmmach_free(VM_Machine *);
+void vmmach_exec(vmmach_t *, vmprogbuf_t *);
+void vmmach_free(vmmach_t *);
 
 #endif
 

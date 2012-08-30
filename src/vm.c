@@ -29,13 +29,13 @@
 #define VMPROGBUF_SIZE_INIT 5
 #define VMPROGBUF_SIZE_INCR 5
 
-VM_Machine *vmmach_init(void)
+vmmach_t *vmmach_init(void)
 {
-    VM_Machine *vm;
+    vmmach_t *vm;
     int i;
 
     /* allocate memory for machine */
-    if ((vm = (VM_Machine *)calloc(1, sizeof(VM_Machine))) == NULL) {
+    if ((vm = (vmmach_t *)calloc(1, sizeof(vmmach_t))) == NULL) {
         perror("Allocate machine failured");
         exit(EXIT_FAILURE);
     }
@@ -50,7 +50,7 @@ VM_Machine *vmmach_init(void)
     return vm;
 }
 
-void vmmach_free(VM_Machine *vm)
+void vmmach_free(vmmach_t *vm)
 {
     int i;
     for (i = 0; i < VMMACH_NUM_REGS; i++) {
@@ -59,13 +59,13 @@ void vmmach_free(VM_Machine *vm)
     free(vm);
 }
 
-static VM_Instr *vminstr_init(OpCode op, ...)
+static vminstr_t *vminstr_init(opcode_t op, ...)
 {
-    VM_Instr *instr;
+    vminstr_t *instr;
     va_list ap;
 
     /* allocate memory for instruction */
-    if ((instr = (VM_Instr *)calloc(1, sizeof(VM_Instr))) == NULL) {
+    if ((instr = (vminstr_t *)calloc(1, sizeof(vminstr_t))) == NULL) {
         perror("Allocate instruction failed");
         exit(EXIT_FAILURE);
     }
@@ -105,15 +105,15 @@ static VM_Instr *vminstr_init(OpCode op, ...)
     return instr;
 }
 
-static void vminstr_free(VM_Instr *instr)
+static void vminstr_free(vminstr_t *instr)
 {
     free(instr);
 }
 
-void vmmach_exec(VM_Machine *vm, VM_ProgBuf *b)
+void vmmach_exec(vmmach_t *vm, vmprogbuf_t *b)
 {
     int dest, src, tmp1, tmp2;
-    VM_Instr *instr;
+    vminstr_t *instr;
 
     for (vm->ip = 0 ; vm->ip < b->tail; vm->ip++) {
         instr = b->instr[vm->ip];
@@ -234,12 +234,12 @@ void vmmach_exec(VM_Machine *vm, VM_ProgBuf *b)
     }
 }
 
-static VM_ProgBuf *vmprogbuf_init(void)
+static vmprogbuf_t *vmprogbuf_init(void)
 {
-    VM_ProgBuf *b;
+    vmprogbuf_t *b;
 
     /* allocate memory for program buffer */
-    if ((b = (VM_ProgBuf *)calloc(1, sizeof(VM_ProgBuf))) == NULL) {
+    if ((b = (vmprogbuf_t *)calloc(1, sizeof(vmprogbuf_t))) == NULL) {
         perror("Allocate program buffer failed");
         exit(EXIT_FAILURE);
     }
@@ -247,7 +247,7 @@ static VM_ProgBuf *vmprogbuf_init(void)
     /* initialize buffer */
     b->tail = 0;
     b->len = VMPROGBUF_SIZE_INIT;
-    if ((b->instr = (VM_Instr **)calloc(b->len, sizeof(VM_Instr *))) == NULL) {
+    if ((b->instr = (vminstr_t **)calloc(b->len, sizeof(vminstr_t *))) == NULL) {
         perror("Allocate program buffer instruction storage failed");
         exit(EXIT_FAILURE);
     }
@@ -255,7 +255,7 @@ static VM_ProgBuf *vmprogbuf_init(void)
     return b;
 }
 
-static void vmprogbuf_free(VM_ProgBuf *b)
+static void vmprogbuf_free(vmprogbuf_t *b)
 {
     int i;
     for (i = 0; i < b->tail; i++) {
@@ -265,17 +265,17 @@ static void vmprogbuf_free(VM_ProgBuf *b)
     free(b);
 }
 
-static void vmprogbuf_grow(VM_ProgBuf *b)
+static void vmprogbuf_grow(vmprogbuf_t *b)
 {
     /* increase storage capacity of buffer */
     b->len += VMPROGBUF_SIZE_INCR;
-    if ((b->instr = (VM_Instr **)realloc(b->instr, sizeof(VM_Instr *) * b->len)) == NULL) {
+    if ((b->instr = (vminstr_t **)realloc(b->instr, sizeof(vminstr_t *) * b->len)) == NULL) {
         perror("Reallocate program buffer instruction storage failed");
         exit(EXIT_FAILURE);
     }
 }
 
-static void vmprogbuf_push(VM_ProgBuf *b, VM_Instr *i)
+static void vmprogbuf_push(vmprogbuf_t *b, vminstr_t *i)
 {
     b->instr[b->tail] = i;
     b->tail++;
@@ -287,8 +287,8 @@ static void vmprogbuf_push(VM_ProgBuf *b, VM_Instr *i)
 
 int main()
 {
-    VM_ProgBuf *b = vmprogbuf_init();
-    VM_Machine *vm = vmmach_init();
+    vmprogbuf_t *b = vmprogbuf_init();
+    vmmach_t *vm = vmmach_init();
 
     /* load program */
     vmprogbuf_push(b, vminstr_init(OP_NOOP));

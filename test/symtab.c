@@ -19,52 +19,33 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
-#include "scanner.h"
-#include "y.tab.h"
-#include "unicode/ustdio.h"
-
-extern void scanner_parse(scanner_t *s); /* y.tab.c */
-
-int scanner_error(scanner_t *s, const char *str)
-{
-    fprintf(stderr, "%s line %d\n", str, s->lineno);
-    return 1;
-}
-
-UFILE *ustdout;
-
-int scanner_lex(YYSTYPE *lvalp, scanner_t *s)
-{
-    scanner_token(s);
-    /* force re-read on comments */
-    if (s->name == T_COMMENT) {
-        return scanner_lex(lvalp, s);
-    }
-    else {
-/*
-        if (s->name == T_NUMBER) {
-            yylval.number = ...
-        }
-        else if (s->name == T_IDENTIFIER || s->name == T_STRING) {
-            yylval.string = ...
-        }
-*/
-        return s->name;
-    }
-}
+#include "symtab.h"
 
 int main()
 {
-    scanner_t *s;
+    symtab_t *t;
+    t = symtab_init();
 
-    ustdout = u_finit(stdout, NULL, NULL);
+    int a =40;
+    int b =41;
 
-    s = scanner_init();
-    scanner_parse(s);
-    scanner_free(s);
+    symtab_insert(t, "a", SYMTAB_ENTRY_NUMBER, &a);
+    symtab_enterscope(t);
+    symtab_insert(t, "b", SYMTAB_ENTRY_NUMBER, &b);
+    symtab_enterscope(t);
+
+    if (symtab_lookup(t, "a")) printf("a=%d\n", *(int *)symtab_lookup(t, "a")); else printf("a not found\n");
+    if (symtab_lookup(t, "b")) printf("b=%d\n", *(int *)symtab_lookup(t, "b")); else printf("b not found\n");
+    symtab_leavescope(t);
+    if (symtab_lookup(t, "a")) printf("a=%d\n", *(int *)symtab_lookup(t, "a")); else printf("a not found\n");
+    if (symtab_lookup(t, "b")) printf("b=%d\n", *(int *)symtab_lookup(t, "b")); else printf("b not found\n");
+    symtab_leavescope(t);
+    if (symtab_lookup(t, "a")) printf("a=%d\n", *(int *)symtab_lookup(t, "a")); else printf("a not found\n");
+    if (symtab_lookup(t, "b")) printf("b=%d\n", *(int *)symtab_lookup(t, "b")); else printf("b not found\n");
 
     return EXIT_SUCCESS;
 }
+

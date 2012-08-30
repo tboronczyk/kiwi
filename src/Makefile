@@ -8,10 +8,10 @@ LDFLAGS_DBG=-licuio -licuuc
 all: kiwi vm
 
 kiwi: parser vm
-	$(CC) $(CFLAGS) -o kiwi scanner.o y.tab.o main.c $(LDFLAGS)
+	$(CC) $(CFLAGS) -o kiwi scanner.o symtab.o y.tab.o main.c $(LDFLAGS)
 
 kiwi-debug: parser-debug vm-debug
-	$(CC) $(CFLAGS_DBG) -o kiwi-debug scanner.o y.tab.o main.c $(LDFLAGS_DBG)
+	$(CC) $(CFLAGS_DBG) -o kiwi-debug scanner.o symtab.o y.tab.o main.c $(LDFLAGS_DBG)
 
 vm:
 	$(CC) $(CFLAGS) -o vm vm.c $(LDFLAGS)
@@ -19,11 +19,17 @@ vm:
 vm-debug:
 	$(CC) $(CFLAGS_DBG) -o vm-debug vm.c $(LDFLAGS_DBG)
 
-parser: scanner
+parser: symtab scanner 
 	$(CC) $(CFLAGS) -c y.tab.c
 
-parser-debug: scanner-debug
+parser-debug: symtab-debug scanner-debug
 	$(CC) $(CFLAGS_DBG) -c y.tab.c
+
+symtab:
+	$(CC) $(CFLAGS) -c symtab.c
+
+symtab-debug:
+	$(CC) $(CFLAGS_DBG) -c symtab.c
 
 scanner: ytab
 	$(CC) $(CFLAGS) -c scanner.c
@@ -41,4 +47,4 @@ ytab-debug:
 
 clean: 
 	rm -Rf  ../include/y.tab.h y.tab.c y.output *.o kiwi kiwi-debug \
-	 vm vm-debug
+	vm vm-debug

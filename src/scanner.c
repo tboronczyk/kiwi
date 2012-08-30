@@ -53,7 +53,7 @@
     append_advance(s); \
     if (s->c == x) { set_single(s, t2); } else s->name = t1
 
-static void buffer_init(Scanner *s)
+static void buffer_init(scanner_t *s)
 {
     /* initialize token buffer */
     s->ti = 0;
@@ -64,13 +64,13 @@ static void buffer_init(Scanner *s)
     }
 }
 
-static void buffer_reset(Scanner *s)
+static void buffer_reset(scanner_t *s)
 {
     s->ti = 0;
     memset(s->tbuf, 0, sizeof(UChar) * s->tlen);
 }
 
-static void buffer_grow(Scanner *s)
+static void buffer_grow(scanner_t *s)
 {
     /* increase storage of token buffer */
     s->tlen += SCANBUF_SIZE_INCR;
@@ -82,7 +82,7 @@ static void buffer_grow(Scanner *s)
     memset(&s->tbuf[s->ti], 0, sizeof(UChar) * (s->tlen - s->ti));
 }
 
-static void buffer_append(Scanner *s)
+static void buffer_append(scanner_t *s)
 {
     s->tbuf[s->ti] = s->c;
     s->ti++;
@@ -92,12 +92,12 @@ static void buffer_append(Scanner *s)
     }
 }
 
-static void buffer_free(Scanner *s)
+static void buffer_free(scanner_t *s)
 {
     free(s->tbuf);
 }
 
-static void stream_advance(Scanner *s)
+static void stream_advance(scanner_t *s)
 {
     s->c = u_fgetc(s->fp);
 
@@ -107,20 +107,20 @@ static void stream_advance(Scanner *s)
     }
 }
 
-static void append_advance(Scanner *s)
+static void append_advance(scanner_t *s)
 {
     buffer_append(s);
     stream_advance(s);
 }
 
-static void stream_skip_whitespace(Scanner *s)
+static void stream_skip_whitespace(scanner_t *s)
 {
     while (u_isWhitespace(s->c) == TRUE) {
         stream_advance(s);
     }
 }
 
-static void stream_init(Scanner *s)
+static void stream_init(scanner_t *s)
 {
     /* set file position and advance through stream to first non-whitespace
        character */
@@ -129,7 +129,7 @@ static void stream_init(Scanner *s)
     stream_skip_whitespace(s);
 }
 
-static void read_comment_multi_inner(Scanner *s)
+static void read_comment_multi_inner(scanner_t *s)
 {
     /* need to keep track of previous character */
     UChar prev;
@@ -148,7 +148,7 @@ static void read_comment_multi_inner(Scanner *s)
     append_advance(s);
 }
 
-static void read_slash(Scanner *s)
+static void read_slash(scanner_t *s)
 {
     append_advance(s);
     /* match single-line comment */
@@ -174,7 +174,7 @@ static void read_slash(Scanner *s)
     }
 }
 
-static void read_string(Scanner *s)
+static void read_string(scanner_t *s)
 {
     UChar tmp;
     s->name = T_STRING;
@@ -204,7 +204,7 @@ static void read_string(Scanner *s)
     stream_advance(s);
 }
 
-static void read_number(Scanner *s)
+static void read_number(scanner_t *s)
 {
     static int init = 1;
     int j;
@@ -267,7 +267,7 @@ static void read_number(Scanner *s)
     }
 }
 
-static void read_identifier(Scanner *s)
+static void read_identifier(scanner_t *s)
 {
     static int init = 1;
 
@@ -324,7 +324,7 @@ static void read_identifier(Scanner *s)
     }
 }
 
-static void stream_read_token(Scanner *s) {
+static void stream_read_token(scanner_t *s) {
 /*
     static int init = 1;
 
@@ -372,12 +372,12 @@ static void stream_read_token(Scanner *s) {
     }
 }
 
-Scanner* scanner_init(void) {
+scanner_t* scanner_init(void) {
     char *fname = "stdin";
-    Scanner *s;
+    scanner_t *s;
 
     /* allocate scanner */
-    if ((s = (Scanner *)calloc(1, sizeof(Scanner))) == NULL) {
+    if ((s = (scanner_t *)calloc(1, sizeof(scanner_t))) == NULL) {
         perror("Allocate scanner failed");
         exit(EXIT_FAILURE);
     }
@@ -401,7 +401,7 @@ Scanner* scanner_init(void) {
     return s;
 }
 
-void scanner_token(Scanner *s) 
+void scanner_token(scanner_t *s) 
 {
     buffer_reset(s);
 
@@ -412,7 +412,7 @@ void scanner_token(Scanner *s)
     stream_read_token(s);
 }
 
-void scanner_free(Scanner *s) 
+void scanner_free(scanner_t *s) 
 {
     u_fclose(s->fp);
     free(s->fname);
