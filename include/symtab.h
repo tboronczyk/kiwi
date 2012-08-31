@@ -61,8 +61,6 @@ typedef struct _symtab
 }
 symtab_t;
 
-symtab_entry_t *symtab_entry_init(char *, symtab_entrytype_t, void *);
-
 symtab_t *symtab_init(void);
 void symtab_enterscope(symtab_t *);
 void symtab_leavescope(symtab_t *);

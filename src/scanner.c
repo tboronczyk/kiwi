@@ -19,6 +19,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,7 +59,8 @@ static void buffer_init(scanner_t *s)
     /* initialize token buffer */
     s->ti = 0;
     s->tlen = SCANBUF_SIZE_INIT;
-    if ((s->tbuf = (UChar *)calloc(s->tlen, sizeof(UChar))) == NULL) {
+    assert(s->tbuf == NULL);
+    if ((s->tbuf = (UChar *)calloc((size_t)s->tlen, sizeof(UChar))) == NULL) {
         perror("Allocate token buffer failed");
         exit(EXIT_FAILURE);
     }
@@ -87,14 +89,9 @@ static void buffer_append(scanner_t *s)
     s->tbuf[s->ti] = s->c;
     s->ti++;
     /* increase token buffer size if necessary */
-    if (s->ti == s->tlen) {
+    if (s->ti == (unsigned int)s->tlen) {
         buffer_grow(s);
     }
-}
-
-static void buffer_free(scanner_t *s)
-{
-    free(s->tbuf);
 }
 
 static void stream_advance(scanner_t *s)
@@ -372,7 +369,8 @@ static void stream_read_token(scanner_t *s) {
     }
 }
 
-scanner_t* scanner_init(void) {
+scanner_t* scanner_init(void) 
+{
     char *fname = "stdin";
     scanner_t *s;
 
@@ -382,12 +380,14 @@ scanner_t* scanner_init(void) {
         exit(EXIT_FAILURE);
     }
     /* set filename */
+    assert(s->fname == NULL);
     if ((s->fname = (char *)calloc(strlen(fname) + 1, sizeof(char))) == NULL) {
         perror("Allocate scanner filename failed");
         exit(EXIT_FAILURE);
     }
     memcpy(s->fname, fname, sizeof(char) * strlen(fname));
     /* open stream to file */
+    assert(s->fp == NULL);
     if (strcmp("stdin", fname) == 0) {
         s->fp = u_finit(stdin, NULL, NULL);
     }
@@ -416,7 +416,7 @@ void scanner_free(scanner_t *s)
 {
     u_fclose(s->fp);
     free(s->fname);
-    buffer_free(s);
+    free(s->tbuf);
     free(s);
 }
 

@@ -28,14 +28,14 @@
 
 typedef struct _scanner
 {
-    int lineno,   /* current line number of file (used for error reporting) */
-        name,     /* name of token being scanned */
-        ti,       /* current position of pointer in *tbuf */
-        tlen;     /* size of *tbuf */
-    UChar c,      /* current character read */
-        *tbuf;    /* buffer in which token values are accumulated */
-    char *fname;  /* name of file being scanned (used for error reporting) */
-    UFILE *fp;    /* open file descriptor of file at *fname */
+    int lineno,       /* current line number of file (used for error reporting) */
+        name;         /* name of token being scanned */
+    unsigned int ti;  /* current position of pointer in *tbuf */
+    size_t tlen;      /* size of *tbuf */
+    UChar c,          /* current character read */
+        *tbuf;        /* buffer in which token values are accumulated */
+    char *fname;      /* name of file being scanned (used for error reporting) */
+    UFILE *fp;        /* open file descriptor of file at *fname */
 }
 scanner_t;
 

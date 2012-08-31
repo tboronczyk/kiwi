@@ -19,9 +19,11 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #include "symtab.h"
 
 static unsigned int symtab_hash(char *s)
@@ -31,33 +33,44 @@ static unsigned int symtab_hash(char *s)
     unsigned int hash;
 
     hash = 0;
-    for (c = s; *c; c++) {
-        hash += *c;
+    for (c = s; *c != '\0'; c++) {
+        hash += (unsigned int)*c;
     }
     return hash;
 }
 
-symtab_entry_t *symtab_entry_init(char *key, symtab_entrytype_t type, void *value)
+static symtab_entry_t *symtab_entry_init(void)
 {
-    /* initialize new symbol entry */
     symtab_entry_t *e;
 
-    e = (symtab_entry_t *)calloc(1, sizeof(symtab_entry_t));
-    e->key = key;
-    e->type = type;
-    e->value = value;
-    e->next = NULL;
+    /* initialize new symbol entry */
+    if ((e = (symtab_entry_t *)calloc(1, sizeof(symtab_entry_t))) == NULL) {
+        perror("Allocate symbol table entry failed");
+        exit(EXIT_FAILURE);
+    }
 
     return e;
 }
 
 symtab_t *symtab_init()
 {
+    symtab_t *t;
+
     /* initialize symbol table */
-    symtab_t *t = (symtab_t *)calloc(1, sizeof(symtab_t));
+    if ((t = (symtab_t *)calloc(1, sizeof(symtab_t))) == NULL) {
+        perror("Allocate symbol table failed");
+        exit(EXIT_FAILURE);
+    }
     t->hash = symtab_hash;
-    t->entries = (symtab_entry_t **)calloc(SYMTAB_SIZE, sizeof(symtab_entry_t));
-    t->stack = NULL;
+
+    assert(t->stack == NULL);
+    assert(t->entries == NULL);
+
+    if ((t->entries = (symtab_entry_t **)calloc(SYMTAB_SIZE, sizeof(symtab_entry_t))) == NULL) {
+        perror("Allocate symbol table entry storage failed");
+        exit(EXIT_FAILURE);
+    }
+
     return t;
 }
 
@@ -66,13 +79,23 @@ void symtab_enterscope(symtab_t *t)
     symtab_stack_t *s;
 
     /* enter current scope to stack */
-    s = (symtab_stack_t *)calloc(1, sizeof(symtab_stack_t));
+    if ((s = (symtab_stack_t *)calloc(1, sizeof(symtab_stack_t))) == NULL) {
+        perror("Allocate symbol table stack failed");
+        exit(EXIT_FAILURE);
+    }
+
+    assert(s->entries == NULL);
+    assert(s->next == NULL);
+
     s->entries = t->entries;
     s->next = t->stack;
     t->stack = s;
 
     /* init new scope */
-    t->entries = (symtab_entry_t **)calloc(SYMTAB_SIZE, sizeof(symtab_entry_t));
+    if ((t->entries = (symtab_entry_t **)calloc(SYMTAB_SIZE, sizeof(symtab_entry_t))) == NULL) {
+        perror("Allocate symbol table entry failed");
+        exit(EXIT_FAILURE);
+    }
 }
 
 void symtab_leavescope(symtab_t *t)
@@ -89,19 +112,28 @@ void symtab_leavescope(symtab_t *t)
 
 void symtab_insert(symtab_t *t, char *key, symtab_entrytype_t type, void *value)
 {
-    int i;
+    unsigned int i;
     symtab_entry_t *e;
 
     /* create new symbol entry and enter to front of entry list */
     i = t->hash(key) % SYMTAB_SIZE;
-    e = symtab_entry_init(key, type, value);
+    e = symtab_entry_init();
+
+    assert(e->key == NULL);
+    assert(e->value == NULL);
+    assert(e->next == NULL);
+
+    e->key = key;
+    e->type = type;
+    e->value = value;
     e->next = t->entries[i];
+
     t->entries[i] = e;
 }
 
 void *symtab_lookup(symtab_t *t, char *key)
 {
-    int i;
+    unsigned int i;
     symtab_entry_t *e;
 
     i = t->hash(key) % SYMTAB_SIZE;
@@ -115,11 +147,13 @@ void *symtab_lookup(symtab_t *t, char *key)
 
 void symtab_delete(symtab_t *t, char *key)
 {
-    int i;
+    unsigned int i;
     symtab_entry_t *e;
 
     /* remove first occurence from entry list */
     i = t->hash(key) % SYMTAB_SIZE;
     e = t->entries[i];
     t->entries[i] = (t->entries[i])->next;
+
+    /* free(e); */
 }
