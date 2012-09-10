@@ -52,24 +52,24 @@
 
 %%
 program
-	:
-	| statementlist
+	: /* empty */
+	| stmtlist
 	;
 
 
-statementlist
-	: statement
-	| statementlist statement
+stmtlist
+	: stmt
+	| stmtlist stmt
 	;
 
-statement
+stmt
 	: complexstmt
 	| simplestmt
 	;
 
 complexstmt
 	: compoundstmt
-	| functiondef
+	| funcdef
 	;
 
 compoundstmt
@@ -78,16 +78,19 @@ compoundstmt
 	;
 
 ifstmt
-	: T_IF expression compoundbody
-	| T_IF expression compoundbody elsestmt
+	: T_IF expr compoundbody
+	| T_IF expr compoundbody elsestmt
 	;
 
-expression
+expr
 	: notexpr
-	| expression T_AND notexpr
-	| expression T_OR notexpr
+	| expr exprop notexpr
 	;
 
+exprop
+	: T_AND
+	| T_OR
+	;
 notexpr
 	: compareexpr
 	| T_NOT compareexpr
@@ -110,22 +113,26 @@ compop
 
 minorexpr
 	: term
-	| minorexpr T_ADD term
-	| minorexpr T_SUBTRACT term
-	| minorexpr T_CONCAT term
+	| minorexpr addop term
 	;
+
+addop
+	: T_ADD
+	| T_SUBTRACT;
 
 term
 	: factor
-	| term T_MULTIPLY factor
-	| term T_DIVIDE factor
-        | term T_MODULO factor
+	| term mulop factor
+	;
+
+mulop
+	: T_MULTIPLY
+	| T_DIVIDE
 	;
 
 factor
 	: atom
-	| T_ADD factor
-	| T_SUBTRACT factor
+	| addop factor
 	;
 
 atom
@@ -135,17 +142,17 @@ atom
 	| T_TRUE
 	| T_FALSE
 	| T_STRING
-	| T_LPAREN expression T_RPAREN 
+	| T_LPAREN expr T_RPAREN 
 	;
 
 funccall
 	: T_IDENTIFIER T_LPAREN T_RPAREN
-	| T_IDENTIFIER T_LPAREN expressionlist T_RPAREN
+	| T_IDENTIFIER T_LPAREN exprlist T_RPAREN
 	;
 
-expressionlist
-	: expression
-	| expressionlist T_COMMA expression
+exprlist
+	: expr
+	| exprlist T_COMMA expr
 	;
 
 elsestmt
@@ -158,17 +165,15 @@ compoundbody
 	;
 
 compoundbodylist
-	: simplestmt
-	| compoundstmt
-	| compoundbodylist simplestmt
-	| compoundbodylist compoundstmt
+	: stmt
+	| compoundbodylist stmt
 	;
 
 whilestmt
-	: T_WHILE expression compoundbody
+	: T_WHILE expr compoundbody
 	;
 
-functiondef
+funcdef
 	: T_FUNC T_IDENTIFIER compoundbody
 	| T_FUNC T_IDENTIFIER funcparamlist compoundbody
 	;
@@ -182,11 +187,11 @@ simplestmt
 	: assignstmt T_DOT
 	| returnstmt T_DOT
 	| varstmt T_DOT
-	| expression T_DOT
+	| expr T_DOT
 	;
 	
 assignstmt
-	: T_IDENTIFIER assignop expression
+	: T_IDENTIFIER assignop expr
 	;
 
 assignop
@@ -200,7 +205,7 @@ assignop
 
 
 returnstmt
-	: T_RETURN expression
+	: T_RETURN expr
 	;
 
 varstmt
