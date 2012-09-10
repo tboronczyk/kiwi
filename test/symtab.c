@@ -34,16 +34,16 @@ int main(void)
     b = 41;
 
     symtab_insert(t, "a", SYMTAB_ENTRY_NUMBER, &a);
-    symtab_enterscope(t);
+    symtab_enter_scope(t);
     symtab_insert(t, "b", SYMTAB_ENTRY_NUMBER, &b);
-    symtab_enterscope(t);
+    symtab_enter_scope(t);
 
     if (symtab_lookup(t, "a")) printf("a=%d\n", *(int *)symtab_lookup(t, "a")); else printf("a not found\n");
     if (symtab_lookup(t, "b")) printf("b=%d\n", *(int *)symtab_lookup(t, "b")); else printf("b not found\n");
-    symtab_leavescope(t);
+    symtab_leave_scope(t);
     if (symtab_lookup(t, "a")) printf("a=%d\n", *(int *)symtab_lookup(t, "a")); else printf("a not found\n");
     if (symtab_lookup(t, "b")) printf("b=%d\n", *(int *)symtab_lookup(t, "b")); else printf("b not found\n");
-    symtab_leavescope(t);
+    symtab_leave_scope(t);
     if (symtab_lookup(t, "a")) printf("a=%d\n", *(int *)symtab_lookup(t, "a")); else printf("a not found\n");
     if (symtab_lookup(t, "b")) printf("b=%d\n", *(int *)symtab_lookup(t, "b")); else printf("b not found\n");
 

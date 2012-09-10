@@ -38,8 +38,8 @@ typedef enum
 symtab_entrytype_t;
 
 symtab_t *symtab_init(void);
-void symtab_enterscope(symtab_t *);
-void symtab_leavescope(symtab_t *);
+void symtab_enter_scope(symtab_t *);
+void symtab_leave_scope(symtab_t *);
 void symtab_insert(symtab_t *, char *, symtab_entrytype_t, void *);
 void *symtab_lookup(symtab_t *, char *);
 void symtab_delete(symtab_t *, char *);

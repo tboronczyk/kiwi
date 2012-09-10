@@ -59,6 +59,100 @@ extern UFILE *ustderr;
     append_advance(s); \
     if (s->c == x) { set_single(s, t2); } else s->name = t1
 
+static void append_advance(scanner_t *);
+static void buffer_append(scanner_t *);
+static void buffer_grow(scanner_t *);
+static void buffer_init(scanner_t *);
+static void buffer_reset(scanner_t *);
+static void read_comment_multi_inner(scanner_t *);
+static void read_identifier(scanner_t *);
+static void read_number(scanner_t *);
+static void read_slash(scanner_t *);
+static void read_string(scanner_t *);
+static void stream_advance(scanner_t *);
+static void stream_init(scanner_t *);
+static void stream_read_token(scanner_t *);
+static void stream_skip_whitespace(scanner_t *);
+
+scanner_t* scanner_init(void) 
+{
+    char *fname = "stdin";
+    scanner_t *s;
+
+    /* allocate scanner */
+    if ((s = (scanner_t *)calloc(1, sizeof(scanner_t))) == NULL) {
+        perror("Allocate scanner failed");
+        exit(EXIT_FAILURE);
+    }
+    /* set filename */
+    assert(s->fname == NULL);
+    if ((s->fname = (char *)calloc(strlen(fname) + 1, sizeof(char))) == NULL) {
+        perror("Allocate scanner filename failed");
+        exit(EXIT_FAILURE);
+    }
+    memcpy(s->fname, fname, sizeof(char) * strlen(fname));
+    /* open stream to file */
+    assert(s->fp == NULL);
+    if (strcmp("stdin", fname) == 0) {
+        s->fp = u_finit(stdin, NULL, NULL);
+    }
+    else if ((s->fp = u_fopen(fname, "r", NULL, NULL)) == NULL) {
+        perror("Open file failed");
+        exit(EXIT_FAILURE);
+    }
+    /* initialize scanner */
+    buffer_init(s);
+    stream_init(s);
+    return s;
+}
+
+void scanner_token(scanner_t *s) 
+{
+    buffer_reset(s);
+
+    /* advance stream past whitespace */
+    stream_skip_whitespace(s);
+
+    /* obtain token */
+    stream_read_token(s);
+}
+
+void scanner_free(scanner_t *s) 
+{
+    u_fclose(s->fp);
+    free(s->fname);
+    free(s->tbuf);
+    free(s);
+}
+
+static void append_advance(scanner_t *s)
+{
+    buffer_append(s);
+    stream_advance(s);
+}
+
+static void buffer_append(scanner_t *s)
+{
+    s->tbuf[s->ti] = s->c;
+    s->ti++;
+    /* increase token buffer size if necessary */
+    if (s->ti == (unsigned int)s->tlen) {
+        buffer_grow(s);
+    }
+}
+
+static void buffer_grow(scanner_t *s)
+{
+    /* increase storage of token buffer */
+    s->tlen += SCANBUF_SIZE_INCR;
+    if ((s->tbuf = (UChar *)realloc(s->tbuf, sizeof(UChar) * s->tlen)) == NULL) {
+        perror("Reallocate token buffer failed");
+        exit(EXIT_FAILURE);
+    }
+    /* ensure new buffer space is clear */
+    memset(&s->tbuf[s->ti], 0, sizeof(UChar) * (s->tlen - s->ti));
+}
+
 static void buffer_init(scanner_t *s)
 {
     /* initialize token buffer */
@@ -75,60 +169,6 @@ static void buffer_reset(scanner_t *s)
 {
     s->ti = 0;
     memset(s->tbuf, 0, sizeof(UChar) * s->tlen);
-}
-
-static void buffer_grow(scanner_t *s)
-{
-    /* increase storage of token buffer */
-    s->tlen += SCANBUF_SIZE_INCR;
-    if ((s->tbuf = (UChar *)realloc(s->tbuf, sizeof(UChar) * s->tlen)) == NULL) {
-        perror("Reallocate token buffer failed");
-        exit(EXIT_FAILURE);
-    }
-    /* ensure new buffer space is clear */
-    memset(&s->tbuf[s->ti], 0, sizeof(UChar) * (s->tlen - s->ti));
-}
-
-static void buffer_append(scanner_t *s)
-{
-    s->tbuf[s->ti] = s->c;
-    s->ti++;
-    /* increase token buffer size if necessary */
-    if (s->ti == (unsigned int)s->tlen) {
-        buffer_grow(s);
-    }
-}
-
-static void stream_advance(scanner_t *s)
-{
-    s->c = u_fgetc(s->fp);
-
-    /* update file position */
-    if (s->c == (UChar)'\n') {
-        s->lineno++;
-    }
-}
-
-static void append_advance(scanner_t *s)
-{
-    buffer_append(s);
-    stream_advance(s);
-}
-
-static void stream_skip_whitespace(scanner_t *s)
-{
-    while (u_isWhitespace(s->c) == TRUE) {
-        stream_advance(s);
-    }
-}
-
-static void stream_init(scanner_t *s)
-{
-    /* set file position and advance through stream to first non-whitespace
-       character */
-    s->lineno = 1;
-    stream_advance(s);
-    stream_skip_whitespace(s);
 }
 
 static void read_comment_multi_inner(scanner_t *s)
@@ -150,60 +190,61 @@ static void read_comment_multi_inner(scanner_t *s)
     append_advance(s);
 }
 
-static void read_slash(scanner_t *s)
+static void read_identifier(scanner_t *s)
 {
+    static int init = 1;
+
+    /* string literals for comparison */
+    U_STRING_DECL(ustr_else, "else", 4);
+    U_STRING_DECL(ustr_if, "if", 2);
+    U_STRING_DECL(ustr_is, "is", 2);
+    U_STRING_DECL(ustr_var, "var", 3);
+    U_STRING_DECL(ustr_while, "while", 5);
+    U_STRING_DECL(ustr_true, "true", 4);
+    U_STRING_DECL(ustr_false, "false", 5);
+    U_STRING_DECL(ustr_func, "func", 4);
+    U_STRING_DECL(ustr_return, "return", 6);
+    U_STRING_DECL(ustr_backtick, "`", 1);
+    if (init == 1) {
+        U_STRING_INIT(ustr_else, "else", 4);
+        U_STRING_INIT(ustr_if, "if", 2);
+        U_STRING_INIT(ustr_is, "is", 2);
+        U_STRING_INIT(ustr_var, "var", 3);
+        U_STRING_INIT(ustr_while, "while", 5);
+        U_STRING_INIT(ustr_true, "true", 4);
+        U_STRING_INIT(ustr_false, "false", 5);
+        U_STRING_INIT(ustr_func, "func", 4);
+        U_STRING_INIT(ustr_return, "return", 6);
+        U_STRING_INIT(ustr_backtick, "`", 1);
+        init = 0;
+    }
+
     append_advance(s);
-    /* match single-line comment */
-    if (s->c == (UChar)'/') {
-        s->name = T_COMMENT;
-        while (s->c != (UChar)'\n') {
-            append_advance(s);
-        }
-    }
-    /* match multi-line comment */
-    else if (s->c == (UChar)'*') {
-        s->name = T_COMMENT;
+    while (u_isIDPart(s->c) == TRUE || s->c == (UChar)'_') {
         append_advance(s);
-        read_comment_multi_inner(s);
     }
-    /* match shorthand divide assign operator */
-    else if (s->c == (UChar)'=') {
-        set_single(s, T_DIVIDE_ASSIGN);
-    }
-    /* assumed match division operator */
+    /* match keywords */
+    if (u_strcmp(s->tbuf, ustr_else) == 0) { s->name = T_ELSE; }
+    else if (u_strcmp(s->tbuf, ustr_if) == 0) { s->name = T_IF; }
+    else if (u_strcmp(s->tbuf, ustr_is) == 0) { s->name = T_IS; }
+    else if (u_strcmp(s->tbuf, ustr_var) == 0) { s->name = T_VAR; }
+    else if (u_strcmp(s->tbuf, ustr_while) == 0) { s->name = T_WHILE; }
+    else if (u_strcmp(s->tbuf, ustr_true) == 0) { s->name = T_TRUE; }
+    else if (u_strcmp(s->tbuf, ustr_false) == 0) { s->name = T_FALSE; }
+    else if (u_strcmp(s->tbuf, ustr_func) == 0) { s->name = T_FUNC; }
+    else if (u_strcmp(s->tbuf, ustr_return) == 0) { s->name = T_RETURN; }
+    /* ... */
+
+    /* assign token as identifier */
     else {
-        s->name = T_DIVIDE;
+        s->name = T_IDENTIFIER;
     }
-}
 
-static void read_string(scanner_t *s)
-{
-    UChar tmp;
-    s->name = T_STRING;
-
-    /* do not include initial quote in string value */
-    stream_advance(s);
-
-    while (s->c != (UChar)'"') {
-        /* handle escaped literals */
-        if (s->c == (UChar)'\\') {
-            stream_advance(s);
-            if (s->c == (UChar)'"') { }
-            else if (s->c == (UChar)'r') { s->c = (UChar)'\r'; }
-            else if (s->c == (UChar)'n') { s->c = (UChar)'\n'; }
-            else if (s->c == (UChar)'t') { s->c = (UChar)'\t'; }
-            else if (s->c == (UChar)'\\') { s->c =(UChar) '\\'; }
-            else {
-                tmp = s->c;
-                s->c = (UChar)'\\';
-                buffer_append(s);
-                s->c = tmp;
-            }
-        }
-        append_advance(s);
+    /* backtick is a convenience to allow a programmer to use a reserved-keyword
+       as an identifier, a single backtick itself is not considered valid */
+    if (u_strcmp(s->tbuf, ustr_backtick) == 0) {
+        scan_error_exit(s);
     }
-    /* do not include final quote in string value */
-    stream_advance(s);
 }
 
 static void read_number(scanner_t *s)
@@ -269,61 +310,79 @@ static void read_number(scanner_t *s)
     }
 }
 
-static void read_identifier(scanner_t *s)
+static void read_slash(scanner_t *s)
 {
-    static int init = 1;
-
-    /* string literals for comparison */
-    U_STRING_DECL(ustr_else, "else", 4);
-    U_STRING_DECL(ustr_if, "if", 2);
-    U_STRING_DECL(ustr_is, "is", 2);
-    U_STRING_DECL(ustr_var, "var", 3);
-    U_STRING_DECL(ustr_while, "while", 5);
-    U_STRING_DECL(ustr_true, "true", 4);
-    U_STRING_DECL(ustr_false, "false", 5);
-    U_STRING_DECL(ustr_func, "func", 4);
-    U_STRING_DECL(ustr_return, "return", 6);
-    U_STRING_DECL(ustr_backtick, "`", 1);
-    if (init == 1) {
-        U_STRING_INIT(ustr_else, "else", 4);
-        U_STRING_INIT(ustr_if, "if", 2);
-        U_STRING_INIT(ustr_is, "is", 2);
-        U_STRING_INIT(ustr_var, "var", 3);
-        U_STRING_INIT(ustr_while, "while", 5);
-        U_STRING_INIT(ustr_true, "true", 4);
-        U_STRING_INIT(ustr_false, "false", 5);
-        U_STRING_INIT(ustr_func, "func", 4);
-        U_STRING_INIT(ustr_return, "return", 6);
-        U_STRING_INIT(ustr_backtick, "`", 1);
-        init = 0;
-    }
-
     append_advance(s);
-    while (u_isIDPart(s->c) == TRUE || s->c == (UChar)'_') {
+    /* match single-line comment */
+    if (s->c == (UChar)'/') {
+        s->name = T_COMMENT;
+        while (s->c != (UChar)'\n') {
+            append_advance(s);
+        }
+    }
+    /* match multi-line comment */
+    else if (s->c == (UChar)'*') {
+        s->name = T_COMMENT;
+        append_advance(s);
+        read_comment_multi_inner(s);
+    }
+    /* match shorthand divide assign operator */
+    else if (s->c == (UChar)'=') {
+        set_single(s, T_DIVIDE_ASSIGN);
+    }
+    /* assumed match division operator */
+    else {
+        s->name = T_DIVIDE;
+    }
+}
+
+static void read_string(scanner_t *s)
+{
+    UChar tmp;
+    s->name = T_STRING;
+
+    /* do not include initial quote in string value */
+    stream_advance(s);
+
+    while (s->c != (UChar)'"') {
+        /* handle escaped literals */
+        if (s->c == (UChar)'\\') {
+            stream_advance(s);
+            if (s->c == (UChar)'"') { }
+            else if (s->c == (UChar)'r') { s->c = (UChar)'\r'; }
+            else if (s->c == (UChar)'n') { s->c = (UChar)'\n'; }
+            else if (s->c == (UChar)'t') { s->c = (UChar)'\t'; }
+            else if (s->c == (UChar)'\\') { s->c =(UChar) '\\'; }
+            else {
+                tmp = s->c;
+                s->c = (UChar)'\\';
+                buffer_append(s);
+                s->c = tmp;
+            }
+        }
         append_advance(s);
     }
-    /* match keywords */
-    if (u_strcmp(s->tbuf, ustr_else) == 0) { s->name = T_ELSE; }
-    else if (u_strcmp(s->tbuf, ustr_if) == 0) { s->name = T_IF; }
-    else if (u_strcmp(s->tbuf, ustr_is) == 0) { s->name = T_IS; }
-    else if (u_strcmp(s->tbuf, ustr_var) == 0) { s->name = T_VAR; }
-    else if (u_strcmp(s->tbuf, ustr_while) == 0) { s->name = T_WHILE; }
-    else if (u_strcmp(s->tbuf, ustr_true) == 0) { s->name = T_TRUE; }
-    else if (u_strcmp(s->tbuf, ustr_false) == 0) { s->name = T_FALSE; }
-    else if (u_strcmp(s->tbuf, ustr_func) == 0) { s->name = T_FUNC; }
-    else if (u_strcmp(s->tbuf, ustr_return) == 0) { s->name = T_RETURN; }
-    /* ... */
+    /* do not include final quote in string value */
+    stream_advance(s);
+}
 
-    /* assign token as identifier */
-    else {
-        s->name = T_IDENTIFIER;
-    }
+static void stream_advance(scanner_t *s)
+{
+    s->c = u_fgetc(s->fp);
 
-    /* backtick is a convenience to allow a programmer to use a reserved-keyword
-       as an identifier, a single backtick itself is not considered valid */
-    if (u_strcmp(s->tbuf, ustr_backtick) == 0) {
-        scan_error_exit(s);
+    /* update file position */
+    if (s->c == (UChar)'\n') {
+        s->lineno++;
     }
+}
+
+static void stream_init(scanner_t *s)
+{
+    /* set file position and advance through stream to first non-whitespace
+       character */
+    s->lineno = 1;
+    stream_advance(s);
+    stream_skip_whitespace(s);
 }
 
 static void stream_read_token(scanner_t *s)
@@ -375,53 +434,9 @@ static void stream_read_token(scanner_t *s)
     }
 }
 
-scanner_t* scanner_init(void) 
+static void stream_skip_whitespace(scanner_t *s)
 {
-    char *fname = "stdin";
-    scanner_t *s;
-
-    /* allocate scanner */
-    if ((s = (scanner_t *)calloc(1, sizeof(scanner_t))) == NULL) {
-        perror("Allocate scanner failed");
-        exit(EXIT_FAILURE);
+    while (u_isWhitespace(s->c) == TRUE) {
+        stream_advance(s);
     }
-    /* set filename */
-    assert(s->fname == NULL);
-    if ((s->fname = (char *)calloc(strlen(fname) + 1, sizeof(char))) == NULL) {
-        perror("Allocate scanner filename failed");
-        exit(EXIT_FAILURE);
-    }
-    memcpy(s->fname, fname, sizeof(char) * strlen(fname));
-    /* open stream to file */
-    assert(s->fp == NULL);
-    if (strcmp("stdin", fname) == 0) {
-        s->fp = u_finit(stdin, NULL, NULL);
-    }
-    else if ((s->fp = u_fopen(fname, "r", NULL, NULL)) == NULL) {
-        perror("Open file failed");
-        exit(EXIT_FAILURE);
-    }
-    /* initialize scanner */
-    buffer_init(s);
-    stream_init(s);
-    return s;
-}
-
-void scanner_token(scanner_t *s) 
-{
-    buffer_reset(s);
-
-    /* advance stream past whitespace */
-    stream_skip_whitespace(s);
-
-    /* obtain token */
-    stream_read_token(s);
-}
-
-void scanner_free(scanner_t *s) 
-{
-    u_fclose(s->fp);
-    free(s->fname);
-    free(s->tbuf);
-    free(s);
 }

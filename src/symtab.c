@@ -26,33 +26,10 @@
 #include <assert.h>
 #include "symtab.h"
 
-static unsigned int symtab_hash(char *s)
-{
-    /* TODO: need a good hash function */
-    char *c;
-    unsigned int hash;
+static symtab_entry_t *symtab_entry_init(void);
+static unsigned int symtab_hash(char *);
 
-    hash = 0;
-    for (c = s; *c != '\0'; c++) {
-        hash += (unsigned int)*c;
-    }
-    return hash;
-}
-
-static symtab_entry_t *symtab_entry_init(void)
-{
-    symtab_entry_t *e;
-
-    /* initialize new symbol entry */
-    if ((e = (symtab_entry_t *)calloc(1, sizeof(symtab_entry_t))) == NULL) {
-        perror("Allocate symbol table entry failed");
-        exit(EXIT_FAILURE);
-    }
-
-    return e;
-}
-
-symtab_t *symtab_init()
+symtab_t *symtab_init(void)
 {
     symtab_t *t;
 
@@ -74,7 +51,7 @@ symtab_t *symtab_init()
     return t;
 }
 
-void symtab_enterscope(symtab_t *t)
+void symtab_enter_scope(symtab_t *t)
 {
     symtab_stack_t *s;
 
@@ -98,7 +75,7 @@ void symtab_enterscope(symtab_t *t)
     }
 }
 
-void symtab_leavescope(symtab_t *t)
+void symtab_leave_scope(symtab_t *t)
 {
     symtab_stack_t *s;
 
@@ -156,4 +133,30 @@ void symtab_delete(symtab_t *t, char *key)
     t->entries[i] = (t->entries[i])->next;
 
     /* free(e); */
+}
+
+static symtab_entry_t *symtab_entry_init(void)
+{
+    symtab_entry_t *e;
+
+    /* initialize new symbol entry */
+    if ((e = (symtab_entry_t *)calloc(1, sizeof(symtab_entry_t))) == NULL) {
+        perror("Allocate symbol table entry failed");
+        exit(EXIT_FAILURE);
+    }
+
+    return e;
+}
+
+static unsigned int symtab_hash(char *s)
+{
+    /* TODO: need a good hash function */
+    char *c;
+    unsigned int hash;
+
+    hash = 0;
+    for (c = s; *c != '\0'; c++) {
+        hash += (unsigned int)*c;
+    }
+    return hash;
 }
