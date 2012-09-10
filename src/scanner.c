@@ -29,16 +29,21 @@
 #include "unicode/ustring.h"
 #include "y.tab.h"
 
+/* main.c */
+extern UFILE *ustdin;
+extern UFILE *ustdout;
+extern UFILE *ustderr;
+
 #define SCANBUF_SIZE_INIT 10 
 #define SCANBUF_SIZE_INCR 5
 
 #ifdef DEBUG
 #define scan_error_exit(s) \
-    fprintf(stderr, "scanner:%s:%d: Unexpected lexeme (%s)\n", s->fname, s->lineno, __func__), \
+    u_fprintf(ustderr, "scanner:%s:%d: Unexpected lexeme (%s)\n", s->fname, s->lineno, __func__), \
     exit(EXIT_FAILURE)
 #else
 #define scan_error_exit(s) \
-    fprintf(stderr, "scanner:%s:%d: Unexpected lexeme\n", s->fname, s->lineno), \
+    u_fprintf(ustderr, "scanner:%s:%d: Unexpected lexeme\n", s->fname, s->lineno), \
     exit(EXIT_FAILURE);
 #endif
 
@@ -321,7 +326,8 @@ static void read_identifier(scanner_t *s)
     }
 }
 
-static void stream_read_token(scanner_t *s) {
+static void stream_read_token(scanner_t *s)
+{
 /*
     static int init = 1;
 
@@ -333,7 +339,7 @@ static void stream_read_token(scanner_t *s) {
     }
 */
     /* the first character will determine the parsing logic for various tokens */
-    if (s->c == U_EOF) { set_single(s, 0); }  // return 0 on EOF
+    if (s->c == U_EOF) { set_single(s, T_EOF); }
     else if (s->c == (UChar)':') { set_maybe_double(s, (UChar)'=', T_COLON, T_ASSIGN); }
     else if (s->c == (UChar)'.') { set_maybe_double(s, (UChar)'.', T_DOT, T_CONCAT); }
     else if (s->c == (UChar)'+') { set_maybe_double(s, (UChar)':', T_ADD, T_ADD_ASSIGN); }

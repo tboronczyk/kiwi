@@ -26,44 +26,23 @@
 #include "y.tab.h"
 #include "unicode/ustdio.h"
 
-extern void scanner_parse(scanner_t *s); /* y.tab.c */
+extern void yyparse(scanner_t *s); /* y.tab.c */
 
-int scanner_error(scanner_t *s, const char *str)
-{
-    fprintf(stderr, "%s line %d\n", str, s->lineno);
-    return 1;
-}
+UFILE *ustdin,
+      *ustdout,
+      *ustderr;
 
-UFILE *ustdout;
-
-int scanner_lex(YYSTYPE *lvalp, scanner_t *s)
-{
-    scanner_token(s);
-    /* force re-read on comments */
-    if (s->name == T_COMMENT) {
-        return scanner_lex(lvalp, s);
-    }
-    else {
-/*
-        if (s->name == T_NUMBER) {
-            yylval.number = ...
-        }
-        else if (s->name == T_IDENTIFIER || s->name == T_STRING) {
-            yylval.string = ...
-        }
-*/
-        return s->name;
-    }
-}
-
-int main()
+int main(void)
 {
     scanner_t *s;
 
+    /* prepare unicode file descriptors */
+    ustdin  = u_finit(stdin,  NULL, NULL);
     ustdout = u_finit(stdout, NULL, NULL);
+    ustderr = u_finit(stderr, NULL, NULL);
 
     s = scanner_init();
-    scanner_parse(s);
+    yyparse(s);
     scanner_free(s);
 
     return EXIT_SUCCESS;

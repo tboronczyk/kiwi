@@ -38,11 +38,11 @@ scanner-debug: ytab-debug
 	$(CC) $(CFLAGS_DBG) -c scanner.c
 
 ytab:
-	byacc -P -d -p scanner_ kiwi.y
+	byacc -P -d -p yy kiwi.y
 	mv y.tab.h ../include/y.tab.h
 
 ytab-debug:
-	byacc -P -d -p scanner_ -v -t kiwi.y
+	byacc -P -d -p yy -v -t kiwi.y
 	mv y.tab.h ../include/y.tab.h
 
 clean: 

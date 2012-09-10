@@ -44,6 +44,5 @@ void scanner_free(scanner_t *);
 
 void scanner_token(scanner_t *);
 int scanner_error(scanner_t *, const char *);
-int scanner_lex(YYSTYPE *lvalp, scanner_t *s);
 
 #endif

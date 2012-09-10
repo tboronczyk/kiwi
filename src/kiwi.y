@@ -30,17 +30,24 @@
 #include "unicode/ustring.h"
 #include "scanner.h"
 #include "y.tab.h"
+
+/* main.c */
+extern UFILE *ustdin;
+extern UFILE *ustdout;
+extern UFILE *ustderr;
+
 %}
 
 %union
 {
-    int number;
+    UChar *number; /* temporarily set UChar; need convert functionality */
     UChar *string;
 }
 
 %token <number> T_NUMBER
 %token <string> T_IDENTIFIER T_STRING
 
+%token T_EOF 0
 %token T_IF T_AND T_OR T_NOT T_EQUAL T_ADD T_SUBTRACT T_CONCAT T_MULTIPLY
 %token T_DIVIDE T_NOT_EQUAL T_LESS T_LESS_EQUAL T_GREATER T_GREATER_EQUAL
 %token T_LBRACE T_RBRACE T_ELSE T_COMMA T_DOT T_ASSIGN T_RETURN T_VAR T_TRUE
@@ -52,7 +59,7 @@
 
 %%
 program
-	: /* empty */
+	: T_EOF
 	| stmtlist
 	;
 
@@ -108,7 +115,7 @@ compop
 	| T_LESS_EQUAL
 	| T_GREATER
 	| T_GREATER_EQUAL
-        | T_IS
+	| T_IS
 	;
 
 minorexpr
@@ -138,7 +145,7 @@ factor
 atom
 	: T_IDENTIFIER
 	| funccall
-	| T_NUMBER 
+	| T_NUMBER
 	| T_TRUE
 	| T_FALSE
 	| T_STRING
@@ -196,11 +203,11 @@ assignstmt
 
 assignop
 	: T_ASSIGN
-        | T_ADD_ASSIGN
-        | T_SUBTRACT_ASSIGN
-        | T_MULTIPLY_ASSIGN
-        | T_DIVIDE_ASSIGN
-        | T_MODULO_ASSIGN
+	| T_ADD_ASSIGN
+	| T_SUBTRACT_ASSIGN
+	| T_MULTIPLY_ASSIGN
+	| T_DIVIDE_ASSIGN
+	| T_MODULO_ASSIGN
 	;
 
 
@@ -220,3 +227,26 @@ varstmtlist
 	;
 %%
 
+int yyerror(scanner_t *s, const char *str)
+{
+    u_fprintf(ustderr, "%s line %d\n", str, s->lineno);
+    return 1;
+}
+
+int yylex(YYSTYPE *yylval, scanner_t *s)
+{
+    scanner_token(s);
+    /* force re-read on comments */
+    if (s->name == T_COMMENT) {
+        return yylex(yylval, s);
+    }
+    else {
+        if (s->name == T_NUMBER) {
+            yylval->number = s->tbuf;
+        }
+        else if (s->name == T_IDENTIFIER || s->name == T_STRING) {
+            yylval->string = s->tbuf;
+        }
+        return s->name;
+    }
+}

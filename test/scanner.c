@@ -20,27 +20,40 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "scanner.h"
 #include "unicode/ustdio.h"
 #include "y.tab.h"
 
-UFILE *ustdout;
+UFILE *ustdin,
+      *ustdout,
+      *ustderr;
 
 static void tokenize(scanner_t *s) {
-    while (scanner_token(s) != 0) {
-        u_fprintf(ustdout, "Found %d %S\n", s->name, s->tbuf);
+    do {
+        scanner_token(s);
+        if (s->name == T_EOF) {
+            u_fprintf(ustdout, "Found %d <EOF>\n", s->name);
+        }
+        else {
+            u_fprintf(ustdout, "Found %d %S\n", s->name, s->tbuf);
+        }
     }
+    while (s->name != T_EOF);
 }
 
 int main()
 {
     scanner_t *s;
 
+    /* prepare unicode file descriptors */
+    ustdin  = u_finit(stdin,  NULL, NULL);
     ustdout = u_finit(stdout, NULL, NULL);
+    ustderr = u_finit(stderr, NULL, NULL);
 
     s = scanner_init();
     tokenize(s);
     scanner_free(s);
 
-    return 0;
+    return EXIT_SUCCESS;
 }
