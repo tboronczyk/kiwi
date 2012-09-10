@@ -25,6 +25,7 @@
 
 %{
 #include <stdio.h>
+#include <stdlib.h>
 #include "unicode/uchar.h"
 #include "unicode/ustdio.h"
 #include "unicode/ustring.h"
@@ -229,8 +230,8 @@ varstmtlist
 
 int yyerror(scanner_t *s, const char *str)
 {
-    u_fprintf(ustderr, "%s line %d\n", str, s->lineno);
-    return 1;
+    (void)u_fprintf(ustderr, "%s line %d\n", str, s->lineno);
+    return EXIT_FAILURE;
 }
 
 int yylex(YYSTYPE *yylval, scanner_t *s)

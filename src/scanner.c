@@ -425,4 +425,3 @@ void scanner_free(scanner_t *s)
     free(s->tbuf);
     free(s);
 }
-

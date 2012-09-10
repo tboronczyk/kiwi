@@ -26,7 +26,7 @@
 #include "y.tab.h"
 #include "unicode/ustdio.h"
 
-extern void yyparse(scanner_t *s); /* y.tab.c */
+extern int yyparse(scanner_t *s); /* y.tab.c */
 
 UFILE *ustdin,
       *ustdout,
@@ -35,6 +35,7 @@ UFILE *ustdin,
 int main(void)
 {
     scanner_t *s;
+    int result;
 
     /* prepare unicode file descriptors */
     ustdin  = u_finit(stdin,  NULL, NULL);
@@ -42,8 +43,8 @@ int main(void)
     ustderr = u_finit(stderr, NULL, NULL);
 
     s = scanner_init();
-    yyparse(s);
+    result = yyparse(s);
     scanner_free(s);
 
-    return EXIT_SUCCESS;
+    return (result == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
