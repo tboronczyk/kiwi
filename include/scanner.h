@@ -26,7 +26,15 @@
 #include "unicode/ustdio.h"
 #include "y.tab.h"
 
-typedef struct _scanner
+typedef struct _scanner scanner_t;
+
+scanner_t *scanner_init(void);
+void scanner_free(scanner_t *);
+
+void scanner_token(scanner_t *);
+int scanner_error(scanner_t *, const char *);
+
+struct _scanner
 {
     int lineno,       /* current line number of file (used for error reporting) */
         name;         /* name of token being scanned */
@@ -36,13 +44,6 @@ typedef struct _scanner
         *tbuf;        /* buffer in which token values are accumulated */
     char *fname;      /* name of file being scanned (used for error reporting) */
     UFILE *fp;        /* open file descriptor of file at *fname */
-}
-scanner_t;
-
-scanner_t *scanner_init(void);
-void scanner_free(scanner_t *);
-
-void scanner_token(scanner_t *);
-int scanner_error(scanner_t *, const char *);
+};
 
 #endif

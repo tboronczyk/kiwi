@@ -20,7 +20,7 @@
  */
 
 %pure-parser
-%lex-param { scanner_t *s}
+%lex-param { scanner_t *s }
 %parse-param { scanner_t *s }
 
 %{
@@ -197,7 +197,7 @@ simplestmt
 	| varstmt T_DOT
 	| expr T_DOT
 	;
-	
+
 assignstmt
 	: T_IDENTIFIER assignop expr
 	;

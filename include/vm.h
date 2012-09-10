@@ -27,6 +27,17 @@
 #define VMMACH_NUM_REGS   3
 #define VMMACH_SIZE_STACK 80
 
+typedef struct _vminstr vminstr_t;
+typedef struct _vmmach vmmach_t;
+typedef struct _vmprogbuf vmprogbuf_t;
+
+vmmach_t *vmmach_init(void);
+/*
+void vmmach_load(vmmach_t *);
+*/
+void vmmach_exec(vmmach_t *, vmprogbuf_t *);
+void vmmach_free(vmmach_t *);
+
 typedef enum
 {
     OP_NOOP,
@@ -57,36 +68,26 @@ typedef enum
 }
 opcode_t;
 
-typedef struct _vminstr
+struct _vminstr
 {
     opcode_t op;
     int dest;
     int src;
-}
-vminstr_t;
+};
 
-typedef struct _vmprogbuf
-{
-    int len, tail;
-    vminstr_t **instr;
-}
-vmprogbuf_t;
-
-typedef struct _vmmach
+struct _vmmach
 {
     int sp,                       /* stack pointer */
         ip,                       /* instruction pointer */
         *regs[VMMACH_NUM_REGS],   /* registers */
         stack[VMMACH_SIZE_STACK]; /* stack */
-}
-vmmach_t;
+};
 
-vmmach_t *vmmach_init(void);
-/*
-void vmmach_load(vmmach_t *);
-*/
-void vmmach_exec(vmmach_t *, vmprogbuf_t *);
-void vmmach_free(vmmach_t *);
+struct _vmprogbuf
+{
+    int len, tail;
+    vminstr_t **instr;
+};
 
 #endif
 

@@ -24,13 +24,14 @@
 #include <string.h>
 #include "symtab.h"
 
-int main()
+int main(void)
 {
     symtab_t *t;
-    t = symtab_init();
+    int a, b;
 
-    int a =40;
-    int b =41;
+    t = symtab_init();
+    a = 40;
+    b = 41;
 
     symtab_insert(t, "a", SYMTAB_ENTRY_NUMBER, &a);
     symtab_enterscope(t);
@@ -48,4 +49,3 @@ int main()
 
     return EXIT_SUCCESS;
 }
-

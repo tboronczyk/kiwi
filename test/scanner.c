@@ -33,10 +33,10 @@ static void tokenize(scanner_t *s) {
     do {
         scanner_token(s);
         if (s->name == T_EOF) {
-            u_fprintf(ustdout, "Found %d <EOF>\n", s->name);
+            (void)u_fprintf(ustdout, "Found %d <EOF>\n", s->name);
         }
         else {
-            u_fprintf(ustdout, "Found %d %S\n", s->name, s->tbuf);
+            (void)u_fprintf(ustdout, "Found %d %S\n", s->name, s->tbuf);
         }
     }
     while (s->name != T_EOF);

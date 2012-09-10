@@ -22,8 +22,11 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-
 #define SYMTAB_SIZE 109
+
+typedef struct _symtab symtab_t;
+typedef struct _symtab_entry symtab_entry_t;
+typedef struct _symtab_stack symtab_stack_t;
 
 /* possible data types */
 typedef enum
@@ -34,38 +37,35 @@ typedef enum
 }
 symtab_entrytype_t;
 
-/* linked list bucket for symtab_t hash table */
-typedef struct _symtab_entry
-{
-    char *key;
-    void *value;
-    symtab_entrytype_t type;
-    struct _symtab_entry *next;
-}
-symtab_entry_t;
-
-/* linked list bucket for symtab_t hash table */
-typedef struct _symtab_stack
-{
-    symtab_entry_t **entries;     /* array of entry lists (hash table) */
-    struct _symtab_stack *next;
-}
-symtab_stack_t;
-
-/* symbol table hash table */
-typedef struct _symtab
-{
-    unsigned int (*hash)(char *);  /* function used for hashing keys */
-    symtab_entry_t **entries;      /* array of entry lists (hash table) */
-    symtab_stack_t *stack;         /* array of entry lists (hash table) */
-}
-symtab_t;
-
 symtab_t *symtab_init(void);
 void symtab_enterscope(symtab_t *);
 void symtab_leavescope(symtab_t *);
 void symtab_insert(symtab_t *, char *, symtab_entrytype_t, void *);
 void *symtab_lookup(symtab_t *, char *);
 void symtab_delete(symtab_t *, char *);
+
+/* symbol table hash table */
+struct _symtab
+{
+    unsigned int (*hash)(char *);  /* function used for hashing keys */
+    symtab_entry_t **entries;      /* array of entry lists (hash table) */
+    symtab_stack_t *stack;         /* array of entry lists (hash table) */
+};
+
+/* linked list bucket for symtab_t hash table */
+struct _symtab_entry
+{
+    char *key;
+    void *value;
+    symtab_entrytype_t type;
+    symtab_entry_t *next;
+};
+
+/* linked list bucket for symtab_t hash table */
+struct _symtab_stack
+{
+    symtab_entry_t **entries;     /* array of entry lists (hash table) */
+    symtab_stack_t *next;
+};
 
 #endif
