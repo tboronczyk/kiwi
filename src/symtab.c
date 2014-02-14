@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
 #include "symtab.h"
 
 static symtab_entry_t *symtab_entry_init(void);
