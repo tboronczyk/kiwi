@@ -125,14 +125,24 @@ void *symtab_lookup(symtab_t *t, char *key)
 void symtab_delete(symtab_t *t, char *key)
 {
     unsigned int i;
-    symtab_entry_t *e;
+    symtab_entry_t *e, *tmp;
 
-    /* remove first occurence from entry list */
     i = t->hash(key) % SYMTAB_SIZE;
-    e = t->entries[i];
-    t->entries[i] = (t->entries[i])->next;
-
-    /* free(e); */
+    tmp = NULL;
+    for (e = t->entries[i]; e; tmp = e, e = e->next) {
+        if (strcmp(e->key, key) == 0) {
+            if (tmp == NULL) {
+                t->entries[i] = e->next;
+            }
+            else {
+                tmp->next = e->next;
+            }
+            free(e->key);
+            free(e->value);
+            free(e);
+            return;
+        }
+    }
 }
 
 static symtab_entry_t *symtab_entry_init(void)
