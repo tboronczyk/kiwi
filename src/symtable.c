@@ -23,26 +23,26 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "symtab.h"
+#include "symtable.h"
 
-static symtab_entry_t *symtab_entry_init(void);
-static unsigned int symtab_hash(char *);
+static SymTable_Entry *symtable_entry_init(void);
+static unsigned int symtable_hash(char *);
 
-symtab_t *symtab_init(void)
+SymTable *symtable_init(void)
 {
-    symtab_t *t;
+    SymTable *t;
 
     /* initialize symbol table */
-    if ((t = (symtab_t *)calloc(1, sizeof(symtab_t))) == NULL) {
+    if ((t = (SymTable *)calloc(1, sizeof(SymTable))) == NULL) {
         perror("Allocate symbol table failed");
         exit(EXIT_FAILURE);
     }
-    t->hash = symtab_hash;
+    t->hash = symtable_hash;
 
     assert(t->stack == NULL);
     assert(t->entries == NULL);
 
-    if ((t->entries = (symtab_entry_t **)calloc(SYMTAB_SIZE, sizeof(symtab_entry_t))) == NULL) {
+    if ((t->entries = (SymTable_Entry **)calloc(SYMTAB_SIZE, sizeof(SymTable_Entry))) == NULL) {
         perror("Allocate symbol table entry storage failed");
         exit(EXIT_FAILURE);
     }
@@ -50,12 +50,12 @@ symtab_t *symtab_init(void)
     return t;
 }
 
-void symtab_enter_scope(symtab_t *t)
+void symtable_enter_scope(SymTable *t)
 {
-    symtab_stack_t *s;
+    SymTable_Stack *s;
 
     /* enter current scope to stack */
-    if ((s = (symtab_stack_t *)calloc(1, sizeof(symtab_stack_t))) == NULL) {
+    if ((s = (SymTable_Stack *)calloc(1, sizeof(SymTable_Stack))) == NULL) {
         perror("Allocate symbol table stack failed");
         exit(EXIT_FAILURE);
     }
@@ -68,15 +68,15 @@ void symtab_enter_scope(symtab_t *t)
     t->stack = s;
 
     /* init new scope */
-    if ((t->entries = (symtab_entry_t **)calloc(SYMTAB_SIZE, sizeof(symtab_entry_t))) == NULL) {
+    if ((t->entries = (SymTable_Entry **)calloc(SYMTAB_SIZE, sizeof(SymTable_Entry))) == NULL) {
         perror("Allocate symbol table entry failed");
         exit(EXIT_FAILURE);
     }
 }
 
-void symtab_leave_scope(symtab_t *t)
+void symtable_leave_scope(SymTable *t)
 {
-    symtab_stack_t *s;
+    SymTable_Stack *s;
 
     /* restore scope from stack */
     s = t->stack;
@@ -86,14 +86,14 @@ void symtab_leave_scope(symtab_t *t)
     t->stack = s->next;
 }
 
-void symtab_insert(symtab_t *t, char *key, symtab_entrytype_t type, void *value)
+void symtable_insert(SymTable *t, char *key, SymTable_EntryType type, void *value)
 {
     unsigned int i;
-    symtab_entry_t *e;
+    SymTable_Entry *e;
 
     /* create new symbol entry and enter to front of entry list */
     i = t->hash(key) % SYMTAB_SIZE;
-    e = symtab_entry_init();
+    e = symtable_entry_init();
 
     assert(e->key == NULL);
     assert(e->value == NULL);
@@ -107,10 +107,10 @@ void symtab_insert(symtab_t *t, char *key, symtab_entrytype_t type, void *value)
     t->entries[i] = e;
 }
 
-void *symtab_lookup(symtab_t *t, char *key)
+void *symtable_lookup(SymTable *t, char *key)
 {
     unsigned int i;
-    symtab_entry_t *e;
+    SymTable_Entry *e;
 
     i = t->hash(key) % SYMTAB_SIZE;
     for (e = t->entries[i]; e; e = e->next) {
@@ -121,10 +121,10 @@ void *symtab_lookup(symtab_t *t, char *key)
     return NULL;
 }
 
-void symtab_delete(symtab_t *t, char *key)
+void symtable_delete(SymTable *t, char *key)
 {
     unsigned int i;
-    symtab_entry_t *e, *tmp;
+    SymTable_Entry *e, *tmp;
 
     i = t->hash(key) % SYMTAB_SIZE;
     tmp = NULL;
@@ -144,12 +144,12 @@ void symtab_delete(symtab_t *t, char *key)
     }
 }
 
-static symtab_entry_t *symtab_entry_init(void)
+static SymTable_Entry *symtable_entry_init(void)
 {
-    symtab_entry_t *e;
+    SymTable_Entry *e;
 
     /* initialize new symbol entry */
-    if ((e = (symtab_entry_t *)calloc(1, sizeof(symtab_entry_t))) == NULL) {
+    if ((e = (SymTable_Entry *)calloc(1, sizeof(SymTable_Entry))) == NULL) {
         perror("Allocate symbol table entry failed");
         exit(EXIT_FAILURE);
     }
@@ -157,7 +157,7 @@ static symtab_entry_t *symtab_entry_init(void)
     return e;
 }
 
-static unsigned int symtab_hash(char *s)
+static unsigned int symtable_hash(char *s)
 {
     /* TODO: need a good hash function */
     char *c;

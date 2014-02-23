@@ -29,7 +29,7 @@ UFILE *ustdin,
       *ustdout,
       *ustderr;
 
-static void tokenize(scanner_t *s) {
+static void tokenize(Scanner *s) {
     do {
         scanner_token(s);
         if (s->name == T_EOF) {
@@ -44,7 +44,7 @@ static void tokenize(scanner_t *s) {
 
 int main()
 {
-    scanner_t *s;
+    Scanner *s;
 
     /* prepare unicode file descriptors */
     ustdin  = u_finit(stdin,  NULL, NULL);

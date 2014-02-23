@@ -20,8 +20,8 @@
  */
 
 %pure-parser
-%lex-param { scanner_t *s }
-%parse-param { scanner_t *s }
+%lex-param { Scanner *s }
+%parse-param { Scanner *s }
 
 %{
 #include <stdio.h>
@@ -228,13 +228,13 @@ varstmtlist
 	;
 %%
 
-int yyerror(scanner_t *s, const char *str)
+int yyerror(Scanner *s, const char *str)
 {
     (void)u_fprintf(ustderr, "%s line %d\n", str, s->lineno);
     return EXIT_FAILURE;
 }
 
-int yylex(YYSTYPE *yylval, scanner_t *s)
+int yylex(YYSTYPE *yylval, Scanner *s)
 {
     scanner_token(s);
     /* force re-read on comments */

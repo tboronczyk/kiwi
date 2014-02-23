@@ -1,5 +1,5 @@
-#ifndef SYMTAB_H
-#define SYMTAB_H
+#ifndef SYMTABLE_H
+#define SYMTABLE_H
 
 /*
  * Copyright (c) 2012, Timothy Boronczyk
@@ -24,9 +24,9 @@
 
 #define SYMTAB_SIZE 109
 
-typedef struct _symtab symtab_t;
-typedef struct _symtab_entry symtab_entry_t;
-typedef struct _symtab_stack symtab_stack_t;
+typedef struct s_SymTable SymTable;
+typedef struct s_SymTable_Entry SymTable_Entry;
+typedef struct s_SymTable_Stack SymTable_Stack;
 
 /* possible data types */
 typedef enum
@@ -35,37 +35,37 @@ typedef enum
     SYMTAB_ENTRY_STRING,
     SYMTAB_ENTRY_FUNC
 }
-symtab_entrytype_t;
+SymTable_EntryType;
 
-symtab_t *symtab_init(void);
-void symtab_enter_scope(symtab_t *);
-void symtab_leave_scope(symtab_t *);
-void symtab_insert(symtab_t *, char *, symtab_entrytype_t, void *);
-void *symtab_lookup(symtab_t *, char *);
-void symtab_delete(symtab_t *, char *);
+SymTable *symtable_init(void);
+void symtable_enter_scope(SymTable *);
+void symtable_leave_scope(SymTable *);
+void symtable_insert(SymTable *, char *, SymTable_EntryType, void *);
+void *symtable_lookup(SymTable *, char *);
+void symtable_delete(SymTable *, char *);
 
 /* symbol table hash table */
-struct _symtab
+struct s_SymTable
 {
     unsigned int (*hash)(char *);  /* function used for hashing keys */
-    symtab_entry_t **entries;      /* array of entry lists (hash table) */
-    symtab_stack_t *stack;         /* array of entry lists (hash table) */
+    SymTable_Entry **entries;      /* array of entry lists (hash table) */
+    SymTable_Stack *stack;         /* array of entry lists (hash table) */
 };
 
-/* linked list bucket for symtab_t hash table */
-struct _symtab_entry
+/* linked list bucket for symtable_t hash table */
+struct s_SymTable_Entry
 {
     char *key;
     void *value;
-    symtab_entrytype_t type;
-    symtab_entry_t *next;
+    SymTable_EntryType type;
+    SymTable_Entry *next;
 };
 
-/* linked list bucket for symtab_t hash table */
-struct _symtab_stack
+/* linked list bucket for symtable_t hash table */
+struct s_SymTable_Stack
 {
-    symtab_entry_t **entries;     /* array of entry lists (hash table) */
-    symtab_stack_t *next;
+    SymTable_Entry **entries;     /* array of entry lists (hash table) */
+    SymTable_Stack *next;
 };
 
 #endif

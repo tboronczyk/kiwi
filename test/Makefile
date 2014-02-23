@@ -6,9 +6,9 @@ LDFLAGS_DBG=-licuio -licuuc
 
 all: scanner
 
-symtab:
-	$(MAKE) -C ../src symtab-debug
-	$(CC) $(CFLAGS_DBG) -o symtab ../src/symtab.o symtab.c $(LDFLAGS_DBG)
+symtable:
+	$(MAKE) -C ../src symtable-debug
+	$(CC) $(CFLAGS_DBG) -o symtable ../src/symtable.o symtable.c $(LDFLAGS_DBG)
 
 scanner: ytab
 	$(MAKE) -C ../src scanner-debug
@@ -19,5 +19,5 @@ ytab:
 
 clean:
 
-	rm -Rf symtab scanner
+	rm -Rf symtable scanner
 

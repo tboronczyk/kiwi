@@ -26,16 +26,16 @@
 
 #define UNUSED(x) (void)(x)
 
-#define VMPROGBUF_SIZE_INIT 5
-#define VMPROGBUF_SIZE_INCR 5
+#define VM_PROGBUF_SIZE_INIT 5
+#define VM_PROGBUF_SIZE_INCR 5
 
-vmmach_t *vmmach_init(void)
+VM_Mach *vm_mach_init(void)
 {
-    vmmach_t *vm;
+    VM_Mach *vm;
     int i;
 
     /* allocate memory for machine */
-    if ((vm = (vmmach_t *)calloc(1, sizeof(vmmach_t))) == NULL) {
+    if ((vm = (VM_Mach *)calloc(1, sizeof(VM_Mach))) == NULL) {
         perror("Allocate machine failured");
         exit(EXIT_FAILURE);
     }
@@ -43,29 +43,29 @@ vmmach_t *vmmach_init(void)
     /* initialize machine */
     vm->sp = -1;
     vm->ip = 0;
-    for (i = 0; i < VMMACH_NUM_REGS; i++) {
+    for (i = 0; i < VM_MACH_NUM_REGS; i++) {
         vm->regs[i] = (int *)calloc(1, sizeof(int));
     }
 
     return vm;
 }
 
-void vmmach_free(vmmach_t *vm)
+void vm_mach_free(VM_Mach *vm)
 {
     int i;
-    for (i = 0; i < VMMACH_NUM_REGS; i++) {
+    for (i = 0; i < VM_MACH_NUM_REGS; i++) {
         free(vm->regs[i]);
     }
     free(vm);
 }
 
-static vminstr_t *vminstr_init(opcode_t op, ...)
+static VM_Instr *vm_instr_init(VM_Opcode op, ...)
 {
-    vminstr_t *instr;
+    VM_Instr *instr;
     va_list ap;
 
     /* allocate memory for instruction */
-    if ((instr = (vminstr_t *)calloc(1, sizeof(vminstr_t))) == NULL) {
+    if ((instr = (VM_Instr *)calloc(1, sizeof(VM_Instr))) == NULL) {
         perror("Allocate instruction failed");
         exit(EXIT_FAILURE);
     }
@@ -105,15 +105,15 @@ static vminstr_t *vminstr_init(opcode_t op, ...)
     return instr;
 }
 
-static void vminstr_free(vminstr_t *instr)
+static void vm_instr_free(VM_Instr *instr)
 {
     free(instr);
 }
 
-void vmmach_exec(vmmach_t *vm, vmprogbuf_t *b)
+void vm_mach_exec(VM_Mach *vm, VM_ProgBuf *b)
 {
     int dest, src, tmp1, tmp2;
-    vminstr_t *instr;
+    VM_Instr *instr;
 
     for (vm->ip = 0 ; vm->ip < b->tail; vm->ip++) {
         instr = b->instr[vm->ip];
@@ -149,7 +149,7 @@ void vmmach_exec(vmmach_t *vm, vmprogbuf_t *b)
         case OP_PUSH:
             dest = instr->dest;
 
-            if (vm->sp != VMMACH_SIZE_STACK - 1) {
+            if (vm->sp != VM_MACH_SIZE_STACK - 1) {
                 vm->sp++;
                 vm->stack[vm->sp] = *vm->regs[dest];
             }
@@ -234,20 +234,20 @@ void vmmach_exec(vmmach_t *vm, vmprogbuf_t *b)
     }
 }
 
-static vmprogbuf_t *vmprogbuf_init(void)
+static VM_ProgBuf *vm_progbuf_init(void)
 {
-    vmprogbuf_t *b;
+    VM_ProgBuf *b;
 
     /* allocate memory for program buffer */
-    if ((b = (vmprogbuf_t *)calloc(1, sizeof(vmprogbuf_t))) == NULL) {
+    if ((b = (VM_ProgBuf *)calloc(1, sizeof(VM_ProgBuf))) == NULL) {
         perror("Allocate program buffer failed");
         exit(EXIT_FAILURE);
     }
 
     /* initialize buffer */
     b->tail = 0;
-    b->len = VMPROGBUF_SIZE_INIT;
-    if ((b->instr = (vminstr_t **)calloc(b->len, sizeof(vminstr_t *))) == NULL) {
+    b->len = VM_PROGBUF_SIZE_INIT;
+    if ((b->instr = (VM_Instr **)calloc(b->len, sizeof(VM_Instr *))) == NULL) {
         perror("Allocate program buffer instruction storage failed");
         exit(EXIT_FAILURE);
     }
@@ -255,52 +255,52 @@ static vmprogbuf_t *vmprogbuf_init(void)
     return b;
 }
 
-static void vmprogbuf_free(vmprogbuf_t *b)
+static void vm_progbuf_free(VM_ProgBuf *b)
 {
     int i;
     for (i = 0; i < b->tail; i++) {
-        vminstr_free(b->instr[i]);
+        vm_instr_free(b->instr[i]);
     }
     free(b->instr);
     free(b);
 }
 
-static void vmprogbuf_grow(vmprogbuf_t *b)
+static void vm_progbuf_grow(VM_ProgBuf *b)
 {
     /* increase storage capacity of buffer */
-    b->len += VMPROGBUF_SIZE_INCR;
-    if ((b->instr = (vminstr_t **)realloc(b->instr, sizeof(vminstr_t *) * b->len)) == NULL) {
+    b->len += VM_PROGBUF_SIZE_INCR;
+    if ((b->instr = (VM_Instr **)realloc(b->instr, sizeof(VM_Instr *) * b->len)) == NULL) {
         perror("Reallocate program buffer instruction storage failed");
         exit(EXIT_FAILURE);
     }
 }
 
-static void vmprogbuf_push(vmprogbuf_t *b, vminstr_t *i)
+static void vm_progbuf_push(VM_ProgBuf *b, VM_Instr *i)
 {
     b->instr[b->tail] = i;
     b->tail++;
     /* increase buffer size if necessary */
     if (b->tail == b->len) {
-        vmprogbuf_grow(b);
+        vm_progbuf_grow(b);
     }
 }
 
 int main()
 {
-    vmprogbuf_t *b = vmprogbuf_init();
-    vmmach_t *vm = vmmach_init();
+    VM_ProgBuf *b = vm_progbuf_init();
+    VM_Mach *vm = vm_mach_init();
 
     /* load program */
-    vmprogbuf_push(b, vminstr_init(OP_NOOP));
-    vmprogbuf_push(b, vminstr_init(OP_MOVE, 0, 10));
-    vmprogbuf_push(b, vminstr_init(OP_MOVE, 1, 1));
-    vmprogbuf_push(b, vminstr_init(OP_SUB, 0, 1));
+    vm_progbuf_push(b, vm_instr_init(OP_NOOP));
+    vm_progbuf_push(b, vm_instr_init(OP_MOVE, 0, 10));
+    vm_progbuf_push(b, vm_instr_init(OP_MOVE, 1, 1));
+    vm_progbuf_push(b, vm_instr_init(OP_SUB, 0, 1));
 
     /* execute program */
-    vmmach_exec(vm, b);
+    vm_mach_exec(vm, b);
 
-    vmprogbuf_free(b);
-    vmmach_free(vm);
+    vm_progbuf_free(b);
+    vm_mach_free(vm);
 
     return EXIT_SUCCESS;
 }

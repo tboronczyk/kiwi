@@ -8,10 +8,10 @@ LDFLAGS_DBG=-licuio -licuuc
 all: kiwi vm
 
 kiwi: parser vm
-	$(CC) $(CFLAGS) -o kiwi ast.o scanner.o symtab.o y.tab.o main.c $(LDFLAGS)
+	$(CC) $(CFLAGS) -o kiwi ast.o scanner.o symtable.o y.tab.o main.c $(LDFLAGS)
 
 kiwi-debug: parser-debug vm-debug
-	$(CC) $(CFLAGS_DBG) -o kiwi-debug ast.o scanner.o symtab.o y.tab.o main.c $(LDFLAGS_DBG)
+	$(CC) $(CFLAGS_DBG) -o kiwi-debug ast.o scanner.o symtable.o y.tab.o main.c $(LDFLAGS_DBG)
 
 vm:
 	$(CC) $(CFLAGS) -o vm vm.c $(LDFLAGS)
@@ -19,17 +19,17 @@ vm:
 vm-debug:
 	$(CC) $(CFLAGS_DBG) -o vm-debug vm.c $(LDFLAGS_DBG)
 
-parser: symtab scanner ast
+parser: symtable scanner ast
 	$(CC) $(CFLAGS) -c y.tab.c
 
-parser-debug: symtab-debug scanner-debug ast-debug
+parser-debug: symtable-debug scanner-debug ast-debug
 	$(CC) $(CFLAGS_DBG) -c y.tab.c
 
-symtab:
-	$(CC) $(CFLAGS) -c symtab.c
+symtable:
+	$(CC) $(CFLAGS) -c symtable.c
 
-symtab-debug:
-	$(CC) $(CFLAGS_DBG) -c symtab.c
+symtable-debug:
+	$(CC) $(CFLAGS_DBG) -c symtable.c
 
 scanner: ytab
 	$(CC) $(CFLAGS) -c scanner.c

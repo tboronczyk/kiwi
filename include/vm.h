@@ -24,19 +24,19 @@
 
 #define NUM_OPS 19
 
-#define VMMACH_NUM_REGS   3
-#define VMMACH_SIZE_STACK 80
+#define VM_MACH_NUM_REGS   3
+#define VM_MACH_SIZE_STACK 80
 
-typedef struct _vminstr vminstr_t;
-typedef struct _vmmach vmmach_t;
-typedef struct _vmprogbuf vmprogbuf_t;
+typedef struct s_VM_Instr VM_Instr;
+typedef struct s_VM_Mach VM_Mach;
+typedef struct s_VM_ProgBuf VM_ProgBuf;
 
-vmmach_t *vmmach_init(void);
+VM_Mach *vm_mach_init(void);
 /*
-void vmmach_load(vmmach_t *);
+void vm_mach_load(VM_Mach *);
 */
-void vmmach_exec(vmmach_t *, vmprogbuf_t *);
-void vmmach_free(vmmach_t *);
+void vm_mach_exec(VM_Mach *, VM_ProgBuf *);
+void vm_mach_free(VM_Mach *);
 
 typedef enum
 {
@@ -66,28 +66,27 @@ typedef enum
     OP_JUMP
 */
 }
-opcode_t;
+VM_Opcode;
 
-struct _vminstr
+struct s_VM_Instr
 {
-    opcode_t op;
+    VM_Opcode op;
     int dest;
     int src;
 };
 
-struct _vmmach
+struct s_VM_Mach
 {
-    int sp,                       /* stack pointer */
-        ip,                       /* instruction pointer */
-        *regs[VMMACH_NUM_REGS],   /* registers */
-        stack[VMMACH_SIZE_STACK]; /* stack */
+    int sp,                        /* stack pointer */
+        ip,                        /* instruction pointer */
+        *regs[VM_MACH_NUM_REGS],   /* registers */
+        stack[VM_MACH_SIZE_STACK]; /* stack */
 };
 
-struct _vmprogbuf
+struct s_VM_ProgBuf
 {
     int len, tail;
-    vminstr_t **instr;
+    VM_Instr **instr;
 };
 
 #endif
-

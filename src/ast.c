@@ -25,117 +25,117 @@
 #include <string.h>
 #include "ast.h"
 
-static void astnode_assignstmt_free(astnode_assignstmt_t *);
-static void astnode_atom_free(astnode_atom_t *);
-static void astnode_compareexpr_free(astnode_compareexpr_t *);
-static void astnode_complexstmt_free(astnode_complexstmt_t *);
-static void astnode_compoundbody_free(astnode_compoundbody_t *);
-static void astnode_compoundbodylist_free(astnode_compoundbodylist_t *);
-static void astnode_compoundstmt_free(astnode_compoundstmt_t *);
-static void astnode_elsestmt_free(astnode_elsestmt_t *);
-static void astnode_expr_free(astnode_expr_t *);
-static void astnode_exprlist_free(astnode_exprlist_t *);
-static void astnode_factor_free(astnode_factor_t *);
-static void astnode_funccall_free(astnode_funccall_t *);
-static void astnode_funcdef_free(astnode_funcdef_t *);
-static void astnode_funcparamlist_free(astnode_funcparamlist_t *);
-static void astnode_ifstmt_free(astnode_ifstmt_t *);
-static void astnode_minorexpr_free(astnode_minorexpr_t *);
-static void astnode_notexpr_free(astnode_notexpr_t *);
-static void astnode_program_free(astnode_program_t *);
-static void astnode_returnstmt_free(astnode_returnstmt_t *);
-static void astnode_simplestmt_free(astnode_simplestmt_t *);
-static void astnode_stmt_free(astnode_stmt_t *);
-static void astnode_stmtlist_free(astnode_stmtlist_t *);
-static void astnode_term_free(astnode_term_t *);
-static void astnode_varstmt_free(astnode_varstmt_t *);
-static void astnode_varstmtlist_free(astnode_varstmtlist_t *);
-static void astnode_whilestmt_free(astnode_whilestmt_t *);
+static void astnode_assignstmt_free(ASTNode_AssignStmt *);
+static void astnode_atom_free(ASTNode_Atom *);
+static void astnode_compareexpr_free(ASTNode_CompareExpr *);
+static void astnode_complexstmt_free(ASTNode_ComplexStmt *);
+static void astnode_compoundbody_free(ASTNode_CompoundBody *);
+static void astnode_compoundbodylist_free(ASTNode_CompoundBodyList *);
+static void astnode_compoundstmt_free(ASTNode_CompoundStmt *);
+static void astnode_elsestmt_free(ASTNode_ElseStmt *);
+static void astnode_expr_free(ASTNode_Expr *);
+static void astnode_exprlist_free(ASTNode_ExprList *);
+static void astnode_factor_free(ASTNode_Factor *);
+static void astnode_funccall_free(ASTNode_FuncCall *);
+static void astnode_funcdef_free(ASTNode_FuncDef *);
+static void astnode_funcparamlist_free(ASTNode_FuncParamList *);
+static void astnode_ifstmt_free(ASTNode_IfStmt *);
+static void astnode_minorexpr_free(ASTNode_MinorExpr *);
+static void astnode_notexpr_free(ASTNode_NotExpr *);
+static void astnode_program_free(ASTNode_Program *);
+static void astnode_returnstmt_free(ASTNode_ReturnStmt *);
+static void astnode_simplestmt_free(ASTNode_SimpleStmt *);
+static void astnode_stmt_free(ASTNode_Stmt *);
+static void astnode_stmtlist_free(ASTNode_StmtList *);
+static void astnode_term_free(ASTNode_Term *);
+static void astnode_varstmt_free(ASTNode_VarStmt *);
+static void astnode_varstmtlist_free(ASTNode_VarStmtList *);
+static void astnode_whilestmt_free(ASTNode_WhileStmt *);
 
-astnode_node_t *astnode_init(astnode_type_t type)
+ASTNode_Node *astnode_init(ASTNode_Type type)
 {
-    astnode_node_t *n;
+    ASTNode_Node *n;
     size_t size;
 
     /* determine size to allocate for node */
     switch (type) {
         case ASTNODE_ASSIGNSTMT:
-            size = sizeof(astnode_assignstmt_t);
+            size = sizeof(ASTNode_AssignStmt);
             break;
         case ASTNODE_ATOM:
-            size = sizeof(astnode_atom_t);
+            size = sizeof(ASTNode_Atom);
             break;
         case ASTNODE_COMPAREEXPR:
-            size = sizeof(astnode_compareexpr_t);
+            size = sizeof(ASTNode_CompareExpr);
             break;
         case ASTNODE_COMPLEXSTMT:
-            size = sizeof(astnode_complexstmt_t);
+            size = sizeof(ASTNode_ComplexStmt);
             break;
         case ASTNODE_COMPOUNDBODYLIST:
-            size = sizeof(astnode_compoundbodylist_t);
+            size = sizeof(ASTNode_CompoundBodyList);
             break;
         case ASTNODE_COMPOUNDBODY:
-            size = sizeof(astnode_compoundbody_t);
+            size = sizeof(ASTNode_CompoundBody);
             break;
         case ASTNODE_COMPOUNDSTMT:
-            size = sizeof(astnode_compoundstmt_t);
+            size = sizeof(ASTNode_CompoundStmt);
             break;
         case ASTNODE_ELSESTMT:
-            size = sizeof(astnode_elsestmt_t);
+            size = sizeof(ASTNode_ElseStmt);
             break;
         case ASTNODE_EXPRLIST:
-            size = sizeof(astnode_exprlist_t);
+            size = sizeof(ASTNode_ExprList);
             break;
         case ASTNODE_EXPR:
-            size = sizeof(astnode_expr_t);
+            size = sizeof(ASTNode_Expr);
             break;
         case ASTNODE_FACTOR:
-            size = sizeof(astnode_factor_t);
+            size = sizeof(ASTNode_Factor);
             break;
         case ASTNODE_FUNCCALL:
-            size = sizeof(astnode_funccall_t);
+            size = sizeof(ASTNode_FuncCall);
             break;
         case ASTNODE_FUNCDEF:
-            size = sizeof(astnode_funcdef_t);
+            size = sizeof(ASTNode_FuncDef);
             break;
         case ASTNODE_FUNCPARAMLIST:
-            size = sizeof(astnode_funcparamlist_t);
+            size = sizeof(ASTNode_FuncParamList);
             break;
         case ASTNODE_IFSTMT:
-            size = sizeof(astnode_ifstmt_t);
+            size = sizeof(ASTNode_IfStmt);
             break;
         case ASTNODE_MINOREXPR:
-            size = sizeof(astnode_minorexpr_t);
+            size = sizeof(ASTNode_MinorExpr);
             break;
         case ASTNODE_NOTEXPR:
-            size = sizeof(astnode_notexpr_t);
+            size = sizeof(ASTNode_NotExpr);
             break;
         case ASTNODE_PROGRAM:
-            size = sizeof(astnode_program_t);
+            size = sizeof(ASTNode_Program);
             break;
         case ASTNODE_RETURNSTMT:
-            size = sizeof(astnode_returnstmt_t);
+            size = sizeof(ASTNode_ReturnStmt);
             break;
         case ASTNODE_SIMPLESTMT:
-            size = sizeof(astnode_simplestmt_t);
+            size = sizeof(ASTNode_SimpleStmt);
             break;
         case ASTNODE_STMTLIST:
-            size = sizeof(astnode_stmtlist_t);
+            size = sizeof(ASTNode_StmtList);
             break;
         case ASTNODE_STMT:
-            size = sizeof(astnode_stmt_t);
+            size = sizeof(ASTNode_Stmt);
             break;
         case ASTNODE_TERM:
-            size = sizeof(astnode_term_t);
+            size = sizeof(ASTNode_Term);
             break;
         case ASTNODE_VARSTMTLIST:
-            size = sizeof(astnode_varstmtlist_t);
+            size = sizeof(ASTNode_VarStmtList);
             break;
         case ASTNODE_VARSTMT:
-            size = sizeof(astnode_varstmt_t);
+            size = sizeof(ASTNode_VarStmt);
             break;
         case ASTNODE_WHILESTMT:
-            size = sizeof(astnode_whilestmt_t);
+            size = sizeof(ASTNode_WhileStmt);
             break;
         /* should never reach this */
         default:
@@ -143,7 +143,7 @@ astnode_node_t *astnode_init(astnode_type_t type)
             exit(EXIT_FAILURE);
     }
 
-    if ((n = (astnode_node_t *)calloc(1, size)) == NULL) {
+    if ((n = (ASTNode_Node *)calloc(1, size)) == NULL) {
         perror("Allocate astnode failed");
         exit(EXIT_FAILURE);
     }
@@ -152,87 +152,87 @@ astnode_node_t *astnode_init(astnode_type_t type)
     return n;
 }
 
-void astnode_free(astnode_node_t *n)
+void astnode_free(ASTNode_Node *n)
 {
     /* free node with appropriate function */
     switch (n->nodetype) {
         case ASTNODE_ASSIGNSTMT:
-            astnode_assignstmt_free((astnode_assignstmt_t *)n);
+            astnode_assignstmt_free((ASTNode_AssignStmt *)n);
             break;
         case ASTNODE_ATOM:
-            astnode_atom_free((astnode_atom_t *)n);
+            astnode_atom_free((ASTNode_Atom *)n);
             break;
         case ASTNODE_COMPAREEXPR:
-            astnode_compareexpr_free((astnode_compareexpr_t *)n);
+            astnode_compareexpr_free((ASTNode_CompareExpr *)n);
             break;
         case ASTNODE_COMPLEXSTMT:
-            astnode_complexstmt_free((astnode_complexstmt_t *)n);
+            astnode_complexstmt_free((ASTNode_ComplexStmt *)n);
             break;
         case ASTNODE_COMPOUNDBODY:
-            astnode_compoundbody_free((astnode_compoundbody_t *)n);
+            astnode_compoundbody_free((ASTNode_CompoundBody *)n);
             break;
         case ASTNODE_COMPOUNDBODYLIST:
-            astnode_compoundbodylist_free((astnode_compoundbodylist_t *)n);
+            astnode_compoundbodylist_free((ASTNode_CompoundBodyList *)n);
             break;
         case ASTNODE_COMPOUNDSTMT:
-            astnode_compoundstmt_free((astnode_compoundstmt_t *)n);
+            astnode_compoundstmt_free((ASTNode_CompoundStmt *)n);
             break;
         case ASTNODE_ELSESTMT:
-            astnode_elsestmt_free((astnode_elsestmt_t *)n);
+            astnode_elsestmt_free((ASTNode_ElseStmt *)n);
             break;
         case ASTNODE_EXPR:
-            astnode_expr_free((astnode_expr_t *)n);
+            astnode_expr_free((ASTNode_Expr *)n);
             break;
         case ASTNODE_EXPRLIST:
-            astnode_exprlist_free((astnode_exprlist_t *)n);
+            astnode_exprlist_free((ASTNode_ExprList *)n);
             break;
         case ASTNODE_FACTOR:
-            astnode_factor_free((astnode_factor_t *)n);
+            astnode_factor_free((ASTNode_Factor *)n);
             break;
         case ASTNODE_FUNCCALL:
-            astnode_funccall_free((astnode_funccall_t *)n);
+            astnode_funccall_free((ASTNode_FuncCall *)n);
             break;
         case ASTNODE_FUNCDEF:
-            astnode_funcdef_free((astnode_funcdef_t *)n);
+            astnode_funcdef_free((ASTNode_FuncDef *)n);
             break;
         case ASTNODE_FUNCPARAMLIST:
-            astnode_funcparamlist_free((astnode_funcparamlist_t *)n);
+            astnode_funcparamlist_free((ASTNode_FuncParamList *)n);
             break;
         case ASTNODE_IFSTMT:
-            astnode_ifstmt_free((astnode_ifstmt_t *)n);
+            astnode_ifstmt_free((ASTNode_IfStmt *)n);
             break;
         case ASTNODE_MINOREXPR:
-            astnode_minorexpr_free((astnode_minorexpr_t *)n);
+            astnode_minorexpr_free((ASTNode_MinorExpr *)n);
             break;
         case ASTNODE_NOTEXPR:
-            astnode_notexpr_free((astnode_notexpr_t *)n);
+            astnode_notexpr_free((ASTNode_NotExpr *)n);
             break;
         case ASTNODE_PROGRAM:
-            astnode_program_free((astnode_program_t *)n);
+            astnode_program_free((ASTNode_Program *)n);
             break;
         case ASTNODE_RETURNSTMT:
-            astnode_returnstmt_free((astnode_returnstmt_t *)n);
+            astnode_returnstmt_free((ASTNode_ReturnStmt *)n);
             break;
         case ASTNODE_SIMPLESTMT:
-            astnode_simplestmt_free((astnode_simplestmt_t *)n);
+            astnode_simplestmt_free((ASTNode_SimpleStmt *)n);
             break;
         case ASTNODE_STMT:
-            astnode_stmt_free((astnode_stmt_t *)n);
+            astnode_stmt_free((ASTNode_Stmt *)n);
             break;
         case ASTNODE_STMTLIST:
-            astnode_stmtlist_free((astnode_stmtlist_t *)n);
+            astnode_stmtlist_free((ASTNode_StmtList *)n);
             break;
         case ASTNODE_TERM:
-            astnode_term_free((astnode_term_t *)n);
+            astnode_term_free((ASTNode_Term *)n);
             break;
         case ASTNODE_VARSTMT:
-            astnode_varstmt_free((astnode_varstmt_t *)n);
+            astnode_varstmt_free((ASTNode_VarStmt *)n);
             break;
         case ASTNODE_VARSTMTLIST:
-            astnode_varstmtlist_free((astnode_varstmtlist_t *)n);
+            astnode_varstmtlist_free((ASTNode_VarStmtList *)n);
             break;
         case ASTNODE_WHILESTMT:
-            astnode_whilestmt_free((astnode_whilestmt_t *)n);
+            astnode_whilestmt_free((ASTNode_WhileStmt *)n);
             break;
         /* should never reach this */
         default:
@@ -241,106 +241,106 @@ void astnode_free(astnode_node_t *n)
     }
 }
 
-static void astnode_assignstmt_free(astnode_assignstmt_t *n)
+static void astnode_assignstmt_free(ASTNode_AssignStmt *n)
 {
 }
 
-static void astnode_atom_free(astnode_atom_t *n)
+static void astnode_atom_free(ASTNode_Atom *n)
 {
 }
 
-static void astnode_compareexpr_free(astnode_compareexpr_t *n)
+static void astnode_compareexpr_free(ASTNode_CompareExpr *n)
 {
 }
 
-static void astnode_complexstmt_free(astnode_complexstmt_t *n)
+static void astnode_complexstmt_free(ASTNode_ComplexStmt *n)
 {
 }
 
-static void astnode_compoundbody_free(astnode_compoundbody_t *n)
+static void astnode_compoundbody_free(ASTNode_CompoundBody *n)
 {
 }
 
-static void astnode_compoundbodylist_free(astnode_compoundbodylist_t *n)
+static void astnode_compoundbodylist_free(ASTNode_CompoundBodyList *n)
 {
 }
 
-static void astnode_compoundstmt_free(astnode_compoundstmt_t *n)
+static void astnode_compoundstmt_free(ASTNode_CompoundStmt *n)
 {
 }
 
-static void astnode_elsestmt_free(astnode_elsestmt_t *n)
+static void astnode_elsestmt_free(ASTNode_ElseStmt *n)
 {
 }
 
-static void astnode_expr_free(astnode_expr_t *n)
+static void astnode_expr_free(ASTNode_Expr *n)
 {
 }
 
-static void astnode_exprlist_free(astnode_exprlist_t *n)
+static void astnode_exprlist_free(ASTNode_ExprList *n)
 {
 }
 
-static void astnode_factor_free(astnode_factor_t *n)
+static void astnode_factor_free(ASTNode_Factor *n)
 {
 }
 
-static void astnode_funccall_free(astnode_funccall_t *n)
+static void astnode_funccall_free(ASTNode_FuncCall *n)
 {
 }
 
-static void astnode_funcdef_free(astnode_funcdef_t *n)
+static void astnode_funcdef_free(ASTNode_FuncDef *n)
 {
 }
 
-static void astnode_funcparamlist_free(astnode_funcparamlist_t *n)
+static void astnode_funcparamlist_free(ASTNode_FuncParamList *n)
 {
 }
 
-static void astnode_ifstmt_free(astnode_ifstmt_t *n)
+static void astnode_ifstmt_free(ASTNode_IfStmt *n)
 {
 }
 
-static void astnode_minorexpr_free(astnode_minorexpr_t *n)
+static void astnode_minorexpr_free(ASTNode_MinorExpr *n)
 {
 }
 
-static void astnode_notexpr_free(astnode_notexpr_t *n)
+static void astnode_notexpr_free(ASTNode_NotExpr *n)
 {
 }
 
-static void astnode_program_free(astnode_program_t *n)
+static void astnode_program_free(ASTNode_Program *n)
 {
 }
 
-static void astnode_returnstmt_free(astnode_returnstmt_t *n)
+static void astnode_returnstmt_free(ASTNode_ReturnStmt *n)
 {
 }
 
-static void astnode_simplestmt_free(astnode_simplestmt_t *n)
+static void astnode_simplestmt_free(ASTNode_SimpleStmt *n)
 {
 }
 
-static void astnode_stmt_free(astnode_stmt_t *n)
+static void astnode_stmt_free(ASTNode_Stmt *n)
 {
 }
 
-static void astnode_stmtlist_free(astnode_stmtlist_t *n)
+static void astnode_stmtlist_free(ASTNode_StmtList *n)
 {
 }
 
-static void astnode_term_free(astnode_term_t *n)
+static void astnode_term_free(ASTNode_Term *n)
 {
 }
 
-static void astnode_varstmt_free(astnode_varstmt_t *n)
+static void astnode_varstmt_free(ASTNode_VarStmt *n)
 {
 }
 
-static void astnode_varstmtlist_free(astnode_varstmtlist_t *n)
+static void astnode_varstmtlist_free(ASTNode_VarStmtList *n)
 {
 }
 
-static void astnode_whilestmt_free(astnode_whilestmt_t *n)
+static void astnode_whilestmt_free(ASTNode_WhileStmt *n)
 {
 }

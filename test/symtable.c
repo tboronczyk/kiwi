@@ -22,30 +22,30 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "symtab.h"
+#include "symtable.h"
 
 int main(void)
 {
-    symtab_t *t;
+    SymTable *t;
     int a, b;
 
-    t = symtab_init();
+    t = symtable_init();
     a = 40;
     b = 41;
 
-    symtab_insert(t, "a", SYMTAB_ENTRY_NUMBER, &a);
-    symtab_enter_scope(t);
-    symtab_insert(t, "b", SYMTAB_ENTRY_NUMBER, &b);
-    symtab_enter_scope(t);
+    symtable_insert(t, "a", SYMTABLE_ENTRY_NUMBER, &a);
+    symtable_enter_scope(t);
+    symtable_insert(t, "b", SYMTABLE_ENTRY_NUMBER, &b);
+    symtable_enter_scope(t);
 
-    if (symtab_lookup(t, "a")) printf("a=%d\n", *(int *)symtab_lookup(t, "a")); else printf("a not found\n");
-    if (symtab_lookup(t, "b")) printf("b=%d\n", *(int *)symtab_lookup(t, "b")); else printf("b not found\n");
-    symtab_leave_scope(t);
-    if (symtab_lookup(t, "a")) printf("a=%d\n", *(int *)symtab_lookup(t, "a")); else printf("a not found\n");
-    if (symtab_lookup(t, "b")) printf("b=%d\n", *(int *)symtab_lookup(t, "b")); else printf("b not found\n");
-    symtab_leave_scope(t);
-    if (symtab_lookup(t, "a")) printf("a=%d\n", *(int *)symtab_lookup(t, "a")); else printf("a not found\n");
-    if (symtab_lookup(t, "b")) printf("b=%d\n", *(int *)symtab_lookup(t, "b")); else printf("b not found\n");
+    if (symtable_lookup(t, "a")) printf("a=%d\n", *(int *)symtable_lookup(t, "a")); else printf("a not found\n");
+    if (symtable_lookup(t, "b")) printf("b=%d\n", *(int *)symtable_lookup(t, "b")); else printf("b not found\n");
+    symtable_leave_scope(t);
+    if (symtable_lookup(t, "a")) printf("a=%d\n", *(int *)symtable_lookup(t, "a")); else printf("a not found\n");
+    if (symtable_lookup(t, "b")) printf("b=%d\n", *(int *)symtable_lookup(t, "b")); else printf("b not found\n");
+    symtable_leave_scope(t);
+    if (symtable_lookup(t, "a")) printf("a=%d\n", *(int *)symtable_lookup(t, "a")); else printf("a not found\n");
+    if (symtable_lookup(t, "b")) printf("b=%d\n", *(int *)symtable_lookup(t, "b")); else printf("b not found\n");
 
     return EXIT_SUCCESS;
 }
