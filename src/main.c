@@ -35,6 +35,7 @@ UFILE *ustdin,
 int main(void)
 {
     Scanner *s;
+    Scanner_ErrCode err;
     int result;
 
     /* prepare unicode file descriptors */
@@ -42,7 +43,12 @@ int main(void)
     ustdout = u_finit(stdout, NULL, NULL);
     ustderr = u_finit(stderr, NULL, NULL);
 
-    s = scanner_init();
+    err = scanner_init(&s);
+    if (err != SCANERR_OK) {
+        fprintf(stderr, "Allocate scanner failed");
+        exit(EXIT_FAILURE);
+    }
+
     result = yyparse(s);
     scanner_free(s);
 

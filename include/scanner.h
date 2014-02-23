@@ -26,17 +26,30 @@
 #include "unicode/ustdio.h"
 #include "y.tab.h"
 
+typedef enum
+{
+    SCANERR_OK,
+    SCANERR_ALLOC_SCANNER,
+    SCANERR_ALLOC_FILENAME,
+    SCANERR_FILEOPEN,
+    SCANERR_ALLOC_BUFFER,
+    SCANERR_REALLOC_BUFFER,
+    SCANERR_UNEXPECTED_LEX
+}
+Scanner_ErrCode;
+
 typedef struct s_Scanner Scanner;
 
-Scanner *scanner_init(void);
+Scanner_ErrCode scanner_init(Scanner **);
 void scanner_free(Scanner *);
 
-void scanner_token(Scanner *);
+Scanner_ErrCode scanner_token(Scanner *);
 int scanner_error(Scanner *, const char *);
 
 struct s_Scanner
 {
-    int lineno,       /* current line number of file (used for error reporting) */
+    int linenum,      /* current line number of file (used for error reporting) */
+        linepos,      /* current position in file line */
         name;         /* name of token being scanned */
     unsigned int ti;  /* current position of pointer in *tbuf */
     size_t tlen;      /* size of *tbuf */

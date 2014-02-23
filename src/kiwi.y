@@ -230,7 +230,7 @@ varstmtlist
 
 int yyerror(Scanner *s, const char *str)
 {
-    (void)u_fprintf(ustderr, "%s line %d\n", str, s->lineno);
+    (void)u_fprintf(ustderr, "%s at %d:%d\n", str, s->linenum, s->linepos);
     return EXIT_FAILURE;
 }
 

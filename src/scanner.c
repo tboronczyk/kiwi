@@ -37,132 +37,152 @@ extern UFILE *ustderr;
 #define SCANBUF_SIZE_INIT 10 
 #define SCANBUF_SIZE_INCR 5
 
-#ifdef DEBUG
-#define scan_error_exit(s) \
-    u_fprintf(ustderr, "scanner:%s:%d: Unexpected lexeme (%s)\n", s->fname, s->lineno, __func__), \
-    exit(EXIT_FAILURE)
-#else
-#define scan_error_exit(s) \
-    u_fprintf(ustderr, "scanner:%s:%d: Unexpected lexeme\n", s->fname, s->lineno), \
-    exit(EXIT_FAILURE);
-#endif
+#define RETURN_ON_ERROR(stmt,err) do { \
+    if (((err) = (stmt)) != SCANERR_OK) { return (err); } \
+} while (0)
 
-#define set_single(s,t) \
-    s->name = t; \
-    append_advance(s)
+#define SET_SINGLE(s,t,err) do { \
+    (s)->name = (t); \
+    RETURN_ON_ERROR(append_advance((s)), (err)); \
+} while (0)
 
-#define set_double(s,x,t) \
-    append_advance(s); \
-    if (s->c == x) { set_single(s, t); } else scan_error_exit(s)
+#define SET_DOUBLE(s,x,t,err) do { \
+    RETURN_ON_ERROR(append_advance((s)), (err)); \
+    if ((s)->c == x) { SET_SINGLE((s), (t), (err)); } \
+    else { return SCANERR_UNEXPECTED_LEX; } \
+} while (0)
 
-#define set_maybe_double(s,x,t1,t2) \
-    append_advance(s); \
-    if (s->c == x) { set_single(s, t2); } else s->name = t1
-
-static void append_advance(Scanner *);
-static void buffer_append(Scanner *);
-static void buffer_grow(Scanner *);
-static void buffer_init(Scanner *);
+#define SET_MAYBE_DOUBLE(s,x,t1,t2,err) do { \
+    RETURN_ON_ERROR(append_advance((s)), (err)); \
+    if ((s)->c == x) { SET_SINGLE((s), (t2), (err)); } \
+    else { (s)->name = (t1); } \
+} while (0)
+    
+static Scanner_ErrCode append_advance(Scanner *);
+static Scanner_ErrCode buffer_append(Scanner *);
+static Scanner_ErrCode buffer_grow(Scanner *);
+static Scanner_ErrCode buffer_init(Scanner *);
 static void buffer_reset(Scanner *);
-static void read_comment_multi_inner(Scanner *);
-static void read_identifier(Scanner *);
-static void read_number(Scanner *);
-static void read_slash(Scanner *);
-static void read_string(Scanner *);
-static void stream_advance(Scanner *);
-static void stream_init(Scanner *);
-static void stream_read_token(Scanner *);
-static void stream_skip_whitespace(Scanner *);
+static Scanner_ErrCode read_comment_multi_inner(Scanner *);
+static Scanner_ErrCode read_identifier(Scanner *);
+static Scanner_ErrCode read_number(Scanner *);
+static Scanner_ErrCode read_slash(Scanner *);
+static Scanner_ErrCode read_string(Scanner *);
+static Scanner_ErrCode stream_advance(Scanner *);
+static Scanner_ErrCode stream_init(Scanner *);
+static Scanner_ErrCode stream_read_token(Scanner *);
+static Scanner_ErrCode stream_skip_whitespace(Scanner *);
 
-Scanner* scanner_init(void) 
+Scanner_ErrCode scanner_init(Scanner **s)
 {
     char *fname = "stdin";
-    Scanner *s;
 
     /* allocate scanner */
-    if ((s = (Scanner *)calloc(1, sizeof(Scanner))) == NULL) {
-        perror("Allocate scanner failed");
-        exit(EXIT_FAILURE);
+    *s = calloc(1, sizeof(Scanner));
+    if (*s == NULL) {
+        return SCANERR_ALLOC_SCANNER;
     }
+
     /* set filename */
-    assert(s->fname == NULL);
-    if ((s->fname = (char *)calloc(strlen(fname) + 1, sizeof(char))) == NULL) {
-        perror("Allocate scanner filename failed");
-        exit(EXIT_FAILURE);
+    assert((*s)->fname == NULL);
+    (*s)->fname = calloc(strlen(fname) + 1, sizeof(char));
+    if ((*s)->fname == NULL) {
+        free(*s);
+        return SCANERR_ALLOC_FILENAME;
     }
-    memcpy(s->fname, fname, sizeof(char) * strlen(fname));
+    memcpy((*s)->fname, fname, sizeof(char) * strlen(fname));
+
     /* open stream to file */
-    assert(s->fp == NULL);
+    assert((*s)->fp == NULL);
     if (strcmp("stdin", fname) == 0) {
-        s->fp = u_finit(stdin, NULL, NULL);
+        (*s)->fp = u_finit(stdin, NULL, NULL);
     }
-    else if ((s->fp = u_fopen(fname, "r", NULL, NULL)) == NULL) {
-        perror("Open file failed");
-        exit(EXIT_FAILURE);
+    else {
+        (*s)->fp = u_fopen(fname, "r", NULL, NULL);
     }
+    if ((*s)->fp == NULL) {
+        free((*s)->fname);
+        free(*s);
+        return SCANERR_FILEOPEN;
+    }
+
     /* initialize scanner */
-    buffer_init(s);
-    stream_init(s);
-    return s;
+    Scanner_ErrCode err = buffer_init(*s);
+    if (err != SCANERR_OK) {
+        scanner_free(*s);
+        return err;
+    }
+    stream_init(*s);
+    return SCANERR_OK;
 }
 
-void scanner_token(Scanner *s) 
+Scanner_ErrCode scanner_token(Scanner *s) 
 {
+    Scanner_ErrCode err;
+
     buffer_reset(s);
 
     /* advance stream past whitespace */
-    stream_skip_whitespace(s);
+    RETURN_ON_ERROR(stream_skip_whitespace(s), err);
 
     /* obtain token */
-    stream_read_token(s);
+    RETURN_ON_ERROR(stream_read_token(s), err);
+
+    return SCANERR_OK;
 }
 
 void scanner_free(Scanner *s) 
 {
-    u_fclose(s->fp);
-    free(s->fname);
-    free(s->tbuf);
-    free(s);
+    if (s != NULL) {
+        u_fclose(s->fp);
+        free(s->fname);
+        free(s->tbuf);
+        free(s);
+    }
 }
 
-static void append_advance(Scanner *s)
+static Scanner_ErrCode append_advance(Scanner *s)
 {
-    buffer_append(s);
-    stream_advance(s);
+    Scanner_ErrCode err;
+    RETURN_ON_ERROR(buffer_append(s), err);
+    RETURN_ON_ERROR(stream_advance(s), err);
+    return SCANERR_OK;
 }
 
-static void buffer_append(Scanner *s)
+static Scanner_ErrCode buffer_append(Scanner *s)
 {
     s->tbuf[s->ti] = s->c;
     s->ti++;
     /* increase token buffer size if necessary */
     if (s->ti == (unsigned int)s->tlen) {
-        buffer_grow(s);
+        Scanner_ErrCode err;
+        RETURN_ON_ERROR(buffer_grow(s), err);
     }
+    return SCANERR_OK;
 }
 
-static void buffer_grow(Scanner *s)
+static Scanner_ErrCode buffer_grow(Scanner *s)
 {
     /* increase storage of token buffer */
     s->tlen += SCANBUF_SIZE_INCR;
-    if ((s->tbuf = (UChar *)realloc(s->tbuf, sizeof(UChar) * s->tlen)) == NULL) {
-        perror("Reallocate token buffer failed");
-        exit(EXIT_FAILURE);
+    if ((s->tbuf = realloc(s->tbuf, sizeof(UChar) * s->tlen)) == NULL) {
+        return SCANERR_REALLOC_BUFFER;
     }
     /* ensure new buffer space is clear */
     memset(&s->tbuf[s->ti], 0, sizeof(UChar) * (s->tlen - s->ti));
+    return SCANERR_OK;
 }
 
-static void buffer_init(Scanner *s)
+static Scanner_ErrCode buffer_init(Scanner *s)
 {
     /* initialize token buffer */
     s->ti = 0;
     s->tlen = SCANBUF_SIZE_INIT;
     assert(s->tbuf == NULL);
-    if ((s->tbuf = (UChar *)calloc((size_t)s->tlen, sizeof(UChar))) == NULL) {
-        perror("Allocate token buffer failed");
-        exit(EXIT_FAILURE);
+    if ((s->tbuf = calloc((size_t)s->tlen, sizeof(UChar))) == NULL) {
+        return SCANERR_ALLOC_BUFFER;
     }
+    return SCANERR_OK;
 }
 
 static void buffer_reset(Scanner *s)
@@ -171,29 +191,32 @@ static void buffer_reset(Scanner *s)
     memset(s->tbuf, 0, sizeof(UChar) * s->tlen);
 }
 
-static void read_comment_multi_inner(Scanner *s)
+static Scanner_ErrCode read_comment_multi_inner(Scanner *s)
 {
+    Scanner_ErrCode err;
     /* need to keep track of previous character */
     UChar prev;
     prev = s->c;
 
     /* read characters until end of comment is seen */
-    append_advance(s);
+    RETURN_ON_ERROR(append_advance(s), err);
     while (!(prev == (UChar)'*' && s->c == (UChar)'/')) {
         /* support nested comments */
         if (prev == (UChar)'/' && s->c == (UChar)'*') {
-            read_comment_multi_inner(s);
+            RETURN_ON_ERROR(read_comment_multi_inner(s), err);
         }
         prev = s->c;
-        append_advance(s);
+        RETURN_ON_ERROR(append_advance(s), err);
     }
-    append_advance(s);
+    RETURN_ON_ERROR(append_advance(s), err);
+    return SCANERR_OK;
 }
 
-static void read_identifier(Scanner *s)
+static Scanner_ErrCode read_identifier(Scanner *s)
 {
-    static int init = 1;
+    Scanner_ErrCode err;
 
+    static int init = 1;
     /* string literals for comparison */
     U_STRING_DECL(ustr_else, "else", 4);
     U_STRING_DECL(ustr_if, "if", 2);
@@ -219,9 +242,9 @@ static void read_identifier(Scanner *s)
         init = 0;
     }
 
-    append_advance(s);
+    RETURN_ON_ERROR(append_advance(s), err);
     while (u_isIDPart(s->c) == TRUE || s->c == (UChar)'_') {
-        append_advance(s);
+        RETURN_ON_ERROR(append_advance(s), err);
     }
     /* match keywords */
     if (u_strcmp(s->tbuf, ustr_else) == 0) { s->name = T_ELSE; }
@@ -243,15 +266,18 @@ static void read_identifier(Scanner *s)
     /* backtick is a convenience to allow a programmer to use a reserved-keyword
        as an identifier, a single backtick itself is not considered valid */
     if (u_strcmp(s->tbuf, ustr_backtick) == 0) {
-        scan_error_exit(s);
+        return SCANERR_UNEXPECTED_LEX;
     }
+
+    return SCANERR_OK;
 }
 
-static void read_number(Scanner *s)
+static Scanner_ErrCode read_number(Scanner *s)
 {
-    static int init = 1;
-    int j;
+    Scanner_ErrCode err;
+    int i;
 
+    static int init = 1;
     /* string literals for comparison */
     U_STRING_DECL(ustr_base2, "2", 1);
     U_STRING_DECL(ustr_base8, "8", 1);
@@ -265,84 +291,89 @@ static void read_number(Scanner *s)
         init = 0;
     }
 
-    j = 0;
+    i = 0;
     /* append digits, initially assuming a base-10 number */
     s->name = T_NUMBER;
     while (u_isdigit(s->c) == TRUE) {
-        append_advance(s);
+        RETURN_ON_ERROR(append_advance(s), err);
     }
 
     /* read value for non base-10 numbers */
     if (s->c == (UChar)'#') {
         /* read hexadecimal number, assume hex if there is no leading radix */
         if (s->ti == 0 || u_strcmp(s->tbuf, ustr_base16) == 0) {
-            append_advance(s);
+            RETURN_ON_ERROR(append_advance(s), err);
             while (u_isxdigit(s->c) == TRUE) {
-                j++;
-                append_advance(s);
+                i++;
+                RETURN_ON_ERROR(append_advance(s), err);
             }
         }
         /* read binary number */
         else if (u_strcmp(s->tbuf, ustr_base2) == 0) {
-            append_advance(s);
+            RETURN_ON_ERROR(append_advance(s), err);
             while (s->c == (UChar)'0' || s->c == (UChar)'1') {
-                j++;
-                append_advance(s);
+                i++;
+                RETURN_ON_ERROR(append_advance(s), err);
             }
         }
         /* read octal number */
         else if (u_strcmp(s->tbuf, ustr_base8) == 0) {
-            append_advance(s);
+            RETURN_ON_ERROR(append_advance(s), err);
             while (u_memchr(ustr_octvals, s->c, u_strlen(ustr_octvals)) != NULL) {
-                j++;
-                append_advance(s);
+                i++;
+                RETURN_ON_ERROR(append_advance(s), err);
             }
         }
         /* only bases 2, 8, and 16 are supported */
         else {
-            scan_error_exit(s);
+            return SCANERR_UNEXPECTED_LEX;
         }
 
         /* radix with no number part is invalid */
-        if (j == 0) {
-            scan_error_exit(s);
+        if (i == 0) {
+            return SCANERR_UNEXPECTED_LEX;
         }
     }
+    return SCANERR_OK;
 }
 
-static void read_slash(Scanner *s)
+static Scanner_ErrCode read_slash(Scanner *s)
 {
-    append_advance(s);
+    Scanner_ErrCode err;
+
+    RETURN_ON_ERROR(append_advance(s), err);
     /* match single-line comment */
     if (s->c == (UChar)'/') {
         s->name = T_COMMENT;
         while (s->c != (UChar)'\n') {
-            append_advance(s);
+            RETURN_ON_ERROR(append_advance(s), err);
         }
     }
     /* match multi-line comment */
     else if (s->c == (UChar)'*') {
         s->name = T_COMMENT;
-        append_advance(s);
-        read_comment_multi_inner(s);
+        RETURN_ON_ERROR(append_advance(s), err);
+        RETURN_ON_ERROR(read_comment_multi_inner(s), err);
     }
     /* match shorthand divide assign operator */
     else if (s->c == (UChar)'=') {
-        set_single(s, T_DIVIDE_ASSIGN);
+        SET_SINGLE(s, T_DIVIDE_ASSIGN, err);
     }
     /* assumed match division operator */
     else {
         s->name = T_DIVIDE;
     }
+    return SCANERR_OK;
 }
 
-static void read_string(Scanner *s)
+static Scanner_ErrCode read_string(Scanner *s)
 {
+    Scanner_ErrCode err;
     UChar tmp;
     s->name = T_STRING;
 
     /* do not include initial quote in string value */
-    stream_advance(s);
+    RETURN_ON_ERROR(stream_advance(s), err);
 
     while (s->c != (UChar)'"') {
         /* handle escaped literals */
@@ -356,37 +387,44 @@ static void read_string(Scanner *s)
             else {
                 tmp = s->c;
                 s->c = (UChar)'\\';
-                buffer_append(s);
+                RETURN_ON_ERROR(buffer_append(s), err);
                 s->c = tmp;
             }
         }
-        append_advance(s);
+        RETURN_ON_ERROR(append_advance(s), err);
     }
     /* do not include final quote in string value */
-    stream_advance(s);
+    RETURN_ON_ERROR(stream_advance(s), err);
+    return SCANERR_OK;
 }
 
-static void stream_advance(Scanner *s)
+static Scanner_ErrCode stream_advance(Scanner *s)
 {
     s->c = u_fgetc(s->fp);
+    s->linepos++;
 
     /* update file position */
     if (s->c == (UChar)'\n') {
-        s->lineno++;
+        s->linenum++;
+        s->linepos = 1;
     }
+    return SCANERR_OK;
 }
 
-static void stream_init(Scanner *s)
+static Scanner_ErrCode stream_init(Scanner *s)
 {
-    /* set file position and advance through stream to first non-whitespace
-       character */
-    s->lineno = 1;
-    stream_advance(s);
-    stream_skip_whitespace(s);
+    Scanner_ErrCode err;
+    /* set file position and advance through stream to first non-whitespace character */
+    s->linenum = 1;
+    s->linepos = 1;
+    RETURN_ON_ERROR(stream_advance(s), err);
+    RETURN_ON_ERROR(stream_skip_whitespace(s), err);
+    return SCANERR_OK;
 }
 
-static void stream_read_token(Scanner *s)
+static Scanner_ErrCode stream_read_token(Scanner *s)
 {
+    Scanner_ErrCode err;
 /*
     static int init = 1;
 
@@ -398,29 +436,29 @@ static void stream_read_token(Scanner *s)
     }
 */
     /* the first character will determine the parsing logic for various tokens */
-    if (s->c == U_EOF) { set_single(s, T_EOF); }
-    else if (s->c == (UChar)':') { set_maybe_double(s, (UChar)'=', T_COLON, T_ASSIGN); }
-    else if (s->c == (UChar)'.') { set_maybe_double(s, (UChar)'.', T_DOT, T_CONCAT); }
-    else if (s->c == (UChar)'+') { set_maybe_double(s, (UChar)':', T_ADD, T_ADD_ASSIGN); }
-    else if (s->c == (UChar)'-') { set_maybe_double(s, (UChar)':', T_SUBTRACT, T_SUBTRACT_ASSIGN); }
-    else if (s->c == (UChar)'*') { set_maybe_double(s, (UChar)':', T_MULTIPLY, T_MULTIPLY_ASSIGN); }
-    else if (s->c == (UChar)'%') { set_maybe_double(s, (UChar)':', T_MODULO, T_MODULO_ASSIGN); }
-    else if (s->c == (UChar)'/') { read_slash(s); }
-    else if (s->c == (UChar)'=') { set_single(s, T_EQUAL); }
-    else if (s->c == (UChar)'~') { set_maybe_double(s, (UChar)'=', T_NOT, T_NOT_EQUAL); }
-    else if (s->c == (UChar)'<') { set_maybe_double(s, (UChar)'=', T_LESS, T_LESS_EQUAL); }
-    else if (s->c == (UChar)'>') { set_maybe_double(s, (UChar)'=', T_GREATER, T_GREATER_EQUAL); }
-    else if (s->c == (UChar)'&') { set_double(s, (UChar)'&', T_AND); }
-    else if (s->c == (UChar)'|') { set_double(s, (UChar)'|', T_NOT); }
-    else if (s->c == (UChar)'{') { set_single(s, T_LBRACE); }
-    else if (s->c == (UChar)'}') { set_single(s, T_RBRACE); }
-    else if (s->c == (UChar)'(') { set_single(s, T_LPAREN); }
-    else if (s->c == (UChar)')') { set_single(s, T_RPAREN); }
-    else if (s->c == (UChar)',') { set_single(s, T_COMMA); }
-    else if (s->c == (UChar)'"') { read_string(s); }
-    else if (u_isdigit(s->c) == TRUE || s->c == (UChar)'#') { read_number(s); }
+    if (s->c == U_EOF) { SET_SINGLE(s, T_EOF, err); }
+    else if (s->c == (UChar)':') { SET_MAYBE_DOUBLE(s, (UChar)'=', T_COLON, T_ASSIGN, err); }
+    else if (s->c == (UChar)'.') { SET_MAYBE_DOUBLE(s, (UChar)'.', T_DOT, T_CONCAT, err); }
+    else if (s->c == (UChar)'+') { SET_MAYBE_DOUBLE(s, (UChar)':', T_ADD, T_ADD_ASSIGN, err); }
+    else if (s->c == (UChar)'-') { SET_MAYBE_DOUBLE(s, (UChar)':', T_SUBTRACT, T_SUBTRACT_ASSIGN, err); }
+    else if (s->c == (UChar)'*') { SET_MAYBE_DOUBLE(s, (UChar)':', T_MULTIPLY, T_MULTIPLY_ASSIGN, err); }
+    else if (s->c == (UChar)'%') { SET_MAYBE_DOUBLE(s, (UChar)':', T_MODULO, T_MODULO_ASSIGN, err); }
+    else if (s->c == (UChar)'/') { RETURN_ON_ERROR(read_slash(s), err); }
+    else if (s->c == (UChar)'=') { SET_SINGLE(s, T_EQUAL, err); }
+    else if (s->c == (UChar)'~') { SET_MAYBE_DOUBLE(s, (UChar)'=', T_NOT, T_NOT_EQUAL, err); }
+    else if (s->c == (UChar)'<') { SET_MAYBE_DOUBLE(s, (UChar)'=', T_LESS, T_LESS_EQUAL, err); }
+    else if (s->c == (UChar)'>') { SET_MAYBE_DOUBLE(s, (UChar)'=', T_GREATER, T_GREATER_EQUAL, err); }
+    else if (s->c == (UChar)'&') { SET_DOUBLE(s, (UChar)'&', T_AND, err); }
+    else if (s->c == (UChar)'|') { SET_DOUBLE(s, (UChar)'|', T_NOT, err); }
+    else if (s->c == (UChar)'{') { SET_SINGLE(s, T_LBRACE, err); }
+    else if (s->c == (UChar)'}') { SET_SINGLE(s, T_RBRACE, err); }
+    else if (s->c == (UChar)'(') { SET_SINGLE(s, T_LPAREN, err); }
+    else if (s->c == (UChar)')') { SET_SINGLE(s, T_RPAREN, err); }
+    else if (s->c == (UChar)',') { SET_SINGLE(s, T_COMMA, err); }
+    else if (s->c == (UChar)'"') { RETURN_ON_ERROR(read_string(s), err); }
+    else if (u_isdigit(s->c) == TRUE || s->c == (UChar)'#') { RETURN_ON_ERROR(read_number(s), err); }
     else if (u_isIDStart(s->c) == TRUE || s->c == (UChar)'_' || s->c == (UChar)'`') {
-        read_identifier(s);
+        RETURN_ON_ERROR(read_identifier(s), err);
 /*
         // single _ is wildcard token
         if (u_strcmp(s->tbuf, ustr_wildcard) == 0) {
@@ -430,13 +468,16 @@ static void stream_read_token(Scanner *s)
     }
     /* invalid */
     else {
-        scan_error_exit(s);
+        return SCANERR_UNEXPECTED_LEX;
     }
+    return SCANERR_OK;
 }
 
-static void stream_skip_whitespace(Scanner *s)
+static Scanner_ErrCode stream_skip_whitespace(Scanner *s)
 {
+    Scanner_ErrCode err;
     while (u_isWhitespace(s->c) == TRUE) {
-        stream_advance(s);
+        RETURN_ON_ERROR(stream_advance(s), err);
     }
+    return SCANERR_OK;
 }
