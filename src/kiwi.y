@@ -64,7 +64,6 @@ program
 	| stmtlist
 	;
 
-
 stmtlist
 	: stmt
 	| stmtlist stmt
@@ -136,6 +135,7 @@ term
 mulop
 	: T_MULTIPLY
 	| T_DIVIDE
+	| T_MODULO
 	;
 
 factor
