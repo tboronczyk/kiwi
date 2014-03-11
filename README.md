@@ -2,7 +2,7 @@ Copyright (c) 2012, Timothy Boronczyk
 
 This is the file README for the Kiwi Programming Language distribution.
 
-Kiwi is my on-going "forever Project" to implement a programming language from
+Kiwi is my on-going "Forever Project" to implement a programming language from
 scratch. Not only a learning opportunity, it also serves as a playground to
 explore issues in programming language design.
 
@@ -10,6 +10,12 @@ Kiwi probably won't be useful to anyone other than me, especially at the rate
 I get to work on it, but the code is licensed as free software. You can
 redistribute it and/or modify it under the terms of the license provided in
 the LICENSE file.
+
+To compile:
+
+    autoreconf --install
+    ./configure
+    make
 
 Comments
 ========

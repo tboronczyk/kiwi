@@ -31,7 +31,7 @@
 #include <unicode/ustring.h>
 #include "ast.h"
 #include "scanner.h"
-#include "y.tab.h"
+#include "parser.h"
 
 /* main.c */
 extern UFILE *ustderr;
@@ -113,7 +113,7 @@ int yylex(YYSTYPE *, Scanner *);
 %token <atom> T_NUMBER T_IDENTIFIER T_STRING T_TRUE T_FALSE
 
 %token T_IF T_NOT T_CONCAT
-%token T_LBRACE T_RBRACE T_ELSE T_COMMA T_DOT T_ASSIGN T_RETURN T_VAR
+%token T_LBRACE T_RBRACE T_ELSE T_COMMA T_DOT T_RETURN T_VAR
 %token T_LPAREN T_RPAREN T_WHILE T_FUNC
 %token T_COMMENT T_COLON
 

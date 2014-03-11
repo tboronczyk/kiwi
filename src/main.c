@@ -25,9 +25,8 @@
 #include <unicode/ustdio.h>
 #include "ast.h"
 #include "scanner.h"
-#include "y.tab.h"
 
-extern int yyparse(Scanner *s, ASTNode_Program **n); /* y.tab.c */
+extern int yyparse(Scanner *s, ASTNode_Program **n); /* parser.c */
 
 UFILE *ustdin,
       *ustdout,

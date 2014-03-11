@@ -25,7 +25,7 @@
 #include <unicode/ustdio.h>
 #include "ast.h"
 #include "scanner.h"
-#include "y.tab.h"
+#include "parser.h"
 
 UFILE *ustdin,
       *ustdout,

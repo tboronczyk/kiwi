@@ -28,7 +28,7 @@
 #include <unicode/ustring.h>
 #include "ast.h"
 #include "scanner.h"
-#include "y.tab.h"
+#include "parser.h"
 
 /* main.c */
 extern UFILE *ustdin;

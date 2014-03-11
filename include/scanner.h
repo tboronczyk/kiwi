@@ -24,7 +24,6 @@
 
 #include <stdio.h>
 #include "unicode/ustdio.h"
-#include "y.tab.h"
 
 typedef enum
 {
