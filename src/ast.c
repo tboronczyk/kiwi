@@ -26,7 +26,6 @@
 #include "ast.h"
 
 static void astnode_assignstmt_free(ASTNode_AssignStmt *);
-static void astnode_atom_free(ASTNode_Atom *);
 static void astnode_compareexpr_free(ASTNode_CompareExpr *);
 static void astnode_complexstmt_free(ASTNode_ComplexStmt *);
 static void astnode_compoundbody_free(ASTNode_CompoundBody *);
@@ -52,18 +51,13 @@ static void astnode_varstmt_free(ASTNode_VarStmt *);
 static void astnode_varstmtlist_free(ASTNode_VarStmtList *);
 static void astnode_whilestmt_free(ASTNode_WhileStmt *);
 
-ASTNode_Node *astnode_init(ASTNode_Type type)
+void *astnode_init(ASTNode_Type type)
 {
-    ASTNode_Node *n;
-    size_t size;
-
     /* determine size to allocate for node */
+    size_t size;
     switch (type) {
         case ASTNODE_ASSIGNSTMT:
             size = sizeof(ASTNode_AssignStmt);
-            break;
-        case ASTNODE_ATOM:
-            size = sizeof(ASTNode_Atom);
             break;
         case ASTNODE_COMPAREEXPR:
             size = sizeof(ASTNode_CompareExpr);
@@ -139,15 +133,16 @@ ASTNode_Node *astnode_init(ASTNode_Type type)
             break;
         /* should never reach this */
         default:
-            perror("Invalid astnode type passed on init");
+            perror("Invalid ASTNode_Type passed to astnode_init");
             exit(EXIT_FAILURE);
     }
 
-    if ((n = (ASTNode_Node *)calloc(1, size)) == NULL) {
+    void *n;
+    if ((n = calloc(1, size)) == NULL) {
         perror("Allocate astnode failed");
         exit(EXIT_FAILURE);
     }
-    n->nodetype = type;
+    ((ASTNode_Node *)n)->nodetype = type;
 
     return n;
 }
@@ -158,9 +153,6 @@ void astnode_free(ASTNode_Node *n)
     switch (n->nodetype) {
         case ASTNODE_ASSIGNSTMT:
             astnode_assignstmt_free((ASTNode_AssignStmt *)n);
-            break;
-        case ASTNODE_ATOM:
-            astnode_atom_free((ASTNode_Atom *)n);
             break;
         case ASTNODE_COMPAREEXPR:
             astnode_compareexpr_free((ASTNode_CompareExpr *)n);
@@ -242,10 +234,6 @@ void astnode_free(ASTNode_Node *n)
 }
 
 static void astnode_assignstmt_free(ASTNode_AssignStmt *n)
-{
-}
-
-static void astnode_atom_free(ASTNode_Atom *n)
 {
 }
 

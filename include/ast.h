@@ -22,12 +22,13 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <unicode/uchar.h>
+
 typedef int Token;
 
 typedef struct s_ASTNode_Node ASTNode_Node;
 
 typedef struct s_ASTNode_AssignStmt ASTNode_AssignStmt;
-typedef struct s_ASTNode_Atom ASTNode_Atom;
 typedef struct s_ASTNode_CompareExpr ASTNode_CompareExpr;
 typedef struct s_ASTNode_ComplexStmt ASTNode_ComplexStmt;
 typedef struct s_ASTNode_CompoundBody ASTNode_CompoundBody;
@@ -55,9 +56,12 @@ typedef struct s_ASTNode_WhileStmt ASTNode_WhileStmt;
 
 typedef enum
 {
+    ASTNODE_ADDOP,
+    ASTNODE_ASSIGNOP,
     ASTNODE_ASSIGNSTMT,
     ASTNODE_ATOM,
     ASTNODE_COMPAREEXPR,
+    ASTNODE_COMPAREOP,
     ASTNODE_COMPLEXSTMT,
     ASTNODE_COMPOUNDBODY,
     ASTNODE_COMPOUNDBODYLIST,
@@ -65,12 +69,15 @@ typedef enum
     ASTNODE_ELSESTMT,
     ASTNODE_EXPR,
     ASTNODE_EXPRLIST,
+    ASTNODE_EXPROP,
     ASTNODE_FACTOR,
     ASTNODE_FUNCCALL,
     ASTNODE_FUNCDEF,
     ASTNODE_FUNCPARAMLIST,
+    ASTNODE_IDENTIFIER,
     ASTNODE_IFSTMT,
     ASTNODE_MINOREXPR,
+    ASTNODE_MULOP,
     ASTNODE_NOTEXPR,
     ASTNODE_PROGRAM,
     ASTNODE_RETURNSTMT,
@@ -84,40 +91,26 @@ typedef enum
 }
 ASTNode_Type;
 
-ASTNode_Node *astnode_init(ASTNode_Type);
-void ASTNode_free(ASTNode_Node *);
+void *astnode_init(ASTNode_Type);
 
 struct s_ASTNode_Node
 {
     ASTNode_Type nodetype;
 };
 
-struct s_ASTNode_AssignStmt
+struct s_ASTNode_AssignStmt 
 {
     ASTNode_Type nodetype;
-    Token identifier;
+    UChar *identifier;
     Token assignop;
     ASTNode_Expr *expr;
-};
-
-struct s_ASTNode_Atom
-{
-    ASTNode_Type nodetype;
-    ASTNode_Type atomtype;
-    union
-    {
-        Token token;
-        ASTNode_FuncCall *funccall;
-        ASTNode_Expr *expr;
-    }
-    atom;
 };
 
 struct s_ASTNode_CompareExpr
 {
     ASTNode_Type nodetype;
     ASTNode_CompareExpr *compareexpr;
-    Token compop;
+    Token compareop;
     ASTNode_MinorExpr *minorexpr;
 };
 
@@ -129,8 +122,7 @@ struct s_ASTNode_ComplexStmt
     {
         ASTNode_CompoundStmt *compoundstmt;
         ASTNode_FuncDef *funcdef;
-    }
-    stmt;
+    } stmt;
 };
 
 struct s_ASTNode_CompoundBody
@@ -154,8 +146,7 @@ struct s_ASTNode_CompoundStmt
     {
         ASTNode_IfStmt *ifstmt;
         ASTNode_WhileStmt *whilestmt;
-    }
-    stmt;
+    } stmt;
 };
 
 struct s_ASTNode_ElseStmt
@@ -166,15 +157,14 @@ struct s_ASTNode_ElseStmt
     {
         ASTNode_CompoundBody *compoundbody;
         ASTNode_IfStmt *ifstmt;
-    }
-    stmt;
+    } stmt;
 };
 
 struct s_ASTNode_Expr
 {
     ASTNode_Type nodetype;
     ASTNode_Expr *expr;
-    Token expop;
+    Token exprop;
     ASTNode_NotExpr *notexpr;
 };
 
@@ -191,24 +181,25 @@ struct s_ASTNode_Factor
     ASTNode_Type factortype;
     union
     {
-        ASTNode_Atom *atom;
+        UChar *atom;
+        ASTNode_FuncCall *funccall;
+        ASTNode_Expr *expr;
         ASTNode_Factor *factor;
-    }
-    factor;
+    } factor;
     Token addop;
 };
 
 struct s_ASTNode_FuncCall
 {
     ASTNode_Type nodetype;
-    Token identifier;
+    UChar* identifier;
     ASTNode_ExprList *exprlist;
 };
 
 struct s_ASTNode_FuncDef
 {
     ASTNode_Type nodetype;
-    Token identifier;
+    UChar* identifier;
     ASTNode_FuncParamList *funcparamlist;
     ASTNode_CompoundBody *compoundbody;
 };
@@ -216,7 +207,7 @@ struct s_ASTNode_FuncDef
 struct s_ASTNode_FuncParamList
 {
     ASTNode_Type nodetype;
-    Token identifier;
+    UChar *identifier;
     ASTNode_FuncParamList *funcparamlist;
 };
 
@@ -239,7 +230,7 @@ struct s_ASTNode_MinorExpr
 struct s_ASTNode_NotExpr
 {
     ASTNode_Type nodetype;
-    Token tnot;
+    int tnot;
     ASTNode_CompareExpr *compareexpr;
 };
 
@@ -251,6 +242,7 @@ struct s_ASTNode_Program
 
 struct s_ASTNode_ReturnStmt
 {
+    ASTNode_Type nodetype;
     ASTNode_Expr *expr;
 };
 
@@ -264,8 +256,7 @@ struct s_ASTNode_SimpleStmt
         ASTNode_ReturnStmt *returnstmt;
         ASTNode_VarStmt *varstmt;
         ASTNode_Expr * expr;
-    }
-    stmt;
+    } stmt;
 };
 
 struct s_ASTNode_Stmt
@@ -276,8 +267,7 @@ struct s_ASTNode_Stmt
     {
         ASTNode_ComplexStmt *complexstmt;
         ASTNode_SimpleStmt *simplestmt;
-    }
-    stmt;
+    } stmt;
 };
 
 struct s_ASTNode_StmtList
@@ -308,10 +298,9 @@ struct s_ASTNode_VarStmtList
     ASTNode_Type stmttype;
     union
     {
-        Token identifier;
+        UChar *identifier;
         ASTNode_AssignStmt *assignstmt;
-    }
-    stmt;
+    } stmt;
 };
 
 struct s_ASTNode_WhileStmt

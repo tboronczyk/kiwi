@@ -21,8 +21,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unicode/ustdio.h>
+#include "ast.h"
 #include "scanner.h"
-#include "unicode/ustdio.h"
 #include "y.tab.h"
 
 UFILE *ustdin,

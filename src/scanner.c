@@ -23,10 +23,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unicode/uchar.h>
+#include <unicode/ustdio.h>
+#include <unicode/ustring.h>
+#include "ast.h"
 #include "scanner.h"
-#include "unicode/uchar.h"
-#include "unicode/ustdio.h"
-#include "unicode/ustring.h"
 #include "y.tab.h"
 
 /* main.c */

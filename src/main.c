@@ -22,11 +22,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unicode/ustdio.h>
+#include "ast.h"
 #include "scanner.h"
 #include "y.tab.h"
-#include "unicode/ustdio.h"
 
-extern int yyparse(Scanner *s); /* y.tab.c */
+extern int yyparse(Scanner *s, ASTNode_Program **n); /* y.tab.c */
 
 UFILE *ustdin,
       *ustdout,
@@ -49,7 +50,9 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    result = yyparse(s);
+    ASTNode_Program *node;
+    result = yyparse(s, &node);
+
     scanner_free(s);
 
     return (result == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
