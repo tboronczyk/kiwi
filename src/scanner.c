@@ -74,10 +74,8 @@ static Scanner_ErrCode stream_init(Scanner *);
 static Scanner_ErrCode stream_read_token(Scanner *);
 static Scanner_ErrCode stream_skip_whitespace(Scanner *);
 
-Scanner_ErrCode scanner_init(Scanner **s)
+Scanner_ErrCode scanner_init(Scanner **s, char *fname)
 {
-    char *fname = "stdin";
-
     /* allocate scanner */
     *s = calloc(1, sizeof(Scanner));
     if (*s == NULL) {

@@ -39,7 +39,7 @@ Scanner_ErrCode;
 
 typedef struct s_Scanner Scanner;
 
-Scanner_ErrCode scanner_init(Scanner **);
+Scanner_ErrCode scanner_init(Scanner **, char *);
 void scanner_free(Scanner *);
 
 Scanner_ErrCode scanner_token(Scanner *);
