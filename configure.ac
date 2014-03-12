@@ -8,6 +8,12 @@ AC_INIT([kiwi], [KIWI_MAJOR.KIWI_MINOR.KIWI_PATCH], [KIWI_BUGS])
 AC_CONFIG_SRCDIR([src/main.c])
 
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
+
+PKG_CHECK_MODULES([CHECK], [check >= 0.9.4], [have_check=true],
+  AC_MSG_WARN([Check not found; cannot run unit tests!])
+  [have_check=false])
+AM_CONDITIONAL(HAVE_CHECK, test x"$have_check" = x"true")
+
 AM_CONFIG_HEADER([config.h])
 
 AC_ARG_ENABLE(debug,
@@ -26,6 +32,7 @@ if test -n "${CFLAGS}"; then
 fi
 AC_LANG([C])
 AC_PROG_CC
+AM_PROG_CC_C_O
 AC_PROG_YACC
 if test X$user_set_cflags != Xyes; then
     CFLAGS=""
@@ -34,5 +41,5 @@ fi
 AC_CHECK_HEADERS([assert.h stdarg.h stdio.h stdlib.h string.h])
 AC_CHECK_HEADERS([unicode/uchar.h unicode/ustdio.h unicode/ustring.h])
 
-AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile])
 AC_OUTPUT
