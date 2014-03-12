@@ -355,7 +355,7 @@ static Scanner_ErrCode read_slash(Scanner *s)
         RETURN_ON_ERROR(read_comment_multi_inner(s), err);
     }
     /* match shorthand divide assign operator */
-    else if (s->c == (UChar)'=') {
+    else if (s->c == (UChar)':') {
         SET_SINGLE(s, T_DIVIDE_ASSIGN, err);
     }
     /* assumed match division operator */
@@ -448,7 +448,7 @@ static Scanner_ErrCode stream_read_token(Scanner *s)
     else if (s->c == (UChar)'<') { SET_MAYBE_DOUBLE(s, (UChar)'=', T_LESS, T_LESS_EQUAL, err); }
     else if (s->c == (UChar)'>') { SET_MAYBE_DOUBLE(s, (UChar)'=', T_GREATER, T_GREATER_EQUAL, err); }
     else if (s->c == (UChar)'&') { SET_DOUBLE(s, (UChar)'&', T_AND, err); }
-    else if (s->c == (UChar)'|') { SET_DOUBLE(s, (UChar)'|', T_NOT, err); }
+    else if (s->c == (UChar)'|') { SET_DOUBLE(s, (UChar)'|', T_OR, err); }
     else if (s->c == (UChar)'{') { SET_SINGLE(s, T_LBRACE, err); }
     else if (s->c == (UChar)'}') { SET_SINGLE(s, T_RBRACE, err); }
     else if (s->c == (UChar)'(') { SET_SINGLE(s, T_LPAREN, err); }
