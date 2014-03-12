@@ -1,0 +1,10 @@
++ - * / %
+:= +: -: *: /: %:
+= ~= is < <= > >=
+true false && || ~
+if else func return while var
+. .. , : { } ( )
+/* comment */ /* /* nested */ comment */ // comment
+"string" "\\" "\"" "\t" "\r" "\n" 
+1 2#01 8#07 16#FF #FF
+identifier `var
