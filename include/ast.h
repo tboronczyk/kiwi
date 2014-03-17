@@ -26,8 +26,6 @@
 
 typedef int Token;
 
-typedef struct s_ASTNode_Node ASTNode_Node;
-
 typedef struct s_ASTNode_AssignStmt ASTNode_AssignStmt;
 typedef struct s_ASTNode_CompareExpr ASTNode_CompareExpr;
 typedef struct s_ASTNode_ComplexStmt ASTNode_ComplexStmt;
@@ -91,16 +89,83 @@ typedef enum
 }
 ASTNode_Type;
 
-void *astnode_init(ASTNode_Type);
+ASTNode_AssignStmt *astnode_assignstmt_init(void);
+void astnode_assignstmt_free(ASTNode_AssignStmt *);
 
-struct s_ASTNode_Node
-{
-    ASTNode_Type nodetype;
-};
+ASTNode_CompareExpr *astnode_compareexpr_init(void);
+void astnode_compareexpr_free(ASTNode_CompareExpr *);
+
+ASTNode_ComplexStmt *astnode_complexstmt_init(void);
+void astnode_complexstmt_free(ASTNode_ComplexStmt *);
+
+ASTNode_CompoundBody *astnode_compoundbody_init(void);
+void astnode_compoundbody_free(ASTNode_CompoundBody *);
+
+ASTNode_CompoundBodyList *astnode_compoundbodylist_init(void);
+void astnode_compoundbodylist_free(ASTNode_CompoundBodyList *);
+
+ASTNode_CompoundStmt *astnode_compoundstmt_init(void);
+void astnode_compoundstmt_free(ASTNode_CompoundStmt *);
+
+ASTNode_ElseStmt *astnode_elsestmt_init(void);
+void astnode_elsestmt_free(ASTNode_ElseStmt *);
+
+ASTNode_Expr *astnode_expr_init(void);
+void astnode_expr_free(ASTNode_Expr *);
+
+ASTNode_ExprList *astnode_exprlist_init(void);
+void astnode_exprlist_free(ASTNode_ExprList *);
+
+ASTNode_Factor *astnode_factor_init(void);
+void astnode_factor_free(ASTNode_Factor *);
+
+ASTNode_FuncCall *astnode_funccall_init(void);
+void astnode_funccall_free(ASTNode_FuncCall *);
+
+ASTNode_FuncDef *astnode_funcdef_init(void);
+void astnode_funcdef_free(ASTNode_FuncDef *);
+
+ASTNode_FuncParamList *astnode_funcparamlist_init(void);
+void astnode_funcparamlist_free(ASTNode_FuncParamList *);
+
+ASTNode_IfStmt *astnode_ifstmt_init(void);
+void astnode_ifstmt_free(ASTNode_IfStmt *);
+
+ASTNode_MinorExpr *astnode_minorexpr_init(void);
+void astnode_minorexpr_free(ASTNode_MinorExpr *);
+
+ASTNode_NotExpr *astnode_notexpr_init(void);
+void astnode_notexpr_free(ASTNode_NotExpr *);
+
+ASTNode_Program *astnode_program_init(void);
+void astnode_program_free(ASTNode_Program *);
+
+ASTNode_ReturnStmt *astnode_returnstmt_init(void);
+void astnode_returnstmt_free(ASTNode_ReturnStmt *);
+
+ASTNode_SimpleStmt *astnode_simplestmt_init(void);
+void astnode_simplestmt_free(ASTNode_SimpleStmt *);
+
+ASTNode_Stmt *astnode_stmt_init(void);
+void astnode_stmt_free(ASTNode_Stmt *);
+
+ASTNode_StmtList *astnode_stmtlist_init(void);
+void astnode_stmtlist_free(ASTNode_StmtList *);
+
+ASTNode_Term *astnode_term_init(void);
+void astnode_term_free(ASTNode_Term *);
+
+ASTNode_VarStmt *astnode_varstmt_init(void);
+void astnode_varstmt_free(ASTNode_VarStmt *);
+
+ASTNode_VarStmtList *astnode_varstmtlist_init(void);
+void astnode_varstmtlist_free(ASTNode_VarStmtList *);
+
+ASTNode_WhileStmt *astnode_whilestmt_init(void);
+void astnode_whilestmt_free(ASTNode_WhileStmt *);
 
 struct s_ASTNode_AssignStmt 
 {
-    ASTNode_Type nodetype;
     UChar *identifier;
     Token assignop;
     ASTNode_Expr *expr;
@@ -108,7 +173,6 @@ struct s_ASTNode_AssignStmt
 
 struct s_ASTNode_CompareExpr
 {
-    ASTNode_Type nodetype;
     ASTNode_CompareExpr *compareexpr;
     Token compareop;
     ASTNode_MinorExpr *minorexpr;
@@ -116,7 +180,6 @@ struct s_ASTNode_CompareExpr
 
 struct s_ASTNode_ComplexStmt
 {
-    ASTNode_Type nodetype;
     ASTNode_Type stmttype;
     union
     {
@@ -127,20 +190,17 @@ struct s_ASTNode_ComplexStmt
 
 struct s_ASTNode_CompoundBody
 {
-    ASTNode_Type nodetype;
     ASTNode_CompoundBodyList *compoundbodylist;
 };
 
 struct s_ASTNode_CompoundBodyList
 {
-    ASTNode_Type nodetype;
     ASTNode_CompoundBodyList *compoundbodylist;
     ASTNode_Stmt *stmt;
 };
 
 struct s_ASTNode_CompoundStmt
 {
-    ASTNode_Type nodetype;
     ASTNode_Type stmttype;
     union
     {
@@ -151,7 +211,6 @@ struct s_ASTNode_CompoundStmt
 
 struct s_ASTNode_ElseStmt
 {
-    ASTNode_Type nodetype;
     ASTNode_Type stmttype;
     union
     {
@@ -162,7 +221,6 @@ struct s_ASTNode_ElseStmt
 
 struct s_ASTNode_Expr
 {
-    ASTNode_Type nodetype;
     ASTNode_Expr *expr;
     Token exprop;
     ASTNode_NotExpr *notexpr;
@@ -170,14 +228,12 @@ struct s_ASTNode_Expr
 
 struct s_ASTNode_ExprList
 {
-    ASTNode_Type nodetype;
     ASTNode_ExprList *exprlist;
     ASTNode_Expr *expr;
 };
 
 struct s_ASTNode_Factor
 {
-    ASTNode_Type nodetype;
     ASTNode_Type factortype;
     union
     {
@@ -191,14 +247,12 @@ struct s_ASTNode_Factor
 
 struct s_ASTNode_FuncCall
 {
-    ASTNode_Type nodetype;
     UChar* identifier;
     ASTNode_ExprList *exprlist;
 };
 
 struct s_ASTNode_FuncDef
 {
-    ASTNode_Type nodetype;
     UChar* identifier;
     ASTNode_FuncParamList *funcparamlist;
     ASTNode_CompoundBody *compoundbody;
@@ -206,14 +260,12 @@ struct s_ASTNode_FuncDef
 
 struct s_ASTNode_FuncParamList
 {
-    ASTNode_Type nodetype;
     UChar *identifier;
     ASTNode_FuncParamList *funcparamlist;
 };
 
 struct s_ASTNode_IfStmt
 {
-    ASTNode_Type nodetype;
     ASTNode_Expr *expr;
     ASTNode_CompoundBody *compoundbody;
     ASTNode_ElseStmt *elsestmt;
@@ -221,7 +273,6 @@ struct s_ASTNode_IfStmt
 
 struct s_ASTNode_MinorExpr
 {
-    ASTNode_Type nodetype;
     ASTNode_MinorExpr *minorexpr;
     Token addop;
     ASTNode_Term *term;
@@ -229,26 +280,22 @@ struct s_ASTNode_MinorExpr
 
 struct s_ASTNode_NotExpr
 {
-    ASTNode_Type nodetype;
     int tnot;
     ASTNode_CompareExpr *compareexpr;
 };
 
 struct s_ASTNode_Program
 {
-    ASTNode_Type nodetype;
     ASTNode_StmtList *stmtlist;
 };
 
 struct s_ASTNode_ReturnStmt
 {
-    ASTNode_Type nodetype;
     ASTNode_Expr *expr;
 };
 
 struct s_ASTNode_SimpleStmt
 {
-    ASTNode_Type nodetype;
     ASTNode_Type stmttype;
     union
     {
@@ -261,7 +308,6 @@ struct s_ASTNode_SimpleStmt
 
 struct s_ASTNode_Stmt
 {
-    ASTNode_Type nodetype;
     ASTNode_Type stmttype;
     union
     {
@@ -272,14 +318,12 @@ struct s_ASTNode_Stmt
 
 struct s_ASTNode_StmtList
 {
-    ASTNode_Type nodetype;
     ASTNode_StmtList *stmtlist;
     ASTNode_Stmt *stmt;
 };
 
 struct s_ASTNode_Term
 {
-    ASTNode_Type nodetype;
     ASTNode_Term *term;
     Token mulop;
     ASTNode_Factor *factor;
@@ -287,13 +331,11 @@ struct s_ASTNode_Term
 
 struct s_ASTNode_VarStmt
 {
-    ASTNode_Type nodetype;
     ASTNode_VarStmtList *varstmtlist;
 };
 
 struct s_ASTNode_VarStmtList
 {
-    ASTNode_Type nodetype;
     ASTNode_VarStmtList *varstmtlist;
     ASTNode_Type stmttype;
     union
@@ -305,7 +347,6 @@ struct s_ASTNode_VarStmtList
 
 struct s_ASTNode_WhileStmt
 {
-    ASTNode_Type nodetype;
     ASTNode_Expr *expr;
     ASTNode_CompoundBody *compoundbody;
 };

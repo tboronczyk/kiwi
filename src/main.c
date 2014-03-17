@@ -45,23 +45,24 @@ int main(int argc, char **argv)
 
     char *fname = NULL;
     if (argc > 1) {
-        fname = calloc(strlen(argv[1]), sizeof(char));
+        fname = calloc(strlen(argv[1]) + 1, sizeof(char));
         strcpy(fname, argv[1]);
     }
     else {
         fname = calloc(6, sizeof(char));
         strcpy(fname, "stdin");
     }
-
     err = scanner_init(&s, fname);
     if (err != SCANERR_OK) {
         fprintf(stderr, "Allocate scanner failed");
         exit(EXIT_FAILURE);
     }
+    free(fname);
 
     ASTNode_Program *node;
     result = yyparse(s, &node);
 
+    astnode_program_free(node);
     scanner_free(s);
 
     return (result == 0) ? EXIT_SUCCESS : EXIT_FAILURE;

@@ -25,310 +25,414 @@
 #include <string.h>
 #include "ast.h"
 
-static void astnode_assignstmt_free(ASTNode_AssignStmt *);
-static void astnode_compareexpr_free(ASTNode_CompareExpr *);
-static void astnode_complexstmt_free(ASTNode_ComplexStmt *);
-static void astnode_compoundbody_free(ASTNode_CompoundBody *);
-static void astnode_compoundbodylist_free(ASTNode_CompoundBodyList *);
-static void astnode_compoundstmt_free(ASTNode_CompoundStmt *);
-static void astnode_elsestmt_free(ASTNode_ElseStmt *);
-static void astnode_expr_free(ASTNode_Expr *);
-static void astnode_exprlist_free(ASTNode_ExprList *);
-static void astnode_factor_free(ASTNode_Factor *);
-static void astnode_funccall_free(ASTNode_FuncCall *);
-static void astnode_funcdef_free(ASTNode_FuncDef *);
-static void astnode_funcparamlist_free(ASTNode_FuncParamList *);
-static void astnode_ifstmt_free(ASTNode_IfStmt *);
-static void astnode_minorexpr_free(ASTNode_MinorExpr *);
-static void astnode_notexpr_free(ASTNode_NotExpr *);
-static void astnode_program_free(ASTNode_Program *);
-static void astnode_returnstmt_free(ASTNode_ReturnStmt *);
-static void astnode_simplestmt_free(ASTNode_SimpleStmt *);
-static void astnode_stmt_free(ASTNode_Stmt *);
-static void astnode_stmtlist_free(ASTNode_StmtList *);
-static void astnode_term_free(ASTNode_Term *);
-static void astnode_varstmt_free(ASTNode_VarStmt *);
-static void astnode_varstmtlist_free(ASTNode_VarStmtList *);
-static void astnode_whilestmt_free(ASTNode_WhileStmt *);
-
-void *astnode_init(ASTNode_Type type)
+ASTNode_AssignStmt *astnode_assignstmt_init(void)
 {
-    /* determine size to allocate for node */
-    size_t size;
-    switch (type) {
-        case ASTNODE_ASSIGNSTMT:
-            size = sizeof(ASTNode_AssignStmt);
-            break;
-        case ASTNODE_COMPAREEXPR:
-            size = sizeof(ASTNode_CompareExpr);
-            break;
-        case ASTNODE_COMPLEXSTMT:
-            size = sizeof(ASTNode_ComplexStmt);
-            break;
-        case ASTNODE_COMPOUNDBODYLIST:
-            size = sizeof(ASTNode_CompoundBodyList);
-            break;
-        case ASTNODE_COMPOUNDBODY:
-            size = sizeof(ASTNode_CompoundBody);
-            break;
-        case ASTNODE_COMPOUNDSTMT:
-            size = sizeof(ASTNode_CompoundStmt);
-            break;
-        case ASTNODE_ELSESTMT:
-            size = sizeof(ASTNode_ElseStmt);
-            break;
-        case ASTNODE_EXPRLIST:
-            size = sizeof(ASTNode_ExprList);
-            break;
-        case ASTNODE_EXPR:
-            size = sizeof(ASTNode_Expr);
-            break;
-        case ASTNODE_FACTOR:
-            size = sizeof(ASTNode_Factor);
-            break;
-        case ASTNODE_FUNCCALL:
-            size = sizeof(ASTNode_FuncCall);
-            break;
-        case ASTNODE_FUNCDEF:
-            size = sizeof(ASTNode_FuncDef);
-            break;
-        case ASTNODE_FUNCPARAMLIST:
-            size = sizeof(ASTNode_FuncParamList);
-            break;
-        case ASTNODE_IFSTMT:
-            size = sizeof(ASTNode_IfStmt);
-            break;
-        case ASTNODE_MINOREXPR:
-            size = sizeof(ASTNode_MinorExpr);
-            break;
-        case ASTNODE_NOTEXPR:
-            size = sizeof(ASTNode_NotExpr);
-            break;
-        case ASTNODE_PROGRAM:
-            size = sizeof(ASTNode_Program);
-            break;
-        case ASTNODE_RETURNSTMT:
-            size = sizeof(ASTNode_ReturnStmt);
-            break;
-        case ASTNODE_SIMPLESTMT:
-            size = sizeof(ASTNode_SimpleStmt);
-            break;
-        case ASTNODE_STMTLIST:
-            size = sizeof(ASTNode_StmtList);
-            break;
-        case ASTNODE_STMT:
-            size = sizeof(ASTNode_Stmt);
-            break;
-        case ASTNODE_TERM:
-            size = sizeof(ASTNode_Term);
-            break;
-        case ASTNODE_VARSTMTLIST:
-            size = sizeof(ASTNode_VarStmtList);
-            break;
-        case ASTNODE_VARSTMT:
-            size = sizeof(ASTNode_VarStmt);
-            break;
-        case ASTNODE_WHILESTMT:
-            size = sizeof(ASTNode_WhileStmt);
-            break;
-        /* should never reach this */
-        default:
-            perror("Invalid ASTNode_Type passed to astnode_init");
-            exit(EXIT_FAILURE);
-    }
-
-    void *n;
-    if ((n = calloc(1, size)) == NULL) {
-        perror("Allocate astnode failed");
-        exit(EXIT_FAILURE);
-    }
-    ((ASTNode_Node *)n)->nodetype = type;
-
+    ASTNode_AssignStmt *n = calloc(1, sizeof(ASTNode_AssignStmt));
     return n;
 }
 
-void astnode_free(ASTNode_Node *n)
+void astnode_assignstmt_free(ASTNode_AssignStmt *n)
 {
-    /* free node with appropriate function */
-    switch (n->nodetype) {
-        case ASTNODE_ASSIGNSTMT:
-            astnode_assignstmt_free((ASTNode_AssignStmt *)n);
-            break;
-        case ASTNODE_COMPAREEXPR:
-            astnode_compareexpr_free((ASTNode_CompareExpr *)n);
-            break;
-        case ASTNODE_COMPLEXSTMT:
-            astnode_complexstmt_free((ASTNode_ComplexStmt *)n);
-            break;
-        case ASTNODE_COMPOUNDBODY:
-            astnode_compoundbody_free((ASTNode_CompoundBody *)n);
-            break;
-        case ASTNODE_COMPOUNDBODYLIST:
-            astnode_compoundbodylist_free((ASTNode_CompoundBodyList *)n);
-            break;
+    free(n->identifier);
+    astnode_expr_free(n->expr);
+    free(n);
+}
+
+ASTNode_CompareExpr *astnode_compareexpr_init(void)
+{
+    ASTNode_CompareExpr *n = calloc(1, sizeof(ASTNode_CompareExpr));
+    return n;
+}
+
+void astnode_compareexpr_free(ASTNode_CompareExpr *n)
+{
+    if (n->compareexpr != NULL) {
+        astnode_compareexpr_free(n->compareexpr);
+    }
+    astnode_minorexpr_free(n->minorexpr);
+    free(n); 
+}
+
+ASTNode_ComplexStmt *astnode_complexstmt_init(void)
+{
+    ASTNode_ComplexStmt *n = calloc(1, sizeof(ASTNode_ComplexStmt));
+    return n;
+}
+
+void astnode_complexstmt_free(ASTNode_ComplexStmt *n)
+{
+    switch (n->stmttype) {
         case ASTNODE_COMPOUNDSTMT:
-            astnode_compoundstmt_free((ASTNode_CompoundStmt *)n);
-            break;
-        case ASTNODE_ELSESTMT:
-            astnode_elsestmt_free((ASTNode_ElseStmt *)n);
-            break;
-        case ASTNODE_EXPR:
-            astnode_expr_free((ASTNode_Expr *)n);
-            break;
-        case ASTNODE_EXPRLIST:
-            astnode_exprlist_free((ASTNode_ExprList *)n);
-            break;
-        case ASTNODE_FACTOR:
-            astnode_factor_free((ASTNode_Factor *)n);
-            break;
-        case ASTNODE_FUNCCALL:
-            astnode_funccall_free((ASTNode_FuncCall *)n);
+            astnode_compoundstmt_free(n->stmt.compoundstmt);
             break;
         case ASTNODE_FUNCDEF:
-            astnode_funcdef_free((ASTNode_FuncDef *)n);
+            astnode_funcdef_free(n->stmt.funcdef);
             break;
-        case ASTNODE_FUNCPARAMLIST:
-            astnode_funcparamlist_free((ASTNode_FuncParamList *)n);
-            break;
-        case ASTNODE_IFSTMT:
-            astnode_ifstmt_free((ASTNode_IfStmt *)n);
-            break;
-        case ASTNODE_MINOREXPR:
-            astnode_minorexpr_free((ASTNode_MinorExpr *)n);
-            break;
-        case ASTNODE_NOTEXPR:
-            astnode_notexpr_free((ASTNode_NotExpr *)n);
-            break;
-        case ASTNODE_PROGRAM:
-            astnode_program_free((ASTNode_Program *)n);
-            break;
-        case ASTNODE_RETURNSTMT:
-            astnode_returnstmt_free((ASTNode_ReturnStmt *)n);
-            break;
-        case ASTNODE_SIMPLESTMT:
-            astnode_simplestmt_free((ASTNode_SimpleStmt *)n);
-            break;
-        case ASTNODE_STMT:
-            astnode_stmt_free((ASTNode_Stmt *)n);
-            break;
-        case ASTNODE_STMTLIST:
-            astnode_stmtlist_free((ASTNode_StmtList *)n);
-            break;
-        case ASTNODE_TERM:
-            astnode_term_free((ASTNode_Term *)n);
-            break;
-        case ASTNODE_VARSTMT:
-            astnode_varstmt_free((ASTNode_VarStmt *)n);
-            break;
-        case ASTNODE_VARSTMTLIST:
-            astnode_varstmtlist_free((ASTNode_VarStmtList *)n);
-            break;
-        case ASTNODE_WHILESTMT:
-            astnode_whilestmt_free((ASTNode_WhileStmt *)n);
-            break;
-        /* should never reach this */
         default:
-            perror("Invalid astnode type passed on free");
             exit(EXIT_FAILURE);
     }
+    free(n);
 }
 
-static void astnode_assignstmt_free(ASTNode_AssignStmt *n)
+ASTNode_CompoundBody *astnode_compoundbody_init(void)
 {
+    ASTNode_CompoundBody *n = calloc(1, sizeof(ASTNode_CompoundBody));
+    return n;
 }
 
-static void astnode_compareexpr_free(ASTNode_CompareExpr *n)
+void astnode_compoundbody_free(ASTNode_CompoundBody *n)
 {
+    astnode_compoundbodylist_free(n->compoundbodylist);
+    free(n);
 }
 
-static void astnode_complexstmt_free(ASTNode_ComplexStmt *n)
+ASTNode_CompoundBodyList *astnode_compoundbodylist_init(void)
 {
+    ASTNode_CompoundBodyList *n = calloc(1, sizeof(ASTNode_CompoundBodyList));
+    return n;
 }
 
-static void astnode_compoundbody_free(ASTNode_CompoundBody *n)
+void astnode_compoundbodylist_free(ASTNode_CompoundBodyList *n)
 {
+    if (n->compoundbodylist != NULL) {
+        astnode_compoundbodylist_free(n->compoundbodylist);
+    }
+    astnode_stmt_free(n->stmt);
+    free(n);
 }
 
-static void astnode_compoundbodylist_free(ASTNode_CompoundBodyList *n)
+ASTNode_CompoundStmt *astnode_compoundstmt_init(void)
 {
+    ASTNode_CompoundStmt *n = calloc(1, sizeof(ASTNode_CompoundStmt));
+    return n;
 }
 
-static void astnode_compoundstmt_free(ASTNode_CompoundStmt *n)
+void astnode_compoundstmt_free(ASTNode_CompoundStmt *n)
 {
+    switch(n->stmttype) {
+        case ASTNODE_IFSTMT:
+            astnode_ifstmt_free(n->stmt.ifstmt);
+            break;
+        case ASTNODE_WHILESTMT:
+            astnode_whilestmt_free(n->stmt.whilestmt);
+            break;
+        default:
+            exit(EXIT_FAILURE);
+    }
+    free(n);
 }
 
-static void astnode_elsestmt_free(ASTNode_ElseStmt *n)
+ASTNode_ElseStmt *astnode_elsestmt_init(void)
 {
+    ASTNode_ElseStmt *n = calloc(1, sizeof(ASTNode_ElseStmt));
+    return n;
 }
 
-static void astnode_expr_free(ASTNode_Expr *n)
+void astnode_elsestmt_free(ASTNode_ElseStmt *n)
 {
+    switch(n->stmttype) {
+        case ASTNODE_COMPOUNDBODY:
+            astnode_compoundbody_free(n->stmt.compoundbody);
+            break;
+        case ASTNODE_IFSTMT:
+            astnode_ifstmt_free(n->stmt.ifstmt);
+            break;
+        default:
+            exit(EXIT_FAILURE);
+    }
+    free(n);
 }
 
-static void astnode_exprlist_free(ASTNode_ExprList *n)
+ASTNode_Expr *astnode_expr_init(void)
 {
+    ASTNode_Expr *n = calloc(1, sizeof(ASTNode_Expr));
+    return n;
 }
 
-static void astnode_factor_free(ASTNode_Factor *n)
+void astnode_expr_free(ASTNode_Expr *n)
 {
+    if (n->expr != NULL) {
+        astnode_expr_free(n->expr);
+    }
+    astnode_notexpr_free(n->notexpr);
+    free(n);
 }
 
-static void astnode_funccall_free(ASTNode_FuncCall *n)
+ASTNode_ExprList *astnode_exprlist_init(void)
 {
+    ASTNode_ExprList *n = calloc(1, sizeof(ASTNode_ExprList));
+    return n;
 }
 
-static void astnode_funcdef_free(ASTNode_FuncDef *n)
+void astnode_exprlist_free(ASTNode_ExprList *n)
 {
+    if (n->exprlist != NULL) {
+        astnode_exprlist_free(n->exprlist);
+    }
+    astnode_expr_free(n->expr);
+    free(n);
 }
 
-static void astnode_funcparamlist_free(ASTNode_FuncParamList *n)
+ASTNode_Factor *astnode_factor_init(void)
 {
+    ASTNode_Factor *n = calloc(1, sizeof(ASTNode_Factor));
+    return n;
 }
 
-static void astnode_ifstmt_free(ASTNode_IfStmt *n)
+void astnode_factor_free(ASTNode_Factor *n)
 {
+    switch (n->factortype) {
+        case ASTNODE_ATOM:
+            free(n->factor.atom);
+            break;
+        case ASTNODE_FUNCCALL:
+            astnode_funccall_free(n->factor.funccall);
+            break;
+        case ASTNODE_EXPR:
+            astnode_expr_free(n->factor.expr);
+            break;
+        case ASTNODE_FACTOR:
+            astnode_factor_free(n->factor.factor);
+            break;
+        default:
+            exit(EXIT_FAILURE);
+    }
+    free(n);
 }
 
-static void astnode_minorexpr_free(ASTNode_MinorExpr *n)
+ASTNode_FuncCall *astnode_funccall_init(void)
 {
+    ASTNode_FuncCall *n = calloc(1, sizeof(ASTNode_FuncCall));
+    return n;
 }
 
-static void astnode_notexpr_free(ASTNode_NotExpr *n)
+void astnode_funccall_free(ASTNode_FuncCall *n)
 {
+    free(n->identifier);
+    astnode_exprlist_free(n->exprlist);
+    free(n);
 }
 
-static void astnode_program_free(ASTNode_Program *n)
+ASTNode_FuncDef *astnode_funcdef_init(void)
 {
+    ASTNode_FuncDef *n = calloc(1, sizeof(ASTNode_FuncDef));
+    return n;
 }
 
-static void astnode_returnstmt_free(ASTNode_ReturnStmt *n)
+void astnode_funcdef_free(ASTNode_FuncDef *n)
 {
+    free(n->identifier);
+    astnode_funcparamlist_free(n->funcparamlist);
+    astnode_compoundbody_free(n->compoundbody);
+    free(n);
 }
 
-static void astnode_simplestmt_free(ASTNode_SimpleStmt *n)
+ASTNode_FuncParamList *astnode_funcparamlist_init(void)
 {
+    ASTNode_FuncParamList *n = calloc(1, sizeof(ASTNode_FuncParamList));
+    return n;
 }
 
-static void astnode_stmt_free(ASTNode_Stmt *n)
+void astnode_funcparamlist_free(ASTNode_FuncParamList *n)
 {
+    free(n->identifier);
+    if (n->funcparamlist != NULL) {
+        astnode_funcparamlist_free(n->funcparamlist);
+    }
+    free(n);
 }
 
-static void astnode_stmtlist_free(ASTNode_StmtList *n)
+ASTNode_IfStmt *astnode_ifstmt_init(void)
 {
+    ASTNode_IfStmt *n = calloc(1, sizeof(ASTNode_IfStmt));
+    return n;
 }
 
-static void astnode_term_free(ASTNode_Term *n)
+void astnode_ifstmt_free(ASTNode_IfStmt *n)
 {
+    astnode_expr_free(n->expr);
+    astnode_compoundbody_free(n->compoundbody);
+    if (n->elsestmt != NULL) {
+        astnode_elsestmt_free(n->elsestmt);
+    }
+    free(n);
 }
 
-static void astnode_varstmt_free(ASTNode_VarStmt *n)
+ASTNode_MinorExpr *astnode_minorexpr_init(void)
 {
+    ASTNode_MinorExpr *n = calloc(1, sizeof(ASTNode_MinorExpr));
+    return n;
 }
 
-static void astnode_varstmtlist_free(ASTNode_VarStmtList *n)
+void astnode_minorexpr_free(ASTNode_MinorExpr *n)
 {
+    if (n->minorexpr != NULL) {
+        astnode_minorexpr_free(n->minorexpr);
+    }
+    astnode_term_free(n->term);
+    free(n);
 }
 
-static void astnode_whilestmt_free(ASTNode_WhileStmt *n)
+ASTNode_NotExpr *astnode_notexpr_init(void)
 {
+    ASTNode_NotExpr *n = calloc(1, sizeof(ASTNode_NotExpr));
+    return n;
+}
+
+void astnode_notexpr_free(ASTNode_NotExpr *n)
+{
+    astnode_compareexpr_free(n->compareexpr);
+    free(n);
+}
+
+ASTNode_Program *astnode_program_init(void)
+{
+    ASTNode_Program *n = calloc(1, sizeof(ASTNode_Program));
+    return n;
+}
+
+void astnode_program_free(ASTNode_Program *n)
+{
+    astnode_stmtlist_free(n->stmtlist);
+    free(n);
+}
+
+ASTNode_ReturnStmt *astnode_returnstmt_init(void)
+{
+    ASTNode_ReturnStmt *n = calloc(1, sizeof(ASTNode_ReturnStmt));
+    return n;
+}
+
+void astnode_returnstmt_free(ASTNode_ReturnStmt *n)
+{
+    astnode_expr_free(n->expr);
+    free(n);
+}
+
+ASTNode_SimpleStmt *astnode_simplestmt_init(void)
+{
+    ASTNode_SimpleStmt *n = calloc(1, sizeof(ASTNode_SimpleStmt));
+    return n;
+}
+
+void astnode_simplestmt_free(ASTNode_SimpleStmt *n)
+{
+    switch (n->stmttype) {
+        case ASTNODE_ASSIGNSTMT:
+            astnode_assignstmt_free(n->stmt.assignstmt);
+            break;
+        case ASTNODE_RETURNSTMT:
+            astnode_returnstmt_free(n->stmt.returnstmt);
+            break;
+        case ASTNODE_VARSTMT:
+            astnode_varstmt_free(n->stmt.varstmt);
+            break;
+        case ASTNODE_EXPR:
+            astnode_expr_free(n->stmt.expr);
+            break;
+        default:
+            exit(EXIT_FAILURE);
+    }
+    free(n);
+}
+
+ASTNode_Stmt *astnode_stmt_init(void)
+{
+    ASTNode_Stmt *n = calloc(1, sizeof(ASTNode_Stmt));
+    return n;
+}
+
+void astnode_stmt_free(ASTNode_Stmt *n)
+{
+    switch (n->stmttype) {
+        case ASTNODE_COMPLEXSTMT:
+            astnode_complexstmt_free(n->stmt.complexstmt);
+            break;
+        case ASTNODE_SIMPLESTMT:
+            astnode_simplestmt_free(n->stmt.simplestmt);
+            break;
+        default:
+            exit(EXIT_FAILURE);
+    }
+    free(n);
+}
+
+ASTNode_StmtList *astnode_stmtlist_init(void)
+{
+    ASTNode_StmtList *n = calloc(1, sizeof(ASTNode_StmtList));
+    return n;
+}
+
+void astnode_stmtlist_free(ASTNode_StmtList *n)
+{
+    if (n->stmtlist != NULL) {
+        astnode_stmtlist_free(n->stmtlist);
+    }
+    astnode_stmt_free(n->stmt);
+    free(n);
+}
+
+ASTNode_Term *astnode_term_init(void)
+{
+    ASTNode_Term *n = calloc(1, sizeof(ASTNode_Term));
+    return n;
+}
+
+void astnode_term_free(ASTNode_Term *n)
+{
+    if (n->term != NULL) {
+        astnode_term_free(n->term);
+    }
+    astnode_factor_free(n->factor);
+    free(n);
+}
+
+ASTNode_VarStmt *astnode_varstmt_init(void)
+{
+    ASTNode_VarStmt *n = calloc(1, sizeof(ASTNode_VarStmt));
+    return n;
+}
+
+void astnode_varstmt_free(ASTNode_VarStmt *n)
+{
+    astnode_varstmtlist_free(n->varstmtlist);
+    free(n);
+}
+
+ASTNode_VarStmtList *astnode_varstmtlist_init(void)
+{
+    ASTNode_VarStmtList *n = calloc(1, sizeof(ASTNode_VarStmtList));
+    return n;
+}
+
+void astnode_varstmtlist_free(ASTNode_VarStmtList *n)
+{
+    if (n->varstmtlist != NULL) {
+        astnode_varstmtlist_free(n->varstmtlist);
+    }
+    switch (n->stmttype) {
+        case ASTNODE_IDENTIFIER:
+            free(n->stmt.identifier);
+            break;
+        case ASTNODE_ASSIGNSTMT:
+            astnode_assignstmt_free(n->stmt.assignstmt);
+            break;
+        default:
+            exit(EXIT_FAILURE);
+    }
+    free(n);
+
+}
+
+ASTNode_WhileStmt *astnode_whilestmt_init(void)
+{
+    ASTNode_WhileStmt *n = calloc(1, sizeof(ASTNode_WhileStmt));
+    return n;
+}
+
+void astnode_whilestmt_free(ASTNode_WhileStmt *n)
+{
+    astnode_expr_free(n->expr);
+    astnode_compoundbody_free(n->compoundbody);
+    free(n);
 }
