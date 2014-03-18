@@ -42,7 +42,7 @@ START_TEST (test_parser_parse)
     Scanner *s;
     scanner_init(&s, "./fib.kw");
 
-    ASTNode_Program *node;
+    AST_Program *node;
     yyparse(s, &node);
 
     astdump_program(node);

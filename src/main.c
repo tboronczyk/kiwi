@@ -26,7 +26,7 @@
 #include "ast.h"
 #include "scanner.h"
 
-extern int yyparse(Scanner *s, ASTNode_Program **n); /* parser.c */
+extern int yyparse(Scanner *s, AST_Program **n); /* parser.c */
 
 UFILE *ustdin,
       *ustdout,
@@ -59,10 +59,10 @@ int main(int argc, char **argv)
     }
     free(fname);
 
-    ASTNode_Program *node;
+    AST_Program *node;
     result = yyparse(s, &node);
 
-    astnode_program_free(node);
+    ast_program_free(node);
     scanner_free(s);
 
     return (result == 0) ? EXIT_SUCCESS : EXIT_FAILURE;

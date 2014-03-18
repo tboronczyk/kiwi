@@ -28,7 +28,7 @@
 
 extern UFILE *ustdout;
 
-void astdump_assignstmt(ASTNode_AssignStmt *n)
+void astdump_assignstmt(AST_AssignStmt *n)
 {
     u_fprintf(ustdout, "%S ", n->identifier);
     switch (n->assignop) {
@@ -56,7 +56,7 @@ void astdump_assignstmt(ASTNode_AssignStmt *n)
     astdump_expr(n->expr);
 }
 
-void astdump_compareexpr(ASTNode_CompareExpr *n)
+void astdump_compareexpr(AST_CompareExpr *n)
 {
     if (n->compareexpr != NULL) {
         astdump_compareexpr(n->compareexpr);
@@ -89,13 +89,13 @@ void astdump_compareexpr(ASTNode_CompareExpr *n)
     astdump_minorexpr(n->minorexpr);
 }
 
-void astdump_complexstmt(ASTNode_ComplexStmt *n)
+void astdump_complexstmt(AST_ComplexStmt *n)
 {
     switch (n->stmttype) {
-        case ASTNODE_COMPOUNDSTMT:
+        case AST_COMPOUNDSTMT:
             astdump_compoundstmt(n->stmt.compoundstmt);
             break;
-        case ASTNODE_FUNCDEF: 
+        case AST_FUNCDEF: 
             astdump_funcdef(n->stmt.funcdef);
             break;
         default:
@@ -103,14 +103,14 @@ void astdump_complexstmt(ASTNode_ComplexStmt *n)
     }
 }
 
-void astdump_compoundbody(ASTNode_CompoundBody *n)
+void astdump_compoundbody(AST_CompoundBody *n)
 {
     u_fprintf(ustdout, "{ ");
     astdump_compoundbodylist(n->compoundbodylist);
     u_fprintf(ustdout, "} ");
 }
 
-void astdump_compoundbodylist(ASTNode_CompoundBodyList *n)
+void astdump_compoundbodylist(AST_CompoundBodyList *n)
 {
     if (n->compoundbodylist != NULL) {
         astdump_compoundbodylist(n->compoundbodylist);
@@ -118,13 +118,13 @@ void astdump_compoundbodylist(ASTNode_CompoundBodyList *n)
     astdump_stmt(n->stmt);
 }
 
-void astdump_compoundstmt(ASTNode_CompoundStmt *n)
+void astdump_compoundstmt(AST_CompoundStmt *n)
 {
     switch (n->stmttype) {
-        case ASTNODE_IFSTMT:
+        case AST_IFSTMT:
             astdump_ifstmt(n->stmt.ifstmt);
             break;
-        case ASTNODE_WHILESTMT:
+        case AST_WHILESTMT:
             astdump_whilestmt(n->stmt.whilestmt);
             break;
         default:
@@ -132,14 +132,14 @@ void astdump_compoundstmt(ASTNode_CompoundStmt *n)
     }
 }
 
-void astdump_elsestmt(ASTNode_ElseStmt *n)
+void astdump_elsestmt(AST_ElseStmt *n)
 {
     u_fprintf(ustdout, "ELSE ");
     switch (n->stmttype) {
-        case ASTNODE_COMPOUNDBODY:
+        case AST_COMPOUNDBODY:
             astdump_compoundbody(n->stmt.compoundbody);
             break;
-        case ASTNODE_IFSTMT:
+        case AST_IFSTMT:
             astdump_ifstmt(n->stmt.ifstmt);
             break;
         default:
@@ -147,7 +147,7 @@ void astdump_elsestmt(ASTNode_ElseStmt *n)
     }
 }
 
-void astdump_expr(ASTNode_Expr *n)
+void astdump_expr(AST_Expr *n)
 {
     if (n->expr != NULL) {
         astdump_expr(n->expr);
@@ -165,7 +165,7 @@ void astdump_expr(ASTNode_Expr *n)
     astdump_notexpr(n->notexpr);
 }
 
-void astdump_exprlist(ASTNode_ExprList *n)
+void astdump_exprlist(AST_ExprList *n)
 {
     if (n->exprlist != NULL) {
         astdump_exprlist(n->exprlist);
@@ -174,21 +174,21 @@ void astdump_exprlist(ASTNode_ExprList *n)
     astdump_expr(n->expr);
 }
 
-void astdump_factor(ASTNode_Factor *n)
+void astdump_factor(AST_Factor *n)
 {
     switch (n->factortype) {
-        case ASTNODE_ATOM:
+        case AST_ATOM:
             u_fprintf(ustdout, "%S ", n->factor.atom);
             break;
-        case ASTNODE_FUNCCALL:
+        case AST_FUNCCALL:
             astdump_funccall(n->factor.funccall);
             break;
-        case ASTNODE_EXPR:
+        case AST_EXPR:
             u_fprintf(ustdout, "( ");
             astdump_expr(n->factor.expr);
             u_fprintf(ustdout, ") ");
             break;
-        case ASTNODE_FACTOR:
+        case AST_FACTOR:
             switch (n->addop) {
                 case T_ADD:
                     u_fprintf(ustdout, "+ ");
@@ -206,7 +206,7 @@ void astdump_factor(ASTNode_Factor *n)
     }
 }
 
-void astdump_funccall(ASTNode_FuncCall *n)
+void astdump_funccall(AST_FuncCall *n)
 {
      u_fprintf(ustdout, "%S ( ", n->identifier);
      if (n->exprlist != NULL) {
@@ -215,7 +215,7 @@ void astdump_funccall(ASTNode_FuncCall *n)
      u_fprintf(ustdout, ") ");
 }
 
-void astdump_funcdef(ASTNode_FuncDef *n)
+void astdump_funcdef(AST_FuncDef *n)
 {
      u_fprintf(ustdout, "FUNC %S ", n->identifier);
      if (n->funcparamlist != NULL) {
@@ -224,7 +224,7 @@ void astdump_funcdef(ASTNode_FuncDef *n)
      astdump_compoundbody(n->compoundbody);
 }
 
-void astdump_funcparamlist(ASTNode_FuncParamList *n)
+void astdump_funcparamlist(AST_FuncParamList *n)
 {
     if (n->funcparamlist != NULL) {
         astdump_funcparamlist(n->funcparamlist);
@@ -233,7 +233,7 @@ void astdump_funcparamlist(ASTNode_FuncParamList *n)
     u_fprintf(ustdout, "%S ", n->identifier);
 }
 
-void astdump_ifstmt(ASTNode_IfStmt *n)
+void astdump_ifstmt(AST_IfStmt *n)
 {
     u_fprintf(ustdout, "IF ");
     astdump_expr(n->expr);
@@ -243,7 +243,7 @@ void astdump_ifstmt(ASTNode_IfStmt *n)
     }
 }
 
-void astdump_minorexpr(ASTNode_MinorExpr *n)
+void astdump_minorexpr(AST_MinorExpr *n)
 {
     if (n->minorexpr != NULL) {
         astdump_minorexpr(n->minorexpr);
@@ -261,7 +261,7 @@ void astdump_minorexpr(ASTNode_MinorExpr *n)
     astdump_term(n->term);
 }
 
-void astdump_notexpr(ASTNode_NotExpr *n)
+void astdump_notexpr(AST_NotExpr *n)
 {
     if (n->tnot) {
         u_fprintf(ustdout, "~ ");
@@ -269,32 +269,32 @@ void astdump_notexpr(ASTNode_NotExpr *n)
     astdump_compareexpr(n->compareexpr);
 }
 
-void astdump_program(ASTNode_Program *n)
+void astdump_program(AST_Program *n)
 {
     if (n->stmtlist != NULL) {
         astdump_stmtlist(n->stmtlist);
     }
 }
 
-void astdump_returnstmt(ASTNode_ReturnStmt *n)
+void astdump_returnstmt(AST_ReturnStmt *n)
 {
    u_fprintf(ustdout, "RETURN ");
    astdump_expr(n->expr);
 }
 
-void astdump_simplestmt(ASTNode_SimpleStmt *n)
+void astdump_simplestmt(AST_SimpleStmt *n)
 {
     switch (n->stmttype) {
-        case ASTNODE_ASSIGNSTMT:
+        case AST_ASSIGNSTMT:
             astdump_assignstmt(n->stmt.assignstmt);
             break;
-        case ASTNODE_RETURNSTMT:
+        case AST_RETURNSTMT:
             astdump_returnstmt(n->stmt.returnstmt);
             break;
-        case ASTNODE_VARSTMT:
+        case AST_VARSTMT:
             astdump_varstmt(n->stmt.varstmt);
             break;
-        case ASTNODE_EXPR:
+        case AST_EXPR:
             astdump_expr(n->stmt.expr);
             break;
         default:
@@ -303,13 +303,13 @@ void astdump_simplestmt(ASTNode_SimpleStmt *n)
     u_fprintf(ustdout, ". ");
 }
 
-void astdump_stmt(ASTNode_Stmt *n)
+void astdump_stmt(AST_Stmt *n)
 {
     switch (n->stmttype) {
-        case ASTNODE_COMPLEXSTMT:
+        case AST_COMPLEXSTMT:
             astdump_complexstmt(n->stmt.complexstmt);
             break;
-        case ASTNODE_SIMPLESTMT:
+        case AST_SIMPLESTMT:
             astdump_simplestmt(n->stmt.simplestmt);
             break;
         default:
@@ -317,7 +317,7 @@ void astdump_stmt(ASTNode_Stmt *n)
     }
 }
 
-void astdump_stmtlist(ASTNode_StmtList *n)
+void astdump_stmtlist(AST_StmtList *n)
 {
     if (n->stmtlist != NULL) {
         astdump_stmtlist(n->stmtlist);
@@ -325,7 +325,7 @@ void astdump_stmtlist(ASTNode_StmtList *n)
     astdump_stmt(n->stmt);
 }
 
-void astdump_term(ASTNode_Term *n)
+void astdump_term(AST_Term *n)
 {
     if (n->term != NULL) {
         astdump_term(n->term);
@@ -346,23 +346,23 @@ void astdump_term(ASTNode_Term *n)
     astdump_factor(n->factor);
 }
 
-void astdump_varstmt(ASTNode_VarStmt *n)
+void astdump_varstmt(AST_VarStmt *n)
 {
     u_fprintf(ustdout, "VAR ");
     astdump_varstmtlist(n->varstmtlist);
 }
 
-void astdump_varstmtlist(ASTNode_VarStmtList *n)
+void astdump_varstmtlist(AST_VarStmtList *n)
 {
     if (n->varstmtlist != NULL) {
         astdump_varstmtlist(n->varstmtlist);
         u_fprintf(ustdout, ", ");
     }
     switch (n->stmttype) {
-        case ASTNODE_IDENTIFIER:
+        case AST_IDENTIFIER:
            u_fprintf(ustdout, "%S ", n->stmt.identifier);
            break;
-        case ASTNODE_ASSIGNSTMT:
+        case AST_ASSIGNSTMT:
            astdump_assignstmt(n->stmt.assignstmt);
            break;
         default:
@@ -370,7 +370,7 @@ void astdump_varstmtlist(ASTNode_VarStmtList *n)
     }
 }
 
-void astdump_whilestmt(ASTNode_WhileStmt *n)
+void astdump_whilestmt(AST_WhileStmt *n)
 {
     u_fprintf(ustdout, "WHILE ");
     astdump_expr(n->expr);

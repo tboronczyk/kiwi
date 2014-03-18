@@ -24,30 +24,30 @@
 
 #include "ast.h"
 
-void astdump_assignstmt(ASTNode_AssignStmt *);
-void astdump_compareexpr(ASTNode_CompareExpr *);
-void astdump_complexstmt(ASTNode_ComplexStmt *);
-void astdump_compoundbody(ASTNode_CompoundBody *);
-void astdump_compoundbodylist(ASTNode_CompoundBodyList *);
-void astdump_compoundstmt(ASTNode_CompoundStmt *);
-void astdump_elsestmt(ASTNode_ElseStmt *);
-void astdump_expr(ASTNode_Expr *);
-void astdump_exprlist(ASTNode_ExprList *);
-void astdump_factor(ASTNode_Factor *);
-void astdump_funccall(ASTNode_FuncCall *);
-void astdump_funcdef(ASTNode_FuncDef *);
-void astdump_funcparamlist(ASTNode_FuncParamList *);
-void astdump_ifstmt(ASTNode_IfStmt *);
-void astdump_minorexpr(ASTNode_MinorExpr *);
-void astdump_notexpr(ASTNode_NotExpr *);
-void astdump_program(ASTNode_Program *);
-void astdump_returnstmt(ASTNode_ReturnStmt *);
-void astdump_simplestmt(ASTNode_SimpleStmt *);
-void astdump_stmt(ASTNode_Stmt *);
-void astdump_stmtlist(ASTNode_StmtList *);
-void astdump_term(ASTNode_Term *);
-void astdump_varstmt(ASTNode_VarStmt *);
-void astdump_varstmtlist(ASTNode_VarStmtList *);
-void astdump_whilestmt(ASTNode_WhileStmt *);
+void astdump_assignstmt(AST_AssignStmt *);
+void astdump_compareexpr(AST_CompareExpr *);
+void astdump_complexstmt(AST_ComplexStmt *);
+void astdump_compoundbody(AST_CompoundBody *);
+void astdump_compoundbodylist(AST_CompoundBodyList *);
+void astdump_compoundstmt(AST_CompoundStmt *);
+void astdump_elsestmt(AST_ElseStmt *);
+void astdump_expr(AST_Expr *);
+void astdump_exprlist(AST_ExprList *);
+void astdump_factor(AST_Factor *);
+void astdump_funccall(AST_FuncCall *);
+void astdump_funcdef(AST_FuncDef *);
+void astdump_funcparamlist(AST_FuncParamList *);
+void astdump_ifstmt(AST_IfStmt *);
+void astdump_minorexpr(AST_MinorExpr *);
+void astdump_notexpr(AST_NotExpr *);
+void astdump_program(AST_Program *);
+void astdump_returnstmt(AST_ReturnStmt *);
+void astdump_simplestmt(AST_SimpleStmt *);
+void astdump_stmt(AST_Stmt *);
+void astdump_stmtlist(AST_StmtList *);
+void astdump_term(AST_Term *);
+void astdump_varstmt(AST_VarStmt *);
+void astdump_varstmtlist(AST_VarStmtList *);
+void astdump_whilestmt(AST_WhileStmt *);
 
 #endif

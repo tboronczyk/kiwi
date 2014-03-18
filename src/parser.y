@@ -22,7 +22,7 @@
 %pure-parser
 %lex-param { Scanner *s }
 %parse-param { Scanner *s }
-%parse-param { ASTNode_Program **n }
+%parse-param { AST_Program **n }
 %{
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,7 +36,7 @@
 /* main.c */
 extern UFILE *ustderr;
 
-int yyerror(Scanner *, ASTNode_Program **, const char *);
+int yyerror(Scanner *, AST_Program **, const char *);
 int yylex(YYSTYPE *, Scanner *);
 %}
 
@@ -45,31 +45,31 @@ int yylex(YYSTYPE *, Scanner *);
     UChar *atom;
     Token token;
 
-    ASTNode_AssignStmt *assignstmt;
-    ASTNode_CompareExpr *compareexpr;
-    ASTNode_ComplexStmt *complexstmt;
-    ASTNode_CompoundBody *compoundbody;
-    ASTNode_CompoundBodyList *compoundbodylist;
-    ASTNode_CompoundStmt *compoundstmt;
-    ASTNode_ElseStmt *elsestmt;
-    ASTNode_Expr *expr;
-    ASTNode_ExprList *exprlist;
-    ASTNode_Factor *factor;
-    ASTNode_FuncCall *funccall;
-    ASTNode_FuncDef *funcdef;
-    ASTNode_FuncParamList *funcparamlist;
-    ASTNode_IfStmt *ifstmt;
-    ASTNode_MinorExpr *minorexpr;
-    ASTNode_NotExpr *notexpr;
-    ASTNode_Program *program;
-    ASTNode_ReturnStmt *returnstmt;
-    ASTNode_SimpleStmt *simplestmt;
-    ASTNode_Stmt *stmt;
-    ASTNode_StmtList *stmtlist;
-    ASTNode_Term *term;
-    ASTNode_VarStmt *varstmt;
-    ASTNode_VarStmtList *varstmtlist;
-    ASTNode_WhileStmt *whilestmt;
+    AST_AssignStmt *assignstmt;
+    AST_CompareExpr *compareexpr;
+    AST_ComplexStmt *complexstmt;
+    AST_CompoundBody *compoundbody;
+    AST_CompoundBodyList *compoundbodylist;
+    AST_CompoundStmt *compoundstmt;
+    AST_ElseStmt *elsestmt;
+    AST_Expr *expr;
+    AST_ExprList *exprlist;
+    AST_Factor *factor;
+    AST_FuncCall *funccall;
+    AST_FuncDef *funcdef;
+    AST_FuncParamList *funcparamlist;
+    AST_IfStmt *ifstmt;
+    AST_MinorExpr *minorexpr;
+    AST_NotExpr *notexpr;
+    AST_Program *program;
+    AST_ReturnStmt *returnstmt;
+    AST_SimpleStmt *simplestmt;
+    AST_Stmt *stmt;
+    AST_StmtList *stmtlist;
+    AST_Term *term;
+    AST_VarStmt *varstmt;
+    AST_VarStmtList *varstmtlist;
+    AST_WhileStmt *whilestmt;
 }
 
 %type <atom> atom
@@ -122,21 +122,21 @@ int yylex(YYSTYPE *, Scanner *);
 %%
 program
 : T_EOF {
-    *n = astnode_program_init();
+    *n = ast_program_init();
 }
 | stmtlist {
-    *n = astnode_program_init();
+    *n = ast_program_init();
     (*n)->stmtlist = $1;
 }
 ;
 
 stmtlist
 : stmt {
-    $$ = astnode_stmtlist_init();
+    $$ = ast_stmtlist_init();
     $$->stmt = $1;
 }
 | stmtlist stmt {
-    $$ = astnode_stmtlist_init();
+    $$ = ast_stmtlist_init();
     $$->stmtlist = $1;
     $$->stmt = $2;
 }
@@ -144,51 +144,51 @@ stmtlist
 
 stmt
 : complexstmt {
-    $$ = astnode_stmt_init();
-    $$->stmttype = ASTNODE_COMPLEXSTMT;
+    $$ = ast_stmt_init();
+    $$->stmttype = AST_COMPLEXSTMT;
     $$->stmt.complexstmt = $1;
 }
 | simplestmt {
-    $$ = astnode_stmt_init();
-    $$->stmttype = ASTNODE_SIMPLESTMT;
+    $$ = ast_stmt_init();
+    $$->stmttype = AST_SIMPLESTMT;
     $$->stmt.simplestmt = $1;
 }
 ;
 
 complexstmt
 : compoundstmt {
-    $$ = astnode_complexstmt_init();
-    $$->stmttype = ASTNODE_COMPOUNDSTMT;
+    $$ = ast_complexstmt_init();
+    $$->stmttype = AST_COMPOUNDSTMT;
     $$->stmt.compoundstmt = $1;
 }
 | funcdef {
-    $$ = astnode_complexstmt_init();
-    $$->stmttype = ASTNODE_FUNCDEF;
+    $$ = ast_complexstmt_init();
+    $$->stmttype = AST_FUNCDEF;
     $$->stmt.funcdef = $1;
 }
 ;
 
 compoundstmt
 : ifstmt {
-    $$ = astnode_compoundstmt_init();
-    $$->stmttype = ASTNODE_IFSTMT;
+    $$ = ast_compoundstmt_init();
+    $$->stmttype = AST_IFSTMT;
     $$->stmt.ifstmt = $1;
 }
 | whilestmt {
-    $$ = astnode_compoundstmt_init();
-    $$->stmttype = ASTNODE_WHILESTMT;
+    $$ = ast_compoundstmt_init();
+    $$->stmttype = AST_WHILESTMT;
     $$->stmt.whilestmt = $1;
 }
 ;
 
 ifstmt
 : T_IF expr compoundbody {
-    $$ = astnode_ifstmt_init();
+    $$ = ast_ifstmt_init();
     $$->expr = $2;
     $$->compoundbody = $3;
 }
 | T_IF expr compoundbody elsestmt {
-    $$ = astnode_ifstmt_init();
+    $$ = ast_ifstmt_init();
     $$->expr = $2;
     $$->compoundbody = $3;
     $$->elsestmt = $4;
@@ -197,11 +197,11 @@ ifstmt
 
 expr
 : notexpr {
-    $$ = astnode_expr_init();
+    $$ = ast_expr_init();
     $$->notexpr = $1;
 }
 | expr exprop notexpr {
-    $$ = astnode_expr_init();
+    $$ = ast_expr_init();
     $$->expr = $1;
     $$->exprop = $2;
     $$->notexpr = $3;
@@ -215,11 +215,11 @@ exprop
 
 notexpr
 : compareexpr {
-    $$ = astnode_notexpr_init();
+    $$ = ast_notexpr_init();
     $$->compareexpr = $1;
 }
 | T_NOT compareexpr {
-    $$ = astnode_notexpr_init();
+    $$ = ast_notexpr_init();
     $$->tnot = 1;
     $$->compareexpr = $2;
 }
@@ -227,11 +227,11 @@ notexpr
 
 compareexpr
 : minorexpr {
-    $$ = astnode_compareexpr_init();
+    $$ = ast_compareexpr_init();
     $$->minorexpr = $1;
 }
 | compareexpr compareop minorexpr {
-    $$ = astnode_compareexpr_init();
+    $$ = ast_compareexpr_init();
     $$->compareexpr = $1;
     $$->compareop = $2;
     $$->minorexpr = $3;
@@ -250,11 +250,11 @@ compareop
 
 minorexpr
 : term {
-    $$ = astnode_minorexpr_init();
+    $$ = ast_minorexpr_init();
     $$->term = $1;
 }
 | minorexpr addop term {
-    $$ = astnode_minorexpr_init();
+    $$ = ast_minorexpr_init();
     $$->minorexpr = $1;
     $$->addop = $2;
     $$->term = $3;
@@ -268,11 +268,11 @@ addop
 
 term
 : factor {
-    $$ = astnode_term_init();
+    $$ = ast_term_init();
     $$->factor = $1;
 }
 | term mulop factor {
-    $$ = astnode_term_init();
+    $$ = ast_term_init();
     $$->term = $1;
     $$->mulop = $2;
     $$->factor = $3;
@@ -287,23 +287,23 @@ mulop
 
 factor
 : atom {
-    $$ = astnode_factor_init();
-    $$->factortype = ASTNODE_ATOM;
+    $$ = ast_factor_init();
+    $$->factortype = AST_ATOM;
     $$->factor.atom = $1;
 }
 | funccall {
-    $$ = astnode_factor_init();
-    $$->factortype = ASTNODE_FUNCCALL;
+    $$ = ast_factor_init();
+    $$->factortype = AST_FUNCCALL;
     $$->factor.funccall = $1;
 }
 | T_LPAREN expr T_RPAREN {
-    $$ = astnode_factor_init();
-    $$->factortype = ASTNODE_EXPR;
+    $$ = ast_factor_init();
+    $$->factortype = AST_EXPR;
     $$->factor.expr = $2;
 }
 | addop factor {
-    $$ = astnode_factor_init();
-    $$->factortype = ASTNODE_FACTOR;
+    $$ = ast_factor_init();
+    $$->factortype = AST_FACTOR;
     $$->addop = $1;
     $$->factor.factor = $2;
 }
@@ -319,11 +319,11 @@ atom
 
 funccall
 : T_IDENTIFIER T_LPAREN T_RPAREN {
-    $$ = astnode_funccall_init();
+    $$ = ast_funccall_init();
     $$->identifier = $1;
 }
 | T_IDENTIFIER T_LPAREN exprlist T_RPAREN {
-    $$ = astnode_funccall_init();
+    $$ = ast_funccall_init();
     $$->identifier = $1;
     $$->exprlist = $3;
 }
@@ -331,11 +331,11 @@ funccall
 
 exprlist
 : expr {
-    $$ = astnode_exprlist_init();
+    $$ = ast_exprlist_init();
     $$->expr = $1;
 }
 | exprlist T_COMMA expr {
-    $$ = astnode_exprlist_init();
+    $$ = ast_exprlist_init();
     $$->exprlist = $1;
     $$->expr = $3;
 }
@@ -343,31 +343,31 @@ exprlist
 
 elsestmt
 : T_ELSE compoundbody {
-    $$ = astnode_elsestmt_init();
-    $$->stmttype = ASTNODE_COMPOUNDBODY;
+    $$ = ast_elsestmt_init();
+    $$->stmttype = AST_COMPOUNDBODY;
     $$->stmt.compoundbody = $2;
 }
 | T_ELSE ifstmt {
-    $$ = astnode_elsestmt_init();
-    $$->stmttype = ASTNODE_IFSTMT;
+    $$ = ast_elsestmt_init();
+    $$->stmttype = AST_IFSTMT;
     $$->stmt.ifstmt = $2;
 }
 ;
 
 compoundbody
 : T_LBRACE compoundbodylist T_RBRACE {
-    $$ = astnode_compoundbody_init();
+    $$ = ast_compoundbody_init();
     $$->compoundbodylist = $2;
 }
 ;
 
 compoundbodylist
 : stmt {
-    $$ = astnode_compoundbodylist_init();
+    $$ = ast_compoundbodylist_init();
     $$->stmt = $1;
 }
 | compoundbodylist stmt {
-    $$ = astnode_compoundbodylist_init();
+    $$ = ast_compoundbodylist_init();
     $$->compoundbodylist = $1;
     $$->stmt = $2;
 }
@@ -375,7 +375,7 @@ compoundbodylist
 
 whilestmt
 : T_WHILE expr compoundbody {
-    $$ = astnode_whilestmt_init();
+    $$ = ast_whilestmt_init();
     $$->expr = $2;
     $$->compoundbody = $3;
 }
@@ -383,12 +383,12 @@ whilestmt
 
 funcdef
 : T_FUNC T_IDENTIFIER compoundbody {
-    $$ = astnode_funcdef_init();
+    $$ = ast_funcdef_init();
     $$->identifier = $2;
     $$->compoundbody = $3;
 }
 | T_FUNC T_IDENTIFIER funcparamlist compoundbody {
-    $$ = astnode_funcdef_init();
+    $$ = ast_funcdef_init();
     $$->identifier = $2;
     $$->funcparamlist = $3;
     $$->compoundbody = $4;
@@ -397,11 +397,11 @@ funcdef
 
 funcparamlist
 : T_IDENTIFIER {
-    $$ = astnode_funcparamlist_init();
+    $$ = ast_funcparamlist_init();
     $$->identifier = $1;
 }
 | funcparamlist T_COMMA T_IDENTIFIER {
-    $$ = astnode_funcparamlist_init();
+    $$ = ast_funcparamlist_init();
     $$->funcparamlist = $1;
     $$->identifier = $3;
 }
@@ -409,30 +409,30 @@ funcparamlist
 
 simplestmt
 : assignstmt T_DOT {
-    $$ = astnode_simplestmt_init();
-    $$->stmttype = ASTNODE_ASSIGNSTMT;
+    $$ = ast_simplestmt_init();
+    $$->stmttype = AST_ASSIGNSTMT;
     $$->stmt.assignstmt = $1;
 }
 | returnstmt T_DOT {
-    $$ = astnode_simplestmt_init();
-    $$->stmttype = ASTNODE_RETURNSTMT;
+    $$ = ast_simplestmt_init();
+    $$->stmttype = AST_RETURNSTMT;
     $$->stmt.returnstmt = $1;
 }
 | varstmt T_DOT {
-    $$ = astnode_simplestmt_init();
-    $$->stmttype = ASTNODE_VARSTMT;
+    $$ = ast_simplestmt_init();
+    $$->stmttype = AST_VARSTMT;
     $$->stmt.varstmt = $1;
 }
 | expr T_DOT {
-    $$ = astnode_simplestmt_init();
-    $$->stmttype = ASTNODE_EXPR;
+    $$ = ast_simplestmt_init();
+    $$->stmttype = AST_EXPR;
     $$->stmt.expr = $1;
 }
 ;
 
 assignstmt
 : T_IDENTIFIER assignop expr {
-    $$ = astnode_assignstmt_init();
+    $$ = ast_assignstmt_init();
     $$->identifier = $1;
     $$->assignop = $2;
     $$->expr = $3;
@@ -450,45 +450,45 @@ assignop
 
 returnstmt
 : T_RETURN expr {
-    $$ = astnode_returnstmt_init();
+    $$ = ast_returnstmt_init();
     $$->expr = $2;
 }
 ;
 
 varstmt
 : T_VAR varstmtlist {
-    $$ = astnode_varstmt_init();
+    $$ = ast_varstmt_init();
     $$->varstmtlist = $2;
 }
 ;
 
 varstmtlist
 : T_IDENTIFIER {
-    $$ = astnode_varstmtlist_init();
-    $$->stmttype = ASTNODE_IDENTIFIER;
+    $$ = ast_varstmtlist_init();
+    $$->stmttype = AST_IDENTIFIER;
     $$->stmt.identifier = $1;
 }
 | assignstmt {
-    $$ = astnode_varstmtlist_init();
-    $$->stmttype = ASTNODE_ASSIGNSTMT;
+    $$ = ast_varstmtlist_init();
+    $$->stmttype = AST_ASSIGNSTMT;
     $$->stmt.assignstmt = $1;
 }
 | varstmtlist T_COMMA T_IDENTIFIER {
-    $$ = astnode_varstmtlist_init();
-    $$->stmttype = ASTNODE_IDENTIFIER;
+    $$ = ast_varstmtlist_init();
+    $$->stmttype = AST_IDENTIFIER;
     $$->varstmtlist = $1;
     $$->stmt.identifier = $3;
 }
 | varstmtlist T_COMMA assignstmt {
-    $$ = astnode_varstmtlist_init();
-    $$->stmttype = ASTNODE_ASSIGNSTMT;
+    $$ = ast_varstmtlist_init();
+    $$->stmttype = AST_ASSIGNSTMT;
     $$->varstmtlist = $1;
     $$->stmt.assignstmt = $3;
 }
 ;
 %%
 
-int yyerror(Scanner *s, ASTNode_Program **node, const char *str)
+int yyerror(Scanner *s, AST_Program **node, const char *str)
 {
     (void)*node;
     (void)u_fprintf(ustderr, "%s at %d:%d\n", str, s->linenum, s->linepos);
