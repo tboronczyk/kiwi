@@ -209,9 +209,9 @@ expr
 ;
 
 exprop
-	: T_AND
-	| T_OR
-	;
+: T_AND { $$ = T_AND; }
+| T_OR { $$ = T_OR; }
+;
 
 notexpr
 : compareexpr {
@@ -239,14 +239,14 @@ compareexpr
 ;
 
 compareop
-	: T_EQUAL
-	| T_NOT_EQUAL
-	| T_LESS
-	| T_LESS_EQUAL
-	| T_GREATER
-	| T_GREATER_EQUAL
-	| T_IS
-	;
+: T_EQUAL { $$ = T_EQUAL; }
+| T_NOT_EQUAL { $$ = T_NOT_EQUAL; }
+| T_LESS { $$ = T_LESS; }
+| T_LESS_EQUAL { $$ = T_LESS_EQUAL; }
+| T_GREATER { $$ = T_GREATER; }
+| T_GREATER_EQUAL { $$ = T_GREATER_EQUAL; }
+| T_IS { $$ = T_IS; }
+;
 
 minorexpr
 : term {
@@ -262,8 +262,9 @@ minorexpr
 ;
 
 addop
-	: T_ADD
-	| T_SUBTRACT;
+: T_ADD { $$ = T_ADD; }
+| T_SUBTRACT { $$ = T_SUBTRACT; }
+;
 
 term
 : factor {
@@ -279,10 +280,10 @@ term
 ;
 
 mulop
-	: T_MULTIPLY
-	| T_DIVIDE
-	| T_MODULO
-	;
+: T_MULTIPLY { $$ = T_MULTIPLY; }
+| T_DIVIDE { $$ = T_DIVIDE; }
+| T_MODULO { $$ = T_MODULO; }
+;
 
 factor
 : atom {
@@ -309,12 +310,12 @@ factor
 ;
 
 atom
-	: T_IDENTIFIER
-	| T_NUMBER
-	| T_TRUE
-	| T_FALSE
-	| T_STRING
-	;
+: T_IDENTIFIER { $$ = $1; }
+| T_NUMBER { $$ = $1; }
+| T_TRUE { $$ = $1; }
+| T_FALSE { $$ = $1; }
+| T_STRING { $$ = $1; }
+;
 
 funccall
 : T_IDENTIFIER T_LPAREN T_RPAREN {
@@ -439,13 +440,13 @@ assignstmt
 ;
 
 assignop
-	: T_ASSIGN
-	| T_ADD_ASSIGN
-	| T_SUBTRACT_ASSIGN
-	| T_MULTIPLY_ASSIGN
-	| T_DIVIDE_ASSIGN
-	| T_MODULO_ASSIGN
-	;
+: T_ASSIGN  { $$ = T_ASSIGN; }
+| T_ADD_ASSIGN { $$ = T_ADD_ASSIGN; }
+| T_SUBTRACT_ASSIGN { $$ = T_SUBTRACT_ASSIGN; }
+| T_MULTIPLY_ASSIGN { $$ = T_MULTIPLY_ASSIGN; }
+| T_DIVIDE_ASSIGN { $$ = T_DIVIDE_ASSIGN; }
+| T_MODULO_ASSIGN { $$ = T_MODULO_ASSIGN; }
+;
 
 returnstmt
 : T_RETURN expr {
