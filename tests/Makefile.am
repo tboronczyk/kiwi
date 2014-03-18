@@ -7,11 +7,21 @@ else
 AM_CFLAGS += -O2
 endif
 
-TESTS = check_scanner
+TESTS = check_scanner \
+        check_parser
 
-check_PROGRAMS = check_scanner
-check_scanner_SOURCES = check_scanner.c
+check_PROGRAMS = check_scanner \
+                 check_parser
+
+check_scanner_SOURCES = $(top_builddir)/src/scanner.c check_scanner.c
 check_scanner_CFLAGSADD = @CHECK_CFLAGS@
-check_scanner_LDADD = $(top_builddir)/src/scanner.o -licuio -licuuc \
- @CHECK_LIBS@ -lpthread
+check_scanner_LDADD = -licuio -licuuc @CHECK_LIBS@ -lpthread
+
+check_parser_SOURCES = $(top_builddir)/src/ast.c \
+                       $(top_builddir)/src/parser.c \
+                       $(top_builddir)/src/scanner.c \
+                       astdump.c \
+                       check_parser.c
+check_parser_CFLAGSADD = @CHECK_CFLAGS@
+check_parser_LDADD = -licuio -licuuc @CHECK_LIBS@ -lpthread
 
