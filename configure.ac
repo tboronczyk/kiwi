@@ -7,7 +7,7 @@ AC_PREREQ([2.64])
 AC_INIT([kiwi], [KIWI_MAJOR.KIWI_MINOR.KIWI_PATCH], [KIWI_BUGS])
 AC_CONFIG_SRCDIR([src/main.c])
 
-AM_INIT_AUTOMAKE([foreign -Wall -Werror])
+AM_INIT_AUTOMAKE([subdir-objects foreign -Wall -Werror])
 
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4], [have_check=true],
   AC_MSG_WARN([Check not found; cannot run unit tests!])
