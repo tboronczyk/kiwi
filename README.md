@@ -15,6 +15,16 @@ get to work on it, but the code is licensed as free software. You can do
 whatever you want with it under the terms of the license provided in the
 LICENSE file.
 
+## Build
+
+    sudo apt-get install build-essential autoconf pkg-config bison libicu-dev \
+     check git
+    git clone https://github.com/tboronczyk/Kiwi
+    cd Kiwi
+    autoreconf --install
+    ./configure
+    make
+
 ## Language Definition
 
 ### Comments
