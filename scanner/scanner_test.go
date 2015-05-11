@@ -29,7 +29,7 @@ import (
 )
 
 func TestScanSimpleTokens(t *testing.T) {
-	str := "+ - * / % = < <= > >= && & || | ~ ~= ( ) ?"
+	str := "+ - * / % := : = < <= > >= && & || | ~ ~= ( ) { } ; ?"
 	s := NewScanner(strings.NewReader(str))
 
 	tokens := []struct {
@@ -41,6 +41,8 @@ func TestScanSimpleTokens(t *testing.T) {
 		{token.MULTIPLY, "*"},
 		{token.DIVIDE, "/"},
 		{token.MODULO, "%"},
+		{token.ASSIGN, ":="},
+		{token.MALFORMED, ":"},
 		{token.EQUAL, "="},
 		{token.LESS, "<"},
 		{token.LESS_EQ, "<="},
@@ -54,6 +56,9 @@ func TestScanSimpleTokens(t *testing.T) {
 		{token.NOT_EQUAL, "~="},
 		{token.LPAREN, "("},
 		{token.RPAREN, ")"},
+		{token.LBRACE, "{"},
+		{token.RBRACE, "}"},
+		{token.SEMICOLON, ";"},
 		{token.UNKNOWN, "?"},
 		{token.EOF, ""},
 	}
@@ -66,15 +71,18 @@ func TestScanSimpleTokens(t *testing.T) {
 }
 
 func TestScanIdentifiers(t *testing.T) {
-	str := "true false ident"
+	str := "if while true false `if ident"
 	s := NewScanner(strings.NewReader(str))
 
 	tokens := []struct {
 		token token.Token
 		value string
 	}{
+		{token.IF, "if"},
+		{token.WHILE, "while"},
 		{token.TRUE, "true"},
 		{token.FALSE, "false"},
+		{token.IDENTIFIER, "if"},
 		{token.IDENTIFIER, "ident"},
 	}
 

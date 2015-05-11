@@ -37,7 +37,7 @@ type Scanner interface {
 var eof = rune(0)
 
 type scanner struct {
-	r *bufio.Reader
+	r     *bufio.Reader
 	atEOF bool
 }
 
@@ -87,6 +87,13 @@ func (s *scanner) Scan() (token.Token, string) {
 		return token.DIVIDE, "/"
 	case '%':
 		return token.MODULO, "%"
+	case ':':
+		ch = s.read()
+		if ch == '=' {
+			return token.ASSIGN, ":="
+		}
+		s.unread()
+		return token.MALFORMED, ":"
 	case '=':
 		return token.EQUAL, "="
 	case '<':
@@ -128,8 +135,17 @@ func (s *scanner) Scan() (token.Token, string) {
 		return token.LPAREN, "("
 	case ')':
 		return token.RPAREN, ")"
+	case '{':
+		return token.LBRACE, "{"
+	case '}':
+		return token.RBRACE, "}"
+	case ';':
+		return token.SEMICOLON, ";"
 	case '"':
 		return s.scanString()
+	case '`':
+		s.unread()
+		return s.scanIdent()
 	}
 
 	if unicode.IsLetter(ch) {
@@ -175,6 +191,7 @@ func (s *scanner) scanString() (token.Token, string) {
 func (s *scanner) scanIdent() (token.Token, string) {
 	var buf bytes.Buffer
 	buf.WriteRune(s.read())
+
 	for {
 		if ch := s.read(); unicode.IsLetter(ch) || unicode.IsDigit(ch) || ch == '_' {
 			buf.WriteRune(ch)
@@ -183,13 +200,23 @@ func (s *scanner) scanIdent() (token.Token, string) {
 			break
 		}
 	}
-	switch strings.ToUpper(buf.String()) {
-	case "TRUE":
-		return token.TRUE, buf.String()
-	case "FALSE":
-		return token.FALSE, buf.String()
+
+	str := buf.String()
+	if strings.IndexRune(str, '`') == 0 {
+		str = str[1:]
+	} else {
+		switch strings.ToUpper(str) {
+		case "IF":
+			return token.IF, str
+		case "WHILE":
+			return token.WHILE, str
+		case "TRUE":
+			return token.TRUE, str
+		case "FALSE":
+			return token.FALSE, str
+		}
 	}
-	return token.IDENTIFIER, buf.String()
+	return token.IDENTIFIER, str
 }
 
 func (s *scanner) scanNumber() (token.Token, string) {
