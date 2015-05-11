@@ -38,6 +38,7 @@ var eof = rune(0)
 
 type scanner struct {
 	r *bufio.Reader
+	atEOF bool
 }
 
 func NewScanner(r io.Reader) *scanner {
@@ -45,9 +46,14 @@ func NewScanner(r io.Reader) *scanner {
 }
 
 func (s *scanner) read() rune {
+	if s.atEOF {
+		return eof
+	}
+
 	ch, _, err := s.r.ReadRune()
 	if err != nil {
-		return eof
+		s.atEOF = true
+		ch = eof
 	}
 	return ch
 }
