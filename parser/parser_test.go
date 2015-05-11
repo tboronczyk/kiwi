@@ -84,9 +84,9 @@ func TestParseIfStmt(t *testing.T) {
 	p.InitScanner(s)
 
 	node, err := p.ParseIfStmt()
-	assert.Equal(t, token.TRUE, node.Left.Token)
+	assert.Equal(t, token.TRUE, node.Children[0].Token)
 	assert.Equal(t, token.IF, node.Token)
-	assert.Equal(t, token.ASSIGN, node.Right.Token)
+	assert.Equal(t, token.ASSIGN, node.Children[1].Token)
 	assert.Nil(t, err)
 }
 
@@ -108,9 +108,9 @@ func TestParseWhileStmt(t *testing.T) {
 	p.InitScanner(s)
 
 	node, err := p.ParseWhileStmt()
-	assert.Equal(t, token.TRUE, node.Left.Token)
+	assert.Equal(t, token.TRUE, node.Children[0].Token)
 	assert.Equal(t, token.WHILE, node.Token)
-	assert.Equal(t, token.ASSIGN, node.Right.Token)
+	assert.Equal(t, token.ASSIGN, node.Children[1].Token)
 	assert.Nil(t, err)
 }
 
@@ -128,9 +128,9 @@ func TestParseAssignStmt(t *testing.T) {
 	p.InitScanner(s)
 
 	node, err := p.ParseAssignStmt()
-	assert.Equal(t, token.IDENTIFIER, node.Left.Token)
+	assert.Equal(t, token.IDENTIFIER, node.Children[0].Token)
 	assert.Equal(t, token.ASSIGN, node.Token)
-	assert.Equal(t, token.NUMBER, node.Right.Token)
+	assert.Equal(t, token.NUMBER, node.Children[1].Token)
 	assert.Nil(t, err)
 }
 
@@ -147,9 +147,9 @@ func TestParseExpr(t *testing.T) {
 	p.InitScanner(s)
 
 	node, err := p.ParseExpr()
-	assert.Equal(t, token.TRUE, node.Left.Token)
+	assert.Equal(t, token.TRUE, node.Children[0].Token)
 	assert.Equal(t, token.AND, node.Token)
-	assert.Equal(t, token.TRUE, node.Right.Token)
+	assert.Equal(t, token.TRUE, node.Children[1].Token)
 	assert.Nil(t, err)
 }
 
@@ -182,9 +182,9 @@ func TestParseRelation(t *testing.T) {
 
 	node, err := p.ParseRelation()
 	assert.Nil(t, err)
-	assert.Equal(t, token.NUMBER, node.Left.Token)
+	assert.Equal(t, token.NUMBER, node.Children[0].Token)
 	assert.Equal(t, token.LESS, node.Token)
-	assert.Equal(t, token.NUMBER, node.Right.Token)
+	assert.Equal(t, token.NUMBER, node.Children[1].Token)
 }
 
 func TestParseRelationError(t *testing.T) {
@@ -216,9 +216,9 @@ func TestParseSimpleExpr(t *testing.T) {
 
 	node, err := p.ParseSimpleExpr()
 	assert.Nil(t, err)
-	assert.Equal(t, token.NUMBER, node.Left.Token)
+	assert.Equal(t, token.NUMBER, node.Children[0].Token)
 	assert.Equal(t, token.ADD, node.Token)
-	assert.Equal(t, token.NUMBER, node.Right.Token)
+	assert.Equal(t, token.NUMBER, node.Children[1].Token)
 }
 
 func TestParseSimpleExprError(t *testing.T) {
@@ -250,9 +250,9 @@ func TestParseTerm(t *testing.T) {
 
 	node, err := p.ParseTerm()
 	assert.Nil(t, err)
-	assert.Equal(t, token.NUMBER, node.Left.Token)
+	assert.Equal(t, token.NUMBER, node.Children[0].Token)
 	assert.Equal(t, token.MULTIPLY, node.Token)
-	assert.Equal(t, token.NUMBER, node.Right.Token)
+	assert.Equal(t, token.NUMBER, node.Children[1].Token)
 }
 
 func TestParseTermError(t *testing.T) {
@@ -329,7 +329,7 @@ func TestParseFactorNot(t *testing.T) {
 
 	node, err := p.ParseFactor()
 	assert.Nil(t, err)
-	assert.Equal(t, token.TRUE, node.Left.Token)
+	assert.Equal(t, token.TRUE, node.Children[0].Token)
 	assert.Equal(t, token.NOT, node.Token)
 }
 
@@ -361,7 +361,7 @@ func TestParseFactorSigned(t *testing.T) {
 	node, err := p.ParseFactor()
 	assert.Nil(t, err)
 	assert.Equal(t, token.SUBTRACT, node.Token)
-	assert.Equal(t, token.NUMBER, node.Left.Token)
+	assert.Equal(t, token.NUMBER, node.Children[0].Token)
 }
 
 func TestParseFactorSignedError(t *testing.T) {
@@ -409,16 +409,16 @@ func TestParseFullExpression(t *testing.T) {
 	node, err := p.ParseFactor()
 	assert.Nil(t, err)
 	assert.Equal(t, token.NOT, node.Token)
-	assert.Equal(t, token.AND, node.Left.Token)
-	assert.Equal(t, token.LESS, node.Left.Left.Token)
-	assert.Equal(t, token.SUBTRACT, node.Left.Left.Left.Token)
-	assert.Equal(t, token.NUMBER, node.Left.Left.Left.Left.Token)
-	assert.Equal(t, token.NUMBER, node.Left.Left.Right.Token)
-	assert.Equal(t, token.GREATER, node.Left.Right.Token)
-	assert.Equal(t, token.IDENTIFIER, node.Left.Right.Left.Token)
-	assert.Equal(t, token.ADD, node.Left.Right.Right.Token)
-	assert.Equal(t, token.NUMBER, node.Left.Right.Right.Left.Token)
-	assert.Equal(t, token.MULTIPLY, node.Left.Right.Right.Right.Token)
-	assert.Equal(t, token.NUMBER, node.Left.Right.Right.Right.Left.Token)
-	assert.Equal(t, token.NUMBER, node.Left.Right.Right.Right.Right.Token)
+	assert.Equal(t, token.AND, node.Children[0].Token)
+	assert.Equal(t, token.LESS, node.Children[0].Children[0].Token)
+	assert.Equal(t, token.SUBTRACT, node.Children[0].Children[0].Children[0].Token)
+	assert.Equal(t, token.NUMBER, node.Children[0].Children[0].Children[0].Children[0].Token)
+	assert.Equal(t, token.NUMBER, node.Children[0].Children[0].Children[1].Token)
+	assert.Equal(t, token.GREATER, node.Children[0].Children[1].Token)
+	assert.Equal(t, token.IDENTIFIER, node.Children[0].Children[1].Children[0].Token)
+	assert.Equal(t, token.ADD, node.Children[0].Children[1].Children[1].Token)
+	assert.Equal(t, token.NUMBER, node.Children[0].Children[1].Children[1].Children[0].Token)
+	assert.Equal(t, token.MULTIPLY, node.Children[0].Children[1].Children[1].Children[1].Token)
+	assert.Equal(t, token.NUMBER, node.Children[0].Children[1].Children[1].Children[1].Children[0].Token)
+	assert.Equal(t, token.NUMBER, node.Children[0].Children[1].Children[1].Children[1].Children[1].Token)
 }

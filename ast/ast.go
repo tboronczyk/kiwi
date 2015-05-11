@@ -24,12 +24,13 @@ package ast
 import (
 	"fmt"
 	"github.com/tboronczyk/kiwi/token"
+	"strconv"
 )
 
 type Node struct {
 	token.Token
-	Value       string
-	Left, Right *Node
+	Value    string
+	Children []*Node
 }
 
 func (n Node) PrintTree() {
@@ -37,11 +38,13 @@ func (n Node) PrintTree() {
 }
 
 func (n Node) printTree(s string) {
-	if n.Left != nil {
-		n.Left.printTree(s + "\t[L] ")
+	if len(n.Children) > 0 {
+		n.Children[0].printTree(s + "\t[0] ")
 	}
 	fmt.Printf("%s%s (%s)\n", s, n.Value, n.Token.String())
-	if n.Right != nil {
-		n.Right.printTree(s + "\t[R] ")
+	if len(n.Children) > 1 {
+		for i, node := range n.Children[1:] {
+			node.printTree(s + "\t[" + strconv.Itoa(i+1) + "] ")
+		}
 	}
 }
