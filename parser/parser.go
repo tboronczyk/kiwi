@@ -31,6 +31,7 @@ import (
 type Parser struct {
 	tkn token.Token
 	val string
+	s   scanner.Scanner
 }
 
 func NewParser() *Parser {
@@ -41,91 +42,96 @@ func (p Parser) match(t token.Token) bool {
 	return p.tkn == t
 }
 
-func (p *Parser) advance(s scanner.Scanner) {
+func (p *Parser) advance() {
 	for {
-		p.tkn, p.val = s.Scan()
+		p.tkn, p.val = p.s.Scan()
 		if p.tkn != token.COMMENT {
 			break
 		}
 	}
 }
 
-func (p *Parser) ParseExpr(s scanner.Scanner) (*ast.Node, error) {
-	n, err := p.ParseRelation(s)
+func (p *Parser) InitScanner(s scanner.Scanner) {
+	p.s = s
+	p.advance()
+}
+
+func (p *Parser) ParseExpr() (*ast.Node, error) {
+	n, err := p.ParseRelation()
 	if err != nil || !p.tkn.IsLogOp() {
 		return n, err
 	}
 
 	node := &ast.Node{Token: p.tkn, Value: p.val, Left: n}
-	p.advance(s)
-	node.Right, err = p.ParseExpr(s)
+	p.advance()
+	node.Right, err = p.ParseExpr()
 	return node, err
 }
 
-func (p *Parser) ParseRelation(s scanner.Scanner) (*ast.Node, error) {
-	n, err := p.ParseSimpleExpr(s)
+func (p *Parser) ParseRelation() (*ast.Node, error) {
+	n, err := p.ParseSimpleExpr()
 	if err != nil || !p.tkn.IsCmpOp() {
 		return n, err
 	}
 
 	node := &ast.Node{Token: p.tkn, Value: p.val, Left: n}
-	p.advance(s)
-	node.Right, err = p.ParseRelation(s)
+	p.advance()
+	node.Right, err = p.ParseRelation()
 	return node, err
 }
 
-func (p *Parser) ParseSimpleExpr(s scanner.Scanner) (*ast.Node, error) {
-	n, err := p.ParseTerm(s)
+func (p *Parser) ParseSimpleExpr() (*ast.Node, error) {
+	n, err := p.ParseTerm()
 	if err != nil || !p.tkn.IsAddOp() {
 		return n, err
 	}
 
 	node := &ast.Node{Token: p.tkn, Value: p.val, Left: n}
-	p.advance(s)
-	node.Right, err = p.ParseSimpleExpr(s)
+	p.advance()
+	node.Right, err = p.ParseSimpleExpr()
 	return node, err
 }
 
-func (p *Parser) ParseTerm(s scanner.Scanner) (*ast.Node, error) {
-	n, err := p.ParseFactor(s)
+func (p *Parser) ParseTerm() (*ast.Node, error) {
+	n, err := p.ParseFactor()
 	if err != nil || !p.tkn.IsMulOp() {
 		return n, err
 	}
 
 	node := &ast.Node{Token: p.tkn, Value: p.val, Left: n}
-	p.advance(s)
-	node.Right, err = p.ParseTerm(s)
+	p.advance()
+	node.Right, err = p.ParseTerm()
 	return node, err
 }
 
-func (p *Parser) ParseFactor(s scanner.Scanner) (*ast.Node, error) {
+func (p *Parser) ParseFactor() (*ast.Node, error) {
 	if p.match(token.LPAREN) {
-		p.advance(s)
-		n, err := p.ParseExpr(s)
+		p.advance()
+		n, err := p.ParseExpr()
 		if err == nil {
 			if !p.match(token.RPAREN) {
 				err = errors.New("Expected " + token.RPAREN.String() + " but saw " + p.tkn.String())
 			} else {
-				p.advance(s)
+				p.advance()
 			}
 		}
 		return n, err
 	}
 	if p.match(token.NOT) || p.match(token.ADD) || p.match(token.SUBTRACT) {
 		n := &ast.Node{Token: p.tkn, Value: p.val}
-		p.advance(s)
-		left, err := p.ParseFactor(s)
+		p.advance()
+		left, err := p.ParseFactor()
 		n.Left = left
 		return n, err
 	}
-	return p.ParseTerminal(s)
+	return p.ParseTerminal()
 }
 
-func (p *Parser) ParseTerminal(s scanner.Scanner) (*ast.Node, error) {
+func (p *Parser) ParseTerminal() (*ast.Node, error) {
 	n := &ast.Node{Token: p.tkn, Value: p.val}
 	if !p.tkn.IsLiteral() {
 		return n, errors.New("Expected a value or identifier " + "but saw " + p.tkn.String())
 	}
-	p.advance(s)
+	p.advance()
 	return n, nil
 }
