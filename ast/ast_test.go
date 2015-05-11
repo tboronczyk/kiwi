@@ -22,26 +22,52 @@
 package ast
 
 import (
-	"fmt"
+	"bytes"
+	"github.com/stretchr/testify/assert"
 	"github.com/tboronczyk/kiwi/token"
+	"io"
+	"os"
+	"testing"
 )
 
-type Node struct {
-	token.Token
-	Value       string
-	Left, Right *Node
+func capture(n *Node) string {
+	// re-assign stdout
+	old := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	n.PrintTree()
+
+	// capture output
+	out := make(chan string)
+	go func() {
+		var buf bytes.Buffer
+		io.Copy(&buf, r)
+		out <- buf.String()
+	}()
+
+	// restore stdout
+	w.Close()
+	os.Stdout = old
+
+	return <-out
 }
 
-func (n Node) PrintTree() {
-	n.printTree("")
+func TestPrintTreeUnary(t *testing.T) {
+	n := &Node{Token: token.ADD, Value: "+"}
+	n.Left = &Node{Token: token.NUMBER, Value: "2"}
+	expected := "\t[L] 2 (NUMBER)\n+ (+)\n"
+
+	actual := capture(n)
+	assert.Equal(t, expected, actual)
 }
 
-func (n Node) printTree(s string) {
-	if n.Left != nil {
-		n.Left.printTree(s + "\t[L] ")
-	}
-	fmt.Printf("%s%s (%s)\n", s, n.Value, n.Token.String())
-	if n.Right != nil {
-		n.Right.printTree(s + "\t[R] ")
-	}
+func TestPrintTreeBinary(t *testing.T) {
+	n := &Node{Token: token.ADD, Value: "+"}
+	n.Left = &Node{Token: token.NUMBER, Value: "2"}
+	n.Right = &Node{Token: token.NUMBER, Value: "4"}
+	expected := "\t[L] 2 (NUMBER)\n+ (+)\n\t[R] 4 (NUMBER)\n"
+
+	actual := capture(n)
+	assert.Equal(t, expected, actual)
 }
