@@ -13,3 +13,8 @@
         boolean = 'true' | 'false' .
          cmp-op = '=' | '~=' | '<' | '<=' | '>' | '>=' .
          log-op = '&&' | '||' .
+
+           stmt = assign-stmt | if-stmt | while-stmt .
+    assign-stmt = IDENT ':=' expr ';' .
+        if-stmt = 'if' expr '{' stmt '}' .
+     while-stmt = 'while' expr '{' stmt '}' .

@@ -56,6 +56,107 @@ func (p *Parser) InitScanner(s scanner.Scanner) {
 	p.advance()
 }
 
+func (p *Parser) Parse() (*ast.Node, error) {
+	if p.tkn == token.EOF {
+		return &ast.Node{Token: p.tkn, Value: p.val}, nil
+	}
+	return p.ParseStmt()
+}
+
+func (p *Parser) ParseStmt() (*ast.Node, error) {
+	switch p.tkn {
+	case token.IF:
+		return p.ParseIfStmt()
+	case token.WHILE:
+		return p.ParseWhileStmt()
+	case token.IDENTIFIER:
+		return p.ParseAssignStmt()
+	}
+	return &ast.Node{}, errors.New("Expected if, while, or an identifier " + "but saw " + p.tkn.String())
+}
+
+func (p *Parser) ParseIfStmt() (*ast.Node, error) {
+	node := &ast.Node{Token: p.tkn, Value: p.val}
+	p.advance()
+
+	var err error
+	node.Left, err = p.ParseExpr()
+	if err != nil {
+		return node, err
+	}
+
+	if p.tkn != token.LBRACE {
+		return node, errors.New("Expected " + token.LBRACE.String() + " but saw " + p.tkn.String())
+	}
+	p.advance()
+
+	node.Right, err = p.ParseStmt()
+	if err != nil {
+		return node, err
+	}
+
+	if p.tkn != token.RBRACE {
+		return node, errors.New("Expected " + token.RBRACE.String() + " but saw " + p.tkn.String())
+	}
+	p.advance()
+
+	return node, nil
+}
+
+func (p *Parser) ParseWhileStmt() (*ast.Node, error) {
+	node := &ast.Node{Token: p.tkn, Value: p.val}
+	p.advance()
+
+	var err error
+	node.Left, err = p.ParseExpr()
+	if err != nil {
+		return node, err
+	}
+
+	if p.tkn != token.LBRACE {
+		return node, errors.New("Expected " + token.LBRACE.String() + " but saw " + p.tkn.String())
+	}
+	p.advance()
+
+	node.Right, err = p.ParseStmt()
+	if err != nil {
+		return node, err
+	}
+
+	if p.tkn != token.RBRACE {
+		return node, errors.New("Expected " + token.RBRACE.String() + " but saw " + p.tkn.String())
+	}
+	p.advance()
+
+	return node, nil
+}
+
+func (p *Parser) ParseAssignStmt() (*ast.Node, error) {
+	node := &ast.Node{Token: token.ASSIGN, Value: token.ASSIGN.String()}
+	var err error
+	node.Left, err = p.ParseTerminal()
+	if err != nil {
+		return node, err
+	}
+
+	if p.tkn != token.ASSIGN {
+		return node, errors.New("Expected " + token.ASSIGN.String() + " but saw " + p.tkn.String())
+	}
+	p.advance()
+
+	node.Right, err = p.ParseExpr()
+	if err != nil {
+		return node, err
+	}
+
+	if p.tkn != token.SEMICOLON {
+		return node, errors.New("Expected " + token.SEMICOLON.String() + " but saw " + p.tkn.String())
+	}
+	p.advance()
+
+	return node, nil
+}
+
 func (p *Parser) ParseExpr() (*ast.Node, error) {
 	n, err := p.ParseRelation()
 	if err != nil || !p.tkn.IsLogOp() {

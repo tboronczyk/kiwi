@@ -66,6 +66,74 @@ func TestSkipComment(t *testing.T) {
 	assert.Equal(t, token.STRING, p.tkn)
 }
 
+func TestParseIfStmt(t *testing.T) {
+	s := NewMockScanner()
+	// if true { a := false; }
+	s.reset([]tokenPair{
+		{token.IF, "if"},
+		{token.TRUE, "true"},
+		{token.LBRACE, "{"},
+		{token.IDENTIFIER, "a"},
+		{token.ASSIGN, ":="},
+		{token.FALSE, "false"},
+		{token.SEMICOLON, ";"},
+		{token.RBRACE, "}"},
+		{token.EOF, ""},
+	})
+	p := NewParser()
+	p.InitScanner(s)
+
+	node, err := p.ParseIfStmt()
+	assert.Equal(t, token.TRUE, node.Left.Token)
+	assert.Equal(t, token.IF, node.Token)
+	assert.Equal(t, token.ASSIGN, node.Right.Token)
+	assert.Nil(t, err)
+}
+
+func TestParseWhileStmt(t *testing.T) {
+	s := NewMockScanner()
+	// while true { a := false; }
+	s.reset([]tokenPair{
+		{token.WHILE, "while"},
+		{token.TRUE, "true"},
+		{token.LBRACE, "{"},
+		{token.IDENTIFIER, "a"},
+		{token.ASSIGN, ":="},
+		{token.FALSE, "false"},
+		{token.SEMICOLON, ";"},
+		{token.RBRACE, "}"},
+		{token.EOF, ""},
+	})
+	p := NewParser()
+	p.InitScanner(s)
+
+	node, err := p.ParseWhileStmt()
+	assert.Equal(t, token.TRUE, node.Left.Token)
+	assert.Equal(t, token.WHILE, node.Token)
+	assert.Equal(t, token.ASSIGN, node.Right.Token)
+	assert.Nil(t, err)
+}
+
+func TestParseAssignStmt(t *testing.T) {
+	s := NewMockScanner()
+	// a := 4;
+	s.reset([]tokenPair{
+		{token.IDENTIFIER, "a"},
+		{token.ASSIGN, ":="},
+		{token.NUMBER, "4"},
+		{token.SEMICOLON, ";"},
+		{token.EOF, ""},
+	})
+	p := NewParser()
+	p.InitScanner(s)
+
+	node, err := p.ParseAssignStmt()
+	assert.Equal(t, token.IDENTIFIER, node.Left.Token)
+	assert.Equal(t, token.ASSIGN, node.Token)
+	assert.Equal(t, token.NUMBER, node.Right.Token)
+	assert.Nil(t, err)
+}
+
 func TestParseExpr(t *testing.T) {
 	s := NewMockScanner()
 	// true && true

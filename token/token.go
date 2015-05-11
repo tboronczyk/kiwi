@@ -59,8 +59,15 @@ const (
 	NOT
 	logop_end
 
+	ASSIGN
 	LPAREN
 	RPAREN
+	LBRACE
+	RBRACE
+	SEMICOLON
+
+	IF
+	WHILE
 
 	lit_start
 	TRUE
@@ -90,8 +97,14 @@ var tokens = [...]string{
 	AND:        "&&",
 	OR:         "||",
 	NOT:        "~",
+	ASSIGN:     ":=",
 	LPAREN:     "(",
 	RPAREN:     ")",
+	LBRACE:     "{",
+	RBRACE:     "}",
+	SEMICOLON:  ";",
+	IF:         "if",
+	WHILE:      "while",
 	TRUE:       "true",
 	FALSE:      "false",
 	NUMBER:     "NUMBER",
