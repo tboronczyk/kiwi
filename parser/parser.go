@@ -58,21 +58,20 @@ func (p *Parser) InitScanner(s scanner.Scanner) {
 
 func (p *Parser) Parse() (*ast.Node, error) {
 	if p.tkn == token.EOF {
-		return &ast.Node{Token: p.tkn, Value: p.val}, nil
+		return ast.NewNode(p.tkn, p.val, 2), nil
 	}
 	return p.ParseStmt()
 }
 
 func (p *Parser) ParseStmtList() (*ast.Node, error) {
 	var err error
-	node := &ast.Node{Token: p.tkn, Value: p.val}
-	node.Children = make([]*ast.Node, 2)
+	node := ast.NewNode(nil, nil, 2)
 	for p.tkn == token.IF || p.tkn == token.WHILE || p.tkn == token.IDENTIFIER {
 		node.Children[1], err = p.ParseStmt()
 		if err != nil {
 			return node, err
 		}
-		n := &ast.Node{Children: make([]*ast.Node, 2)}
+		n := ast.NewNode(nil, nil, 2)
 		n.Children[0] = node
 		node = n
 	}
@@ -92,8 +91,7 @@ func (p *Parser) ParseStmt() (*ast.Node, error) {
 }
 
 func (p *Parser) ParseIfStmt() (*ast.Node, error) {
-	node := &ast.Node{Token: p.tkn, Value: p.val}
-	node.Children = make([]*ast.Node, 2)
+	node := ast.NewNode(p.tkn, p.val, 2)
 	p.advance()
 
 	var err error
@@ -121,8 +119,7 @@ func (p *Parser) ParseIfStmt() (*ast.Node, error) {
 }
 
 func (p *Parser) ParseWhileStmt() (*ast.Node, error) {
-	node := &ast.Node{Token: p.tkn, Value: p.val}
-	node.Children = make([]*ast.Node, 2)
+	node := ast.NewNode(p.tkn, p.val, 2)
 	p.advance()
 
 	var err error
@@ -150,9 +147,8 @@ func (p *Parser) ParseWhileStmt() (*ast.Node, error) {
 }
 
 func (p *Parser) ParseAssignStmt() (*ast.Node, error) {
-	node := &ast.Node{Token: token.ASSIGN, Value: token.ASSIGN.String()}
-	node.Children = make([]*ast.Node, 2)
 	var err error
+	node := ast.NewNode(token.ASSIGN, token.ASSIGN.String(), 2)
 	node.Children[0], err = p.ParseTerminal()
 	if err != nil {
 		return node, err
@@ -182,8 +178,7 @@ func (p *Parser) ParseExpr() (*ast.Node, error) {
 		return n, err
 	}
 
-	node := &ast.Node{Token: p.tkn, Value: p.val}
-	node.Children = make([]*ast.Node, 2)
+	node := ast.NewNode(p.tkn, p.val, 2)
 	node.Children[0] = n
 	p.advance()
 	node.Children[1], err = p.ParseExpr()
@@ -196,8 +191,7 @@ func (p *Parser) ParseRelation() (*ast.Node, error) {
 		return n, err
 	}
 
-	node := &ast.Node{Token: p.tkn, Value: p.val}
-	node.Children = make([]*ast.Node, 2)
+	node := ast.NewNode(p.tkn, p.val, 2)
 	node.Children[0] = n
 	p.advance()
 	node.Children[1], err = p.ParseRelation()
@@ -210,8 +204,7 @@ func (p *Parser) ParseSimpleExpr() (*ast.Node, error) {
 		return n, err
 	}
 
-	node := &ast.Node{Token: p.tkn, Value: p.val}
-	node.Children = make([]*ast.Node, 2)
+	node := ast.NewNode(p.tkn, p.val, 2)
 	node.Children[0] = n
 	p.advance()
 	node.Children[1], err = p.ParseSimpleExpr()
@@ -224,8 +217,7 @@ func (p *Parser) ParseTerm() (*ast.Node, error) {
 		return n, err
 	}
 
-	node := &ast.Node{Token: p.tkn, Value: p.val}
-	node.Children = make([]*ast.Node, 2)
+	node := ast.NewNode(p.tkn, p.val, 2)
 	node.Children[0] = n
 	p.advance()
 	node.Children[1], err = p.ParseTerm()
@@ -246,8 +238,7 @@ func (p *Parser) ParseFactor() (*ast.Node, error) {
 		return n, err
 	}
 	if p.match(token.NOT) || p.match(token.ADD) || p.match(token.SUBTRACT) {
-		n := &ast.Node{Token: p.tkn, Value: p.val}
-		n.Children = make([]*ast.Node, 1)
+		n := ast.NewNode(p.tkn, p.val, 1)
 		p.advance()
 		c, err := p.ParseFactor()
 		n.Children[0] = c
@@ -257,7 +248,7 @@ func (p *Parser) ParseFactor() (*ast.Node, error) {
 }
 
 func (p *Parser) ParseTerminal() (*ast.Node, error) {
-	n := &ast.Node{Token: p.tkn, Value: p.val}
+	n := ast.NewNode(p.tkn, p.val, 0)
 	if !p.tkn.IsLiteral() {
 		return n, errors.New("Expected a value or identifier " + "but saw " + p.tkn.String())
 	}

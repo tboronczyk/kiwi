@@ -33,6 +33,20 @@ type Node struct {
 	Children []*Node
 }
 
+func NewNode(t interface{}, v interface{}, i uint8) *Node {
+	tkn := token.UNKNOWN
+	if t != nil {
+		tkn = t.(token.Token)
+	}
+
+	val := ""
+	if v != nil {
+		val = v.(string)
+	}
+
+	return &Node{Token: tkn, Value: val, Children: make([]*Node, i)}
+}
+
 func (n Node) PrintTree() {
 	n.printTree("")
 }

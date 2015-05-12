@@ -54,9 +54,8 @@ func capture(n *Node) string {
 }
 
 func TestPrintTreeUnary(t *testing.T) {
-	n := &Node{Token: token.ADD, Value: "+"}
-	n.Children = make([]*Node, 1)
-	n.Children[0] = &Node{Token: token.NUMBER, Value: "2"}
+	n := NewNode(token.ADD, "+", 1)
+	n.Children[0] = NewNode(token.NUMBER, "2", 0)
 	expected := "\t[0] 2 (NUMBER)\n+ (+)\n"
 
 	actual := capture(n)
@@ -64,10 +63,9 @@ func TestPrintTreeUnary(t *testing.T) {
 }
 
 func TestPrintTreeBinary(t *testing.T) {
-	n := &Node{Token: token.ADD, Value: "+"}
-	n.Children = make([]*Node, 2)
-	n.Children[0] = &Node{Token: token.NUMBER, Value: "2"}
-	n.Children[1] = &Node{Token: token.NUMBER, Value: "4"}
+	n := NewNode(token.ADD, "+", 2)
+	n.Children[0] = NewNode(token.NUMBER, "2", 0)
+	n.Children[1] = NewNode(token.NUMBER, "4", 0)
 	expected := "\t[0] 2 (NUMBER)\n+ (+)\n\t[1] 4 (NUMBER)\n"
 
 	actual := capture(n)
@@ -75,11 +73,10 @@ func TestPrintTreeBinary(t *testing.T) {
 }
 
 func TestPrintTreeArbitrary(t *testing.T) {
-	n := &Node{Token: token.IF, Value: "if"}
-	n.Children = make([]*Node, 3)
-	n.Children[0] = &Node{Token: token.TRUE, Value: "true"}
-	n.Children[1] = &Node{Token: token.ASSIGN, Value: ":="}
-	n.Children[2] = &Node{Token: token.ASSIGN, Value: ":="}
+	n := NewNode(token.IF, "if", 3)
+	n.Children[0] = NewNode(token.TRUE, "true", 0)
+	n.Children[1] = NewNode(token.ASSIGN, ":=", 0)
+	n.Children[2] = NewNode(token.ASSIGN, ":=", 0)
 	expected := "\t[0] true (true)\nif (if)\n\t[1] := (:=)\n\t[2] := (:=)\n"
 
 	actual := capture(n)
