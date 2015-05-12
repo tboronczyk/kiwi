@@ -63,6 +63,22 @@ func (p *Parser) Parse() (*ast.Node, error) {
 	return p.ParseStmt()
 }
 
+func (p *Parser) ParseStmtList() (*ast.Node, error) {
+	var err error
+	node := &ast.Node{Token: p.tkn, Value: p.val}
+	node.Children = make([]*ast.Node, 2)
+	for p.tkn == token.IF || p.tkn == token.WHILE || p.tkn == token.IDENTIFIER {
+		node.Children[1], err = p.ParseStmt()
+		if err != nil {
+			return node, err
+		}
+		n := &ast.Node{Children: make([]*ast.Node, 2)}
+		n.Children[0] = node
+		node = n
+	}
+	return node, err
+}
+
 func (p *Parser) ParseStmt() (*ast.Node, error) {
 	switch p.tkn {
 	case token.IF:

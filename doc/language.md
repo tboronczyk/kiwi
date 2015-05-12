@@ -15,6 +15,7 @@
          log-op = '&&' | '||' .
 
            stmt = assign-stmt | if-stmt | while-stmt .
+      stmt-list = stmt | stmt-list stmt .
     assign-stmt = IDENT ':=' expr ';' .
-        if-stmt = 'if' expr '{' stmt '}' .
-     while-stmt = 'while' expr '{' stmt '}' .
+        if-stmt = 'if' expr '{' stmt-list '}' .
+     while-stmt = 'while' expr '{' stmt-list '}' .
