@@ -66,6 +66,34 @@ func TestSkipComment(t *testing.T) {
 	assert.Equal(t, token.STRING, p.tkn)
 }
 
+func TestParseStmtList(t *testing.T) {
+	s := NewMockScanner()
+	// a := true ; b := false ; c := 1 ;
+	s.reset([]tokenPair{
+		{token.IDENTIFIER, "a"},
+		{token.ASSIGN, ":="},
+		{token.TRUE, "true"},
+		{token.SEMICOLON, ";"},
+		{token.IDENTIFIER, "b"},
+		{token.ASSIGN, ":="},
+		{token.FALSE, "false"},
+		{token.SEMICOLON, ";"},
+		{token.IDENTIFIER, "c"},
+		{token.ASSIGN, ":="},
+		{token.NUMBER, "1"},
+		{token.SEMICOLON, ";"},
+		{token.EOF, ""},
+	})
+	p := NewParser()
+	p.InitScanner(s)
+
+	node, err := p.ParseStmtList()
+	assert.Equal(t, token.NUMBER, node.Children[0].Children[1].Children[1].Token)
+	assert.Equal(t, token.FALSE, node.Children[0].Children[0].Children[1].Children[1].Token)
+	assert.Equal(t, token.TRUE, node.Children[0].Children[0].Children[0].Children[1].Children[1].Token)
+	assert.Nil(t, err)
+}
+
 func TestParseIfStmt(t *testing.T) {
 	s := NewMockScanner()
 	// if true { a := false; }
