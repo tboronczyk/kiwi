@@ -65,6 +65,7 @@ const (
 	LBRACE
 	RBRACE
 	SEMICOLON
+	COMMA
 
 	IF
 	WHILE
@@ -103,6 +104,7 @@ var tokens = [...]string{
 	LBRACE:     "{",
 	RBRACE:     "}",
 	SEMICOLON:  ";",
+	COMMA:      ",",
 	IF:         "if",
 	WHILE:      "while",
 	TRUE:       "true",

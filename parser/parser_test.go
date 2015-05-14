@@ -94,6 +94,27 @@ func TestParseStmtList(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestParseExprList(t *testing.T) {
+	s := NewMockScanner()
+	// a, 1, "foo"
+	s.reset([]tokenPair{
+		{token.IDENTIFIER, "a"},
+		{token.COMMA, ","},
+		{token.NUMBER, "1"},
+		{token.COMMA, ","},
+		{token.STRING, "foo"},
+		{token.EOF, ""},
+	})
+	p := NewParser()
+	p.InitScanner(s)
+
+	node, err := p.ParseExprList()
+	assert.Equal(t, token.IDENTIFIER, node.Children[0].Children[0].Children[1].Token)
+	assert.Equal(t, token.NUMBER, node.Children[0].Children[1].Token)
+	assert.Equal(t, token.STRING, node.Children[1].Token)
+	assert.Nil(t, err)
+}
+
 func TestParseIfStmt(t *testing.T) {
 	s := NewMockScanner()
 	// if true { a := false; }
@@ -111,7 +132,7 @@ func TestParseIfStmt(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.ParseIfStmt()
+	node, err := p.ParseStmt()
 	assert.Equal(t, token.TRUE, node.Children[0].Token)
 	assert.Equal(t, token.IF, node.Token)
 	assert.Equal(t, token.ASSIGN, node.Children[1].Token)
@@ -135,7 +156,7 @@ func TestParseWhileStmt(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.ParseWhileStmt()
+	node, err := p.ParseStmt()
 	assert.Equal(t, token.TRUE, node.Children[0].Token)
 	assert.Equal(t, token.WHILE, node.Token)
 	assert.Equal(t, token.ASSIGN, node.Children[1].Token)
@@ -155,7 +176,7 @@ func TestParseAssignStmt(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.ParseAssignStmt()
+	node, err := p.ParseStmt()
 	assert.Equal(t, token.IDENTIFIER, node.Children[0].Token)
 	assert.Equal(t, token.ASSIGN, node.Token)
 	assert.Equal(t, token.NUMBER, node.Children[1].Token)
@@ -404,6 +425,68 @@ func TestParseFactorSignedError(t *testing.T) {
 
 	_, err := p.ParseFactor()
 	assert.NotNil(t, err)
+}
+
+func TestParseTerminalFuncCall(t *testing.T) {
+	s := NewMockScanner()
+	// f()
+	s.reset([]tokenPair{
+		{token.IDENTIFIER, "f"},
+		{token.LPAREN, "("},
+		{token.RPAREN, ")"},
+		{token.EOF, ""},
+	})
+	p := NewParser()
+	p.InitScanner(s)
+
+	node, err := p.ParseTerminal()
+	assert.Equal(t, token.IDENTIFIER, node.Children[0].Token)
+	assert.Nil(t, err)
+}
+
+func TestParseTerminalFuncCallWithArgs(t *testing.T) {
+	s := NewMockScanner()
+	// f(1,2)
+	s.reset([]tokenPair{
+		{token.IDENTIFIER, "f"},
+		{token.LPAREN, "("},
+		{token.IDENTIFIER, "a"},
+		{token.COMMA, ","},
+		{token.NUMBER, "1"},
+		{token.RPAREN, ")"},
+		{token.EOF, ""},
+	})
+	p := NewParser()
+	p.InitScanner(s)
+
+	node, err := p.ParseTerminal()
+	assert.Equal(t, token.IDENTIFIER, node.Children[0].Token)
+	assert.Equal(t, token.IDENTIFIER, node.Children[1].Children[0].Children[1].Token)
+	assert.Equal(t, token.NUMBER, node.Children[1].Children[1].Token)
+	assert.Nil(t, err)
+}
+
+func TestParseFuncCallStmt(t *testing.T) {
+	s := NewMockScanner()
+	// f(1,2)
+	s.reset([]tokenPair{
+		{token.IDENTIFIER, "f"},
+		{token.LPAREN, "("},
+		{token.IDENTIFIER, "a"},
+		{token.COMMA, ","},
+		{token.NUMBER, "1"},
+		{token.RPAREN, ")"},
+		{token.SEMICOLON, ";"},
+		{token.EOF, ""},
+	})
+	p := NewParser()
+	p.InitScanner(s)
+
+	node, err := p.ParseStmt()
+	assert.Equal(t, token.IDENTIFIER, node.Children[0].Token)
+	assert.Equal(t, token.IDENTIFIER, node.Children[1].Children[0].Children[1].Token)
+	assert.Equal(t, token.NUMBER, node.Children[1].Children[1].Token)
+	assert.Nil(t, err)
 }
 
 func TestParseFullExpression(t *testing.T) {

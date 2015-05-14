@@ -54,6 +54,7 @@ func TestTokenToString(t *testing.T) {
 		{LBRACE.String(), "{"},
 		{RBRACE.String(), "}"},
 		{SEMICOLON.String(), ";"},
+		{COMMA.String(), ","},
 		{COMMENT.String(), "COMMENT"},
 		{IF.String(), "if"},
 		{WHILE.String(), "while"},

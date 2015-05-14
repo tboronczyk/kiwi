@@ -141,6 +141,8 @@ func (s *scanner) Scan() (token.Token, string) {
 		return token.RBRACE, "}"
 	case ';':
 		return token.SEMICOLON, ";"
+	case ',':
+		return token.COMMA, ","
 	case '"':
 		return s.scanString()
 	case '`':
