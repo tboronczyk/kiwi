@@ -26,11 +26,13 @@ import (
 	"testing"
 )
 
+type testData struct {
+	actual   string
+	expected string
+}
+
 func TestTokenToString(t *testing.T) {
-	tokens := []struct {
-		actual   string
-		expected string
-	}{
+	tokens := []testData{
 		{UNKNOWN.String(), "UNKNOWN"},
 		{MALFORMED.String(), "MALFORMED"},
 		{EOF.String(), "EOF"},
@@ -66,63 +68,86 @@ func TestTokenToString(t *testing.T) {
 		{Token(254).String(), "Token(254)"},
 	}
 
-	for _, tok := range tokens {
-		assert.Equal(t, tok.actual, tok.expected)
+	for _, tkn := range tokens {
+		assert.Equal(t, tkn.actual, tkn.expected)
 	}
 }
 
 func TestIsAddOp(t *testing.T) {
 	for i := 0; i < len(tokens); i++ {
-		tok := Token(i)
-		if tok == ADD || tok == SUBTRACT {
-			assert.True(t, tok.IsAddOp(), tok.String())
+		tkn := Token(i)
+		if tkn == ADD || tkn == SUBTRACT {
+			assert.True(t, tkn.IsAddOp(), tkn.String())
 		} else {
-			assert.False(t, tok.IsAddOp(), tok.String())
+			assert.False(t, tkn.IsAddOp(), tkn.String())
 		}
 	}
 }
 
 func TestIsMulOp(t *testing.T) {
 	for i := 0; i < len(tokens); i++ {
-		tok := Token(i)
-		if tok == MULTIPLY || tok == DIVIDE || tok == MODULO {
-			assert.True(t, tok.IsMulOp(), tok.String())
+		tkn := Token(i)
+		if tkn == MULTIPLY || tkn == DIVIDE || tkn == MODULO {
+			assert.True(t, tkn.IsMulOp(), tkn.String())
 		} else {
-			assert.False(t, tok.IsMulOp(), tok.String())
+			assert.False(t, tkn.IsMulOp(), tkn.String())
 		}
 	}
 }
 
 func TestIsCmpOp(t *testing.T) {
 	for i := 0; i < len(tokens); i++ {
-		tok := Token(i)
-		if tok == EQUAL || tok == NOT_EQUAL || tok == LESS || tok == LESS_EQ ||
-			tok == GREATER || tok == GREATER_EQ {
-			assert.True(t, tok.IsCmpOp(), tok.String())
+		tkn := Token(i)
+		if tkn == EQUAL || tkn == NOT_EQUAL || tkn == LESS ||
+			tkn == LESS_EQ || tkn == GREATER || tkn == GREATER_EQ {
+			assert.True(t, tkn.IsCmpOp(), tkn.String())
 		} else {
-			assert.False(t, tok.IsCmpOp(), tok.String())
+			assert.False(t, tkn.IsCmpOp(), tkn.String())
 		}
 	}
 }
 
 func TestIsLogOp(t *testing.T) {
 	for i := 0; i < len(tokens); i++ {
-		tok := Token(i)
-		if tok == AND || tok == OR || tok == NOT {
-			assert.True(t, tok.IsLogOp(), tok.String())
+		tkn := Token(i)
+		if tkn == AND || tkn == OR || tkn == NOT {
+			assert.True(t, tkn.IsLogOp(), tkn.String())
 		} else {
-			assert.False(t, tok.IsLogOp(), tok.String())
+			assert.False(t, tkn.IsLogOp(), tkn.String())
+		}
+	}
+}
+
+func TestIsExprOp(t *testing.T) {
+	for i := 0; i < len(tokens); i++ {
+		tkn := Token(i)
+		if tkn == ADD || tkn == SUBTRACT || tkn == NOT {
+			assert.True(t, tkn.IsExprOp(), tkn.String())
+		} else {
+			assert.False(t, tkn.IsExprOp(), tkn.String())
 		}
 	}
 }
 
 func TestIsLiteral(t *testing.T) {
 	for i := 0; i < len(tokens); i++ {
-		tok := Token(i)
-		if tok == TRUE || tok == FALSE || tok == NUMBER || tok == STRING || tok == IDENTIFIER {
-			assert.True(t, tok.IsLiteral(), tok.String())
+		tkn := Token(i)
+		if tkn == IDENTIFIER || tkn == TRUE || tkn == FALSE ||
+			tkn == NUMBER || tkn == STRING {
+			assert.True(t, tkn.IsLiteral(), tkn.String())
 		} else {
-			assert.False(t, tok.IsLiteral(), tok.String())
+			assert.False(t, tkn.IsLiteral(), tkn.String())
+		}
+	}
+}
+
+func TestIsStmtKeyword(t *testing.T) {
+	for i := 0; i < len(tokens); i++ {
+		tkn := Token(i)
+		if tkn == IF || tkn == WHILE {
+			assert.True(t, tkn.IsStmtKeyword(), tkn.String())
+		} else {
+			assert.False(t, tkn.IsStmtKeyword(), tkn.String())
 		}
 	}
 }

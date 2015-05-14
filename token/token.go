@@ -67,15 +67,17 @@ const (
 	SEMICOLON
 	COMMA
 
+	stmtkwd_start
 	IF
 	WHILE
+	stmtkwd_end
 
 	lit_start
+	IDENTIFIER
 	TRUE
 	FALSE
 	NUMBER
 	STRING
-	IDENTIFIER
 	lit_end
 )
 
@@ -141,6 +143,14 @@ func (t Token) IsLogOp() bool {
 	return t > logop_start && t < logop_end
 }
 
+func (t Token) IsExprOp() bool {
+	return t.IsAddOp() || t == NOT
+}
+
 func (t Token) IsLiteral() bool {
 	return t > lit_start && t < lit_end
+}
+
+func (t Token) IsStmtKeyword() bool {
+	return t > stmtkwd_start && t < stmtkwd_end
 }
