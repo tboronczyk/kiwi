@@ -29,68 +29,190 @@ import (
 )
 
 type Parser struct {
-	tkn token.Token
-	val string
-	s   scanner.Scanner
+	token   token.Token
+	value   string
+	scanner scanner.Scanner
 }
 
 func NewParser() *Parser {
 	return &Parser{}
 }
 
-func (p Parser) match(t token.Token) bool {
-	return p.tkn == t
+func (p Parser) match(tkn token.Token) bool {
+	return p.token == tkn
 }
 
 func (p *Parser) advance() {
 	for {
-		p.tkn, p.val = p.s.Scan()
-		if p.tkn != token.COMMENT {
+		p.token, p.value = p.scanner.Scan()
+		if p.token != token.COMMENT {
 			break
 		}
 	}
 }
 
-func (p *Parser) InitScanner(s scanner.Scanner) {
-	p.s = s
+func (p Parser) expectedError(tkn token.Token) error {
+	return errors.New("Expected " + tkn.String() + " but saw " + p.token.String())
+}
+
+func (p Parser) expectedErrorStr(str string) error {
+	return errors.New("Expected " + str + " but saw " + p.token.String())
+}
+
+func (p *Parser) InitScanner(scnr scanner.Scanner) {
+	p.scanner = scnr
 	p.advance()
 }
 
 func (p *Parser) Parse() (*ast.Node, error) {
-	if p.tkn == token.EOF {
-		return ast.NewNode(p.tkn, p.val, 2), nil
+	if p.token == token.EOF {
+		return ast.NewNode(p.token, p.value, 2), nil
 	}
-	return p.ParseStmt()
+	return p.parseStmt()
 }
 
-func (p *Parser) ParseStmtList() (*ast.Node, error) {
-	var err error
-	node := ast.NewNode(nil, nil, 2)
-	for p.tkn == token.IF || p.tkn == token.WHILE || p.tkn == token.IDENTIFIER {
-		node.Children[1], err = p.ParseStmt()
+func (p *Parser) parseExpr() (*ast.Node, error) {
+	node, err := p.parseRelation()
+	if err != nil || !p.token.IsLogOp() {
+		return node, err
+	}
+
+	n := ast.NewNode(p.token, p.value, 2)
+	p.advance()
+
+	n.Children[0] = node
+	n.Children[1], err = p.parseExpr()
+	return n, err
+}
+
+func (p *Parser) parseRelation() (*ast.Node, error) {
+	node, err := p.parseSimpleExpr()
+	if err != nil || !p.token.IsCmpOp() {
+		return node, err
+	}
+
+	n := ast.NewNode(p.token, p.value, 2)
+	p.advance()
+
+	n.Children[0] = node
+	n.Children[1], err = p.parseRelation()
+	return n, err
+}
+
+func (p *Parser) parseSimpleExpr() (*ast.Node, error) {
+	node, err := p.parseTerm()
+	if err != nil || !p.token.IsAddOp() {
+		return node, err
+	}
+
+	n := ast.NewNode(p.token, p.value, 2)
+	p.advance()
+
+	n.Children[0] = node
+	n.Children[1], err = p.parseSimpleExpr()
+	return n, err
+}
+
+func (p *Parser) parseTerm() (*ast.Node, error) {
+	node, err := p.parseFactor()
+	if err != nil || !p.token.IsMulOp() {
+		return node, err
+	}
+
+	n := ast.NewNode(p.token, p.value, 2)
+	p.advance()
+
+	n.Children[0] = node
+	n.Children[1], err = p.parseTerm()
+	return n, err
+}
+
+func (p *Parser) parseFactor() (*ast.Node, error) {
+	if p.match(token.LPAREN) {
+		p.advance()
+
+		node, err := p.parseExpr()
 		if err != nil {
 			return node, err
 		}
-		n := ast.NewNode(nil, nil, 2)
-		n.Children[0] = node
-		node = n
+
+		if !p.match(token.RPAREN) {
+			return node, p.expectedError(token.RPAREN)
+		}
+		p.advance()
+
+		return node, err
 	}
-	return node, err
+	if p.token.IsExprOp() {
+		node := ast.NewNode(p.token, p.value, 1)
+		p.advance()
+
+		n, err := p.parseFactor()
+		node.Children[0] = n
+		return node, err
+	}
+	return p.parseTerminal()
 }
 
-func (p *Parser) ParseExprList() (*ast.Node, error) {
-	var err error = nil
-	n := ast.NewNode(nil, nil, 2)
-	n.Children[1], err = p.ParseExpr()
-	if err != nil || p.tkn != token.COMMA {
-		return n, err
-	}
-	var node *ast.Node
-	for p.tkn == token.COMMA {
+func (p *Parser) parseTerminal() (*ast.Node, error) {
+	if p.token == token.TRUE || p.token == token.FALSE ||
+		p.token == token.NUMBER || p.token == token.STRING {
+		node := ast.NewNode(p.token, p.value, 0)
 		p.advance()
+		return node, nil
+	}
+
+	node, err := p.parseIdentifier()
+	if err != nil || p.token != token.LPAREN {
+		return node, err
+	}
+
+	n := ast.NewNode(nil, nil, 2)
+	n.Children[0] = node
+	n.Children[1], err = p.parseParenExprList()
+	return n, err
+}
+
+func (p *Parser) parseParenExprList() (*ast.Node, error) {
+	// method only called when already p.token == token.LPAREN
+	/*
+		if p.token != token.LPAREN {
+			return &ast.Node{}, p.expectedError(token.LPAREN)
+		}
+	*/
+	p.advance()
+
+	if p.token == token.RPAREN {
+		p.advance()
+		return &ast.Node{}, nil
+	}
+
+	node, err := p.parseExprList()
+	if err != nil {
+		return node, err
+	}
+
+	if p.token != token.RPAREN {
+		return node, p.expectedError(token.RPAREN)
+	}
+	p.advance()
+	return node, nil
+}
+
+func (p *Parser) parseExprList() (*ast.Node, error) {
+	node, err := p.parseExpr()
+	if err != nil || p.token != token.COMMA {
+		return node, err
+	}
+
+	n := ast.NewNode(nil, nil, 2)
+	n.Children[1] = node
+	for p.token == token.COMMA {
+		p.advance()
+
 		node = ast.NewNode(nil, nil, 2)
 		node.Children[0] = n
-		node.Children[1], err = p.ParseExpr()
+		node.Children[1], err = p.parseExpr()
 		if err != nil {
 			return node, err
 		}
@@ -99,229 +221,112 @@ func (p *Parser) ParseExprList() (*ast.Node, error) {
 	return n, err
 }
 
-func (p *Parser) ParseStmt() (*ast.Node, error) {
-	switch p.tkn {
+func (p *Parser) parseStmt() (*ast.Node, error) {
+	switch p.token {
 	case token.IF:
-		return p.ParseIfStmt()
+		return p.parseIfStmt()
 	case token.WHILE:
-		return p.ParseWhileStmt()
+		return p.parseWhileStmt()
 	case token.IDENTIFIER:
-		return p.ParseAssignOrFuncCallStmt()
+		return p.parseAssignOrCallStmt()
 	}
-	return &ast.Node{}, errors.New("Expected if, while, or an identifier " + "but saw " + p.tkn.String())
+	return &ast.Node{}, p.expectedErrorStr(
+		token.IF.String() + ", " + token.WHILE.String() + ", or " +
+			token.IDENTIFIER.String())
 }
 
-func (p *Parser) ParseIfStmt() (*ast.Node, error) {
-	node := ast.NewNode(p.tkn, p.val, 2)
+func (p *Parser) parseIfStmt() (*ast.Node, error) {
+	node := ast.NewNode(p.token, p.value, 2)
 	p.advance()
 
-	var err error
-	node.Children[0], err = p.ParseExpr()
+	n, err := p.parseExpr()
+	node.Children[0] = n
 	if err != nil {
 		return node, err
 	}
 
-	if p.tkn != token.LBRACE {
-		return node, errors.New("Expected " + token.LBRACE.String() + " but saw " + p.tkn.String())
+	node.Children[1], err = p.parseBraceStmtList()
+	return node, err
+}
+
+func (p *Parser) parseBraceStmtList() (*ast.Node, error) {
+	if p.token != token.LBRACE {
+		return &ast.Node{}, p.expectedError(token.LBRACE)
 	}
 	p.advance()
 
-	node.Children[1], err = p.ParseStmt()
+	node, err := p.parseStmtList()
 	if err != nil {
 		return node, err
 	}
 
-	if p.tkn != token.RBRACE {
-		return node, errors.New("Expected " + token.RBRACE.String() + " but saw " + p.tkn.String())
+	if p.token != token.RBRACE {
+		return node, p.expectedError(token.RBRACE)
 	}
 	p.advance()
 
 	return node, nil
 }
 
-func (p *Parser) ParseWhileStmt() (*ast.Node, error) {
-	node := ast.NewNode(p.tkn, p.val, 2)
-	p.advance()
-
-	var err error
-	node.Children[0], err = p.ParseExpr()
-	if err != nil {
-		return node, err
-	}
-
-	if p.tkn != token.LBRACE {
-		return node, errors.New("Expected " + token.LBRACE.String() + " but saw " + p.tkn.String())
-	}
-	p.advance()
-
-	node.Children[1], err = p.ParseStmt()
-	if err != nil {
-		return node, err
-	}
-
-	if p.tkn != token.RBRACE {
-		return node, errors.New("Expected " + token.RBRACE.String() + " but saw " + p.tkn.String())
-	}
-	p.advance()
-
-	return node, nil
-}
-
-func (p *Parser) ParseAssignOrFuncCallStmt() (*ast.Node, error) {
-	var err error
+func (p *Parser) parseStmtList() (*ast.Node, error) {
 	node := ast.NewNode(nil, nil, 2)
-	node.Children[0], err = p.ParseIdentifier()
+	for p.token.IsStmtKeyword() || p.token == token.IDENTIFIER {
+		n, err := p.parseStmt()
+		node.Children[1] = n
+		if err != nil {
+			return node, err
+		}
+		n = ast.NewNode(nil, nil, 2)
+		n.Children[0] = node
+		node = n
+	}
+	return node, nil
+}
+
+func (p *Parser) parseWhileStmt() (*ast.Node, error) {
+	node := ast.NewNode(p.token, p.value, 2)
+	p.advance()
+
+	n, err := p.parseExpr()
+	node.Children[0] = n
 	if err != nil {
 		return node, err
 	}
 
-	if p.tkn == token.ASSIGN {
-		node.Token = token.ASSIGN
-		node.Value = token.ASSIGN.String()
-		p.advance()
+	node.Children[1], err = p.parseBraceStmtList()
+	return node, err
+}
 
-		node.Children[1], err = p.ParseExpr()
-		if err != nil {
-			return node, err
-		}
-	} else if p.tkn == token.LPAREN {
-		node.Children[1], err = p.ParseFuncCallArgs()
-		if err != nil {
-			return node, err
-		}
+func (p *Parser) parseAssignOrCallStmt() (*ast.Node, error) {
+	node, err := p.parseIdentifier()
+	n := ast.NewNode(p.token, p.value, 2)
+	n.Children[0] = node
+
+	if p.token == token.ASSIGN {
+		p.advance()
+		n.Children[1], err = p.parseExpr()
+	} else if p.token == token.LPAREN {
+		n.Children[1], err = p.parseParenExprList()
 	} else {
-		return node, errors.New("Expected " + token.ASSIGN.String() + " or " + token.LPAREN.String() + " but saw " + p.tkn.String())
+		return n, p.expectedErrorStr(
+			token.ASSIGN.String() + " or " + token.LPAREN.String())
 	}
-
-	if p.tkn != token.SEMICOLON {
-		return node, errors.New("Expected " + token.SEMICOLON.String() + " but saw " + p.tkn.String())
-	}
-	p.advance()
-
-	return node, nil
-}
-
-func (p *Parser) ParseExpr() (*ast.Node, error) {
-	n, err := p.ParseRelation()
-	if err != nil || !p.tkn.IsLogOp() {
-		return n, err
-	}
-
-	node := ast.NewNode(p.tkn, p.val, 2)
-	node.Children[0] = n
-	p.advance()
-	node.Children[1], err = p.ParseExpr()
-	return node, err
-}
-
-func (p *Parser) ParseRelation() (*ast.Node, error) {
-	n, err := p.ParseSimpleExpr()
-	if err != nil || !p.tkn.IsCmpOp() {
-		return n, err
-	}
-
-	node := ast.NewNode(p.tkn, p.val, 2)
-	node.Children[0] = n
-	p.advance()
-	node.Children[1], err = p.ParseRelation()
-	return node, err
-}
-
-func (p *Parser) ParseSimpleExpr() (*ast.Node, error) {
-	n, err := p.ParseTerm()
-	if err != nil || !p.tkn.IsAddOp() {
-		return n, err
-	}
-
-	node := ast.NewNode(p.tkn, p.val, 2)
-	node.Children[0] = n
-	p.advance()
-	node.Children[1], err = p.ParseSimpleExpr()
-	return node, err
-}
-
-func (p *Parser) ParseTerm() (*ast.Node, error) {
-	n, err := p.ParseFactor()
-	if err != nil || !p.tkn.IsMulOp() {
-		return n, err
-	}
-
-	node := ast.NewNode(p.tkn, p.val, 2)
-	node.Children[0] = n
-	p.advance()
-	node.Children[1], err = p.ParseTerm()
-	return node, err
-}
-
-func (p *Parser) ParseFactor() (*ast.Node, error) {
-	var n *ast.Node
-	var err error
-	if p.match(token.LPAREN) {
-		p.advance()
-		n, err = p.ParseExpr()
-		if err == nil {
-			if !p.match(token.RPAREN) {
-				err = errors.New("xcvxcvcExpected " + token.RPAREN.String() + " but saw " + p.tkn.String())
-			} else {
-				p.advance()
-			}
-		}
-		return n, err
-	}
-	if p.match(token.NOT) || p.match(token.ADD) || p.match(token.SUBTRACT) {
-		node := ast.NewNode(p.tkn, p.val, 1)
-		p.advance()
-		n, err = p.ParseFactor()
-		node.Children[0] = n
-		return node, err
-	}
-	return p.ParseTerminal()
-}
-
-func (p *Parser) ParseTerminal() (*ast.Node, error) {
-	n := ast.NewNode(p.tkn, p.val, 0)
-	if !p.tkn.IsLiteral() {
-		return n, errors.New("Expected a value or identifier but saw " + p.tkn.String())
-	}
-	p.advance()
-	if n.Token != token.IDENTIFIER || p.tkn != token.LPAREN {
-		return n, nil
-	}
-
-	var err error = nil
-	node := ast.NewNode(nil, nil, 2)
-	node.Children[0] = n
-	node.Children[1], err = p.ParseFuncCallArgs()
-	return node, err
-}
-
-func (p *Parser) ParseIdentifier() (*ast.Node, error) {
-	n := ast.NewNode(p.tkn, p.val, 0)
-	if p.tkn != token.IDENTIFIER {
-		return n, errors.New("Expected an identifier but saw " + p.tkn.String())
-	}
-	p.advance()
-	return n, nil
-}
-
-func (p *Parser) ParseFuncCallArgs() (*ast.Node, error) {
-	var err error = nil
-	n := ast.NewNode(nil, nil, 2)
-	if p.tkn != token.LPAREN {
-		return n, errors.New("Expected " + token.LPAREN.String() + " but saw " + p.tkn.String())
-	}
-	p.advance()
-	if p.tkn == token.RPAREN {
-		p.advance()
-		return n, nil
-	}
-	n, err = p.ParseExprList()
 	if err != nil {
 		return n, err
 	}
-	if p.tkn != token.RPAREN {
-		return n, errors.New("Expected " + token.LPAREN.String() + " but saw " + p.tkn.String())
+
+	if p.token != token.SEMICOLON {
+		return n, p.expectedError(token.SEMICOLON)
 	}
 	p.advance()
 	return n, nil
+}
+
+func (p *Parser) parseIdentifier() (*ast.Node, error) {
+	node := ast.NewNode(p.token, p.value, 0)
+	if p.token != token.IDENTIFIER {
+		return node, p.expectedError(token.IDENTIFIER)
+	}
+	p.advance()
+	return node, nil
 }
