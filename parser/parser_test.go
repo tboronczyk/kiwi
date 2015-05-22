@@ -24,6 +24,7 @@ package parser
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/tboronczyk/kiwi/token"
+	"github.com/tboronczyk/kiwi/ast"
 	"testing"
 )
 
@@ -77,8 +78,8 @@ func TestParseIdentifier(t *testing.T) {
 	p.InitScanner(s)
 
 	node, err := p.parseIdentifier()
-	assert.Equal(t, token.IDENTIFIER, node.Token)
 	assert.Nil(t, err)
+	assert.Equal(t, token.IDENTIFIER, node.Type)
 }
 
 func TestParseIdentifierError(t *testing.T) {
@@ -109,9 +110,9 @@ func TestParseTerm(t *testing.T) {
 
 	node, err := p.parseTerm()
 	assert.Nil(t, err)
-	assert.Equal(t, token.NUMBER, node.Children[0].Token)
-	assert.Equal(t, token.MULTIPLY, node.Token)
-	assert.Equal(t, token.NUMBER, node.Children[1].Token)
+	assert.Equal(t, token.MULTIPLY, node.(ast.Operator).Op)
+	assert.Equal(t, token.NUMBER, node.(ast.Operator).Left.(ast.Literal).Type)
+	assert.Equal(t, token.NUMBER, node.(ast.Operator).Right.(ast.Literal).Type)
 }
 
 func TestParseTermError(t *testing.T) {
@@ -143,9 +144,9 @@ func TestParseSimpleExpr(t *testing.T) {
 
 	node, err := p.parseSimpleExpr()
 	assert.Nil(t, err)
-	assert.Equal(t, token.NUMBER, node.Children[0].Token)
-	assert.Equal(t, token.ADD, node.Token)
-	assert.Equal(t, token.NUMBER, node.Children[1].Token)
+	assert.Equal(t, token.ADD, node.(ast.Operator).Op)
+	assert.Equal(t, token.NUMBER, node.(ast.Operator).Left.(ast.Literal).Type)
+	assert.Equal(t, token.NUMBER, node.(ast.Operator).Right.(ast.Literal).Type)
 }
 
 func TestParseSimpleExprError(t *testing.T) {
@@ -177,9 +178,9 @@ func TestParseRelation(t *testing.T) {
 
 	node, err := p.parseRelation()
 	assert.Nil(t, err)
-	assert.Equal(t, token.NUMBER, node.Children[0].Token)
-	assert.Equal(t, token.LESS, node.Token)
-	assert.Equal(t, token.NUMBER, node.Children[1].Token)
+	assert.Equal(t, token.LESS, node.(ast.Operator).Op)
+	assert.Equal(t, token.NUMBER, node.(ast.Operator).Left.(ast.Literal).Type)
+	assert.Equal(t, token.NUMBER, node.(ast.Operator).Right.(ast.Literal).Type)
 }
 
 func TestParseRelationError(t *testing.T) {
@@ -210,10 +211,10 @@ func TestParseExpr(t *testing.T) {
 	p.InitScanner(s)
 
 	node, err := p.parseExpr()
-	assert.Equal(t, token.TRUE, node.Children[0].Token)
-	assert.Equal(t, token.AND, node.Token)
-	assert.Equal(t, token.TRUE, node.Children[1].Token)
 	assert.Nil(t, err)
+	assert.Equal(t, token.AND, node.(ast.Operator).Op)
+	assert.Equal(t, token.TRUE, node.(ast.Operator).Left.(ast.Literal).Type)
+	assert.Equal(t, token.TRUE, node.(ast.Operator).Right.(ast.Literal).Type)
 }
 
 func TestParseExprError(t *testing.T) {
@@ -245,7 +246,7 @@ func TestParseFactorParens(t *testing.T) {
 
 	node, err := p.parseFactor()
 	assert.Nil(t, err)
-	assert.Equal(t, token.IDENTIFIER, node.Token)
+	assert.Equal(t, token.IDENTIFIER, node.(ast.Literal).Type)
 }
 
 func TestParseFactorParensExprError(t *testing.T) {
@@ -290,8 +291,9 @@ func TestParseFactorSigned(t *testing.T) {
 
 	node, err := p.parseFactor()
 	assert.Nil(t, err)
-	assert.Equal(t, token.SUBTRACT, node.Token)
-	assert.Equal(t, token.NUMBER, node.Children[0].Token)
+	assert.Equal(t, token.SUBTRACT, node.(ast.Operator).Op)
+	assert.Equal(t, token.NUMBER, node.(ast.Operator).Left.(ast.Literal).Type)
+	assert.Nil(t, node.(ast.Operator).Right)
 }
 
 func TestParseTerminalIdentifier(t *testing.T) {
@@ -305,8 +307,8 @@ func TestParseTerminalIdentifier(t *testing.T) {
 	p.InitScanner(s)
 
 	node, err := p.parseTerminal()
-	assert.Equal(t, token.IDENTIFIER, node.Token)
 	assert.Nil(t, err)
+	assert.Equal(t, token.IDENTIFIER, node.(ast.Literal).Type)
 }
 
 func TestParseTerminalFuncCall(t *testing.T) {
@@ -322,8 +324,8 @@ func TestParseTerminalFuncCall(t *testing.T) {
 	p.InitScanner(s)
 
 	node, err := p.parseTerminal()
-	assert.Equal(t, token.IDENTIFIER, node.Children[0].Token)
 	assert.Nil(t, err)
+	assert.Equal(t, "foo", node.(ast.FuncCall).Name)
 }
 
 func TestParseTerminalFuncCallWithArgs(t *testing.T) {
@@ -344,11 +346,11 @@ func TestParseTerminalFuncCallWithArgs(t *testing.T) {
 	p.InitScanner(s)
 
 	node, err := p.parseTerminal()
-	assert.Equal(t, token.IDENTIFIER, node.Children[0].Token)
-	assert.Equal(t, token.IDENTIFIER, node.Children[1].Children[0].Children[0].Children[1].Token)
-	assert.Equal(t, token.NUMBER, node.Children[1].Children[0].Children[1].Token)
-	assert.Equal(t, token.STRING, node.Children[1].Children[1].Token)
 	assert.Nil(t, err)
+	assert.Equal(t, "foo", node.(ast.FuncCall).Name)
+	assert.Equal(t, token.IDENTIFIER, node.(ast.FuncCall).Body.(ast.List).Next.(ast.List).Next.(ast.List).Node.(ast.Literal).Type)
+	assert.Equal(t, token.NUMBER, node.(ast.FuncCall).Body.(ast.List).Next.(ast.List).Node.(ast.Literal).Type)
+	assert.Equal(t, token.STRING, node.(ast.FuncCall).Body.(ast.List).Node.(ast.Literal).Type)
 }
 
 func TestParseTerminalFuncCallWithArgsExprError(t *testing.T) {
@@ -400,8 +402,8 @@ func TestParseBraceStmtListEmpty(t *testing.T) {
 	p.InitScanner(s)
 
 	node, err := p.parseBraceStmtList()
-	assert.Nil(t, node.Children[0])
 	assert.Nil(t, err)
+	assert.Nil(t, node.(ast.List).Next)
 }
 
 func TestParseBraceStmtList(t *testing.T) {
@@ -424,9 +426,9 @@ func TestParseBraceStmtList(t *testing.T) {
 	p.InitScanner(s)
 
 	node, err := p.parseBraceStmtList()
-	assert.Equal(t, token.ASSIGN, node.Children[0].Children[0].Children[1].Token)
-	assert.Equal(t, token.ASSIGN, node.Children[0].Children[1].Token)
 	assert.Nil(t, err)
+	assert.Equal(t, token.ASSIGN, node.(ast.List).Next.(ast.List).Next.(ast.List).Node.(ast.Operator).Op)
+	assert.Equal(t, token.ASSIGN, node.(ast.List).Next.(ast.List).Node.(ast.Operator).Op)
 }
 
 func TestParseBraceStmtListStmtError(t *testing.T) {
@@ -487,9 +489,9 @@ func TestParseIfStmt(t *testing.T) {
 	p.InitScanner(s)
 
 	node, err := p.parseStmt()
-	assert.Equal(t, token.EQUAL, node.Children[0].Token)
-	assert.Equal(t, token.ASSIGN, node.Children[1].Children[0].Children[1].Token)
 	assert.Nil(t, err)
+	assert.Equal(t, token.EQUAL, node.(ast.If).Condition.(ast.Operator).Op)
+	assert.Equal(t, token.ASSIGN, node.(ast.If).Body.(ast.List).Next.(ast.List).Node.(ast.Operator).Op)
 }
 
 func TestParseIfStmtExprError(t *testing.T) {
@@ -548,9 +550,9 @@ func TestParseWhileStmt(t *testing.T) {
 	p.InitScanner(s)
 
 	node, err := p.parseStmt()
-	assert.Equal(t, token.EQUAL, node.Children[0].Token)
-	assert.Equal(t, token.ASSIGN, node.Children[1].Children[0].Children[1].Token)
 	assert.Nil(t, err)
+	assert.Equal(t, token.EQUAL, node.(ast.While).Condition.(ast.Operator).Op)
+	assert.Equal(t, token.ASSIGN, node.(ast.While).Body.(ast.List).Next.(ast.List).Node.(ast.Operator).Op)
 }
 
 func TestParseWhileStmtExprError(t *testing.T) {
@@ -600,10 +602,10 @@ func TestParseAssignStmt(t *testing.T) {
 	p.InitScanner(s)
 
 	node, err := p.parseStmt()
-	assert.Equal(t, token.ASSIGN, node.Token)
-	assert.Equal(t, token.IDENTIFIER, node.Children[0].Token)
-	assert.Equal(t, token.ADD, node.Children[1].Token)
 	assert.Nil(t, err)
+	assert.Equal(t, token.ASSIGN, node.(ast.Operator).Op)
+	assert.Equal(t, token.IDENTIFIER, node.(ast.Operator).Left.(ast.Literal).Type)
+	assert.Equal(t, token.ADD, node.(ast.Operator).Right.(ast.Operator).Op)
 }
 
 func TestParseAssignSmtExprError(t *testing.T) {
@@ -636,10 +638,9 @@ func TestFuncCallStmt(t *testing.T) {
 	})
 	p := NewParser()
 	p.InitScanner(s)
-
 	node, err := p.parseStmt()
-	assert.Equal(t, token.IDENTIFIER, node.Children[0].Token)
-	assert.Nil(t, node.Children[1].Children)
+	assert.Equal(t, "foo", node.(ast.FuncCall).Name)
+	assert.Nil(t, node.(ast.FuncCall).Body)
 	assert.Nil(t, err)
 }
 

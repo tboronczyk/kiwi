@@ -64,70 +64,70 @@ func (p *Parser) InitScanner(scnr scanner.Scanner) {
 	p.advance()
 }
 
-func (p *Parser) Parse() (*ast.Node, error) {
+func (p *Parser) Parse() (ast.Node, error) {
 	if p.token == token.EOF {
-		return ast.NewNode(p.token, p.value, 2), nil
+		return ast.NewOperator(p.token), nil
 	}
 	return p.parseStmt()
 }
 
-func (p *Parser) parseExpr() (*ast.Node, error) {
-	node, err := p.parseRelation()
+func (p *Parser) parseExpr() (ast.Node, error) {
+	n, err := p.parseRelation()
 	if err != nil || !p.token.IsLogOp() {
-		return node, err
+		return n, err
 	}
 
-	n := ast.NewNode(p.token, p.value, 2)
+	node := ast.NewOperator(p.token)
 	p.advance()
 
-	n.Children[0] = node
-	n.Children[1], err = p.parseExpr()
-	return n, err
+	node.Left = n
+	node.Right, err = p.parseExpr()
+	return node, err
 }
 
-func (p *Parser) parseRelation() (*ast.Node, error) {
-	node, err := p.parseSimpleExpr()
+func (p *Parser) parseRelation() (ast.Node, error) {
+	n, err := p.parseSimpleExpr()
 	if err != nil || !p.token.IsCmpOp() {
-		return node, err
+		return n, err
 	}
 
-	n := ast.NewNode(p.token, p.value, 2)
+	node := ast.NewOperator(p.token)
 	p.advance()
 
-	n.Children[0] = node
-	n.Children[1], err = p.parseRelation()
-	return n, err
+	node.Left = n
+	node.Right, err = p.parseRelation()
+	return node, err
 }
 
-func (p *Parser) parseSimpleExpr() (*ast.Node, error) {
-	node, err := p.parseTerm()
+func (p *Parser) parseSimpleExpr() (ast.Node, error) {
+	n, err := p.parseTerm()
 	if err != nil || !p.token.IsAddOp() {
-		return node, err
+		return n, err
 	}
 
-	n := ast.NewNode(p.token, p.value, 2)
+	node := ast.NewOperator(p.token)
 	p.advance()
 
-	n.Children[0] = node
-	n.Children[1], err = p.parseSimpleExpr()
-	return n, err
+	node.Left = n
+	node.Right, err = p.parseSimpleExpr()
+	return node, err
 }
 
-func (p *Parser) parseTerm() (*ast.Node, error) {
-	node, err := p.parseFactor()
+func (p *Parser) parseTerm() (ast.Node, error) {
+	n, err := p.parseFactor()
 	if err != nil || !p.token.IsMulOp() {
-		return node, err
+		return n, err
 	}
 
-	n := ast.NewNode(p.token, p.value, 2)
+	node := ast.NewOperator(p.token)
 	p.advance()
 
-	n.Children[0] = node
-	n.Children[1], err = p.parseTerm()
-	return n, err
+	node.Left = n
+	node.Right, err = p.parseTerm()
+	return node, err
 }
 
-func (p *Parser) parseFactor() (*ast.Node, error) {
+func (p *Parser) parseFactor() (ast.Node, error) {
 	if p.match(token.LPAREN) {
 		p.advance()
 
@@ -144,36 +144,34 @@ func (p *Parser) parseFactor() (*ast.Node, error) {
 		return node, err
 	}
 	if p.token.IsExprOp() {
-		node := ast.NewNode(p.token, p.value, 1)
+		node := ast.NewOperator(p.token)
 		p.advance()
 
 		n, err := p.parseFactor()
-		node.Children[0] = n
+		node.Left = n
 		return node, err
 	}
 	return p.parseTerminal()
 }
 
-func (p *Parser) parseTerminal() (*ast.Node, error) {
+func (p *Parser) parseTerminal() (ast.Node, error) {
 	if p.token == token.TRUE || p.token == token.FALSE ||
 		p.token == token.NUMBER || p.token == token.STRING {
-		node := ast.NewNode(p.token, p.value, 0)
+		node := ast.NewLiteral(p.token, p.value)
 		p.advance()
 		return node, nil
 	}
 
-	node, err := p.parseIdentifier()
+	n, err := p.parseIdentifier()
 	if err != nil || p.token != token.LPAREN {
-		return node, err
+		return n, err
 	}
-
-	n := ast.NewNode(nil, nil, 2)
-	n.Children[0] = node
-	n.Children[1], err = p.parseParenExprList()
-	return n, err
+	node := ast.NewFuncCall(n.Value)
+	node.Body, err = p.parseParenExprList()
+	return node, err
 }
 
-func (p *Parser) parseParenExprList() (*ast.Node, error) {
+func (p *Parser) parseParenExprList() (ast.Node, error) {
 	// method only called when already p.token == token.LPAREN
 	/*
 		if p.token != token.LPAREN {
@@ -184,7 +182,7 @@ func (p *Parser) parseParenExprList() (*ast.Node, error) {
 
 	if p.token == token.RPAREN {
 		p.advance()
-		return &ast.Node{}, nil
+		return nil, nil
 	}
 
 	node, err := p.parseExprList()
@@ -199,29 +197,29 @@ func (p *Parser) parseParenExprList() (*ast.Node, error) {
 	return node, nil
 }
 
-func (p *Parser) parseExprList() (*ast.Node, error) {
-	node, err := p.parseExpr()
+func (p *Parser) parseExprList() (ast.Node, error) {
+	n, err := p.parseExpr()
 	if err != nil || p.token != token.COMMA {
-		return node, err
+		return n, err
 	}
 
-	n := ast.NewNode(nil, nil, 2)
-	n.Children[1] = node
+	node := ast.NewList()
+	node.Node = n
 	for p.token == token.COMMA {
 		p.advance()
 
-		node = ast.NewNode(nil, nil, 2)
-		node.Children[0] = n
-		node.Children[1], err = p.parseExpr()
+		next := ast.NewList()
+		next.Next = node
+		next.Node, err = p.parseExpr()
 		if err != nil {
-			return node, err
+			return next, err
 		}
-		n = node
+		node = next
 	}
-	return n, err
+	return node, err
 }
 
-func (p *Parser) parseStmt() (*ast.Node, error) {
+func (p *Parser) parseStmt() (ast.Node, error) {
 	switch p.token {
 	case token.IF:
 		return p.parseIfStmt()
@@ -230,28 +228,28 @@ func (p *Parser) parseStmt() (*ast.Node, error) {
 	case token.IDENTIFIER:
 		return p.parseAssignOrCallStmt()
 	}
-	return &ast.Node{}, p.expectedErrorStr(
+	return nil, p.expectedErrorStr(
 		token.IF.String() + ", " + token.WHILE.String() + ", or " +
 			token.IDENTIFIER.String())
 }
 
-func (p *Parser) parseIfStmt() (*ast.Node, error) {
-	node := ast.NewNode(p.token, p.value, 2)
+func (p *Parser) parseIfStmt() (ast.Node, error) {
+	node := ast.NewIf()
 	p.advance()
 
 	n, err := p.parseExpr()
-	node.Children[0] = n
+	node.Condition = n
 	if err != nil {
 		return node, err
 	}
 
-	node.Children[1], err = p.parseBraceStmtList()
+	node.Body, err = p.parseBraceStmtList()
 	return node, err
 }
 
-func (p *Parser) parseBraceStmtList() (*ast.Node, error) {
+func (p *Parser) parseBraceStmtList() (ast.Node, error) {
 	if p.token != token.LBRACE {
-		return &ast.Node{}, p.expectedError(token.LBRACE)
+		return nil, p.expectedError(token.LBRACE)
 	}
 	p.advance()
 
@@ -268,62 +266,69 @@ func (p *Parser) parseBraceStmtList() (*ast.Node, error) {
 	return node, nil
 }
 
-func (p *Parser) parseStmtList() (*ast.Node, error) {
-	node := ast.NewNode(nil, nil, 2)
+func (p *Parser) parseStmtList() (ast.Node, error) {
+	node := ast.NewList()
 	for p.token.IsStmtKeyword() || p.token == token.IDENTIFIER {
 		n, err := p.parseStmt()
-		node.Children[1] = n
+		node.Node = n
 		if err != nil {
 			return node, err
 		}
-		n = ast.NewNode(nil, nil, 2)
-		n.Children[0] = node
-		node = n
+		next := ast.NewList()
+		next.Next = node
+		node = next
 	}
 	return node, nil
 }
 
-func (p *Parser) parseWhileStmt() (*ast.Node, error) {
-	node := ast.NewNode(p.token, p.value, 2)
+func (p *Parser) parseWhileStmt() (ast.Node, error) {
+	node := ast.NewWhile()
 	p.advance()
 
 	n, err := p.parseExpr()
-	node.Children[0] = n
+	node.Condition = n
 	if err != nil {
 		return node, err
 	}
 
-	node.Children[1], err = p.parseBraceStmtList()
+	node.Body, err = p.parseBraceStmtList()
 	return node, err
 }
 
-func (p *Parser) parseAssignOrCallStmt() (*ast.Node, error) {
-	node, err := p.parseIdentifier()
-	n := ast.NewNode(p.token, p.value, 2)
-	n.Children[0] = node
-
+func (p *Parser) parseAssignOrCallStmt() (ast.Node, error) {
+	n, err := p.parseIdentifier()
 	if p.token == token.ASSIGN {
+		node := ast.NewOperator(p.token)
 		p.advance()
-		n.Children[1], err = p.parseExpr()
-	} else if p.token == token.LPAREN {
-		n.Children[1], err = p.parseParenExprList()
-	} else {
-		return n, p.expectedErrorStr(
-			token.ASSIGN.String() + " or " + token.LPAREN.String())
+		node.Left = n
+		node.Right, err = p.parseExpr()
+		if err != nil {
+			return node, err
+		}
+		if p.token != token.SEMICOLON {
+			return node, p.expectedError(token.SEMICOLON)
+		}
+		p.advance()
+		return node, nil
 	}
-	if err != nil {
-		return n, err
+	if p.token == token.LPAREN {
+		node := ast.NewFuncCall(n.Value)
+		node.Body, err = p.parseParenExprList()
+		if err != nil {
+			return node, err
+		}
+		if p.token != token.SEMICOLON {
+			return node, p.expectedError(token.SEMICOLON)
+		}
+		p.advance()
+		return node, nil
 	}
-
-	if p.token != token.SEMICOLON {
-		return n, p.expectedError(token.SEMICOLON)
-	}
-	p.advance()
-	return n, nil
+	return nil, p.expectedErrorStr(
+		token.ASSIGN.String() + " or " + token.LPAREN.String())
 }
 
-func (p *Parser) parseIdentifier() (*ast.Node, error) {
-	node := ast.NewNode(p.token, p.value, 0)
+func (p *Parser) parseIdentifier() (ast.Literal, error) {
+	node := ast.NewLiteral(p.token, p.value)
 	if p.token != token.IDENTIFIER {
 		return node, p.expectedError(token.IDENTIFIER)
 	}
