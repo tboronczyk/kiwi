@@ -30,13 +30,13 @@ import (
 	"testing"
 )
 
-func capture(n *Node) string {
+func capture(n Node) string {
 	// re-assign stdout
 	old := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	n.PrintTree()
+	Print(n)
 
 	// capture output
 	out := make(chan string)
@@ -53,32 +53,85 @@ func capture(n *Node) string {
 	return <-out
 }
 
-func TestPrintTreeUnary(t *testing.T) {
-	n := NewNode(token.ADD, "+", 1)
-	n.Children[0] = NewNode(token.NUMBER, "2", 0)
-	expected := "\t[0] 2 (NUMBER)\n+ (+)\n"
+func TestLiteral(t *testing.T) {
+	node := NewLiteral(token.IDENTIFIER, "foo")
+	expected := "foo (IDENTIFIER)\n"
 
-	actual := capture(n)
+	actual := capture(node)
 	assert.Equal(t, expected, actual)
 }
 
-func TestPrintTreeBinary(t *testing.T) {
-	n := NewNode(token.ADD, "+", 2)
-	n.Children[0] = NewNode(token.NUMBER, "2", 0)
-	n.Children[1] = NewNode(token.NUMBER, "4", 0)
-	expected := "\t[0] 2 (NUMBER)\n+ (+)\n\t[1] 4 (NUMBER)\n"
+func TestOperator(t *testing.T) {
+	node := NewOperator(token.ADD)
+	n := NewOperator(token.MULTIPLY)
+	n.Left = NewLiteral(token.NUMBER, "2")
+	n.Right = NewLiteral(token.NUMBER, "4")
+	node.Left = n
+	node.Right = NewLiteral(token.NUMBER, "8")
+	expected := "OP.L OP.L 2 (NUMBER)\nOP.L OP *\nOP.L OP.R 4 (NUMBER)\nOP +\nOP.R 8 (NUMBER)\n"
 
-	actual := capture(n)
+	actual := capture(node)
 	assert.Equal(t, expected, actual)
 }
 
-func TestPrintTreeArbitrary(t *testing.T) {
-	n := NewNode(token.IF, "if", 3)
-	n.Children[0] = NewNode(token.TRUE, "true", 0)
-	n.Children[1] = NewNode(token.ASSIGN, ":=", 0)
-	n.Children[2] = NewNode(token.ASSIGN, ":=", 0)
-	expected := "\t[0] true (true)\nif (if)\n\t[1] := (:=)\n\t[2] := (:=)\n"
+func TestList(t *testing.T) {
+	node := NewList()
+	n := NewOperator(token.ADD)
+	n.Left = NewLiteral(token.NUMBER, "2")
+	n.Right = NewLiteral(token.NUMBER, "4")
+	node.Node = n
+	n = NewOperator(token.SUBTRACT)
+	n.Left = NewLiteral(token.NUMBER, "6")
+	n.Right = NewLiteral(token.NUMBER, "8")
+	node.Next = n
+	expected := "L.N OP.L 2 (NUMBER)\nL.N OP +\nL.N OP.R 4 (NUMBER)\nL.n OP.L 6 (NUMBER)\nL.n OP -\nL.n OP.R 8 (NUMBER)\n"
 
-	actual := capture(n)
+	actual := capture(node)
 	assert.Equal(t, expected, actual)
 }
+
+func TestFuncCall(t *testing.T) {
+	node := NewFuncCall("foo")
+	n := NewOperator(token.ADD)
+	n.Left = NewLiteral(token.NUMBER, "2")
+	n.Right = NewLiteral(token.NUMBER, "4")
+	node.Body = n
+	expected := "F.N foo\nF.B OP.L 2 (NUMBER)\nF.B OP +\nF.B OP.R 4 (NUMBER)\n"
+
+	actual := capture(node)
+	assert.Equal(t, expected, actual)
+}
+
+func TestIf(t *testing.T) {
+	node := NewIf()
+	n := NewOperator(token.EQUAL)
+	n.Left = NewLiteral(token.IDENTIFIER, "foo")
+	n.Right = NewLiteral(token.NUMBER, "true")
+	node.Condition = n
+	n = NewOperator(token.ASSIGN)
+	n.Left = NewLiteral(token.IDENTIFIER, "bar")
+	n.Right = NewLiteral(token.NUMBER, "false")
+	node.Body = n
+	expected := "IF.C OP.L foo (IDENTIFIER)\nIF.C OP =\nIF.C OP.R true (NUMBER)\nIF.B OP.L bar (IDENTIFIER)\nIF.B OP :=\nIF.B OP.R false (NUMBER)\n"
+
+	actual := capture(node)
+	assert.Equal(t, expected, actual)
+}
+
+func TestWhile(t *testing.T) {
+	node := NewWhile()
+	n := NewOperator(token.EQUAL)
+	n.Left = NewLiteral(token.IDENTIFIER, "foo")
+	n.Right = NewLiteral(token.NUMBER, "true")
+	node.Condition = n
+	n = NewOperator(token.ASSIGN)
+	n.Left = NewLiteral(token.IDENTIFIER, "foo")
+	n.Right = NewLiteral(token.NUMBER, "false")
+	node.Body = n
+	expected := "WL.C OP.L foo (IDENTIFIER)\nWL.C OP =\nWL.C OP.R true (NUMBER)\nWL.B OP.L foo (IDENTIFIER)\nWL.B OP :=\nWL.B OP.R false (NUMBER)\n"
+
+	actual := capture(node)
+	assert.Equal(t, expected, actual)
+}
+
+
