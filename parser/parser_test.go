@@ -23,8 +23,8 @@ package parser
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/tboronczyk/kiwi/token"
 	"github.com/tboronczyk/kiwi/ast"
+	"github.com/tboronczyk/kiwi/token"
 	"testing"
 )
 
@@ -77,8 +77,7 @@ func TestParseIdentifier(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.parseIdentifier()
-	assert.Nil(t, err)
+	node := p.parseIdentifier()
 	assert.Equal(t, token.IDENTIFIER, node.Type)
 }
 
@@ -92,8 +91,9 @@ func TestParseIdentifierError(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	_, err := p.parseIdentifier()
-	assert.NotNil(t, err)
+	assert.Panics(t, func() {
+		p.parseIdentifier()
+	})
 }
 
 func TestParseTerm(t *testing.T) {
@@ -108,8 +108,7 @@ func TestParseTerm(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.parseTerm()
-	assert.Nil(t, err)
+	node := p.parseTerm()
 	assert.Equal(t, token.MULTIPLY, node.(ast.Operator).Op)
 	assert.Equal(t, token.NUMBER, node.(ast.Operator).Left.(ast.Literal).Type)
 	assert.Equal(t, token.NUMBER, node.(ast.Operator).Right.(ast.Literal).Type)
@@ -126,8 +125,9 @@ func TestParseTermError(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	_, err := p.parseTerm()
-	assert.NotNil(t, err)
+	assert.Panics(t, func() {
+		p.parseTerm()
+	})
 }
 
 func TestParseSimpleExpr(t *testing.T) {
@@ -142,8 +142,7 @@ func TestParseSimpleExpr(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.parseSimpleExpr()
-	assert.Nil(t, err)
+	node := p.parseSimpleExpr()
 	assert.Equal(t, token.ADD, node.(ast.Operator).Op)
 	assert.Equal(t, token.NUMBER, node.(ast.Operator).Left.(ast.Literal).Type)
 	assert.Equal(t, token.NUMBER, node.(ast.Operator).Right.(ast.Literal).Type)
@@ -160,8 +159,9 @@ func TestParseSimpleExprError(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	_, err := p.parseSimpleExpr()
-	assert.NotNil(t, err)
+	assert.Panics(t, func() {
+		p.parseSimpleExpr()
+	})
 }
 
 func TestParseRelation(t *testing.T) {
@@ -176,8 +176,7 @@ func TestParseRelation(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.parseRelation()
-	assert.Nil(t, err)
+	node := p.parseRelation()
 	assert.Equal(t, token.LESS, node.(ast.Operator).Op)
 	assert.Equal(t, token.NUMBER, node.(ast.Operator).Left.(ast.Literal).Type)
 	assert.Equal(t, token.NUMBER, node.(ast.Operator).Right.(ast.Literal).Type)
@@ -194,8 +193,9 @@ func TestParseRelationError(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	_, err := p.parseRelation()
-	assert.NotNil(t, err)
+	assert.Panics(t, func() {
+		p.parseRelation()
+	})
 }
 
 func TestParseExpr(t *testing.T) {
@@ -210,8 +210,7 @@ func TestParseExpr(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.parseExpr()
-	assert.Nil(t, err)
+	node := p.parseExpr()
 	assert.Equal(t, token.AND, node.(ast.Operator).Op)
 	assert.Equal(t, token.TRUE, node.(ast.Operator).Left.(ast.Literal).Type)
 	assert.Equal(t, token.TRUE, node.(ast.Operator).Right.(ast.Literal).Type)
@@ -228,8 +227,9 @@ func TestParseExprError(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	_, err := p.parseExpr()
-	assert.NotNil(t, err)
+	assert.Panics(t, func() {
+		p.parseExpr()
+	})
 }
 
 func TestParseFactorParens(t *testing.T) {
@@ -244,8 +244,7 @@ func TestParseFactorParens(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.parseFactor()
-	assert.Nil(t, err)
+	node := p.parseFactor()
 	assert.Equal(t, token.IDENTIFIER, node.(ast.Literal).Type)
 }
 
@@ -259,8 +258,9 @@ func TestParseFactorParensExprError(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	_, err := p.parseFactor()
-	assert.NotNil(t, err)
+	assert.Panics(t, func() {
+		p.parseFactor()
+	})
 }
 
 func TestParseFactorParensCloseError(t *testing.T) {
@@ -274,8 +274,9 @@ func TestParseFactorParensCloseError(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	_, err := p.parseFactor()
-	assert.NotNil(t, err)
+	assert.Panics(t, func() {
+		p.parseFactor()
+	})
 }
 
 func TestParseFactorSigned(t *testing.T) {
@@ -289,8 +290,7 @@ func TestParseFactorSigned(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.parseFactor()
-	assert.Nil(t, err)
+	node := p.parseFactor()
 	assert.Equal(t, token.SUBTRACT, node.(ast.Operator).Op)
 	assert.Equal(t, token.NUMBER, node.(ast.Operator).Left.(ast.Literal).Type)
 	assert.Nil(t, node.(ast.Operator).Right)
@@ -306,8 +306,7 @@ func TestParseTerminalIdentifier(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.parseTerminal()
-	assert.Nil(t, err)
+	node := p.parseTerminal()
 	assert.Equal(t, token.IDENTIFIER, node.(ast.Literal).Type)
 }
 
@@ -323,8 +322,7 @@ func TestParseTerminalFuncCall(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.parseTerminal()
-	assert.Nil(t, err)
+	node := p.parseTerminal()
 	assert.Equal(t, "foo", node.(ast.FuncCall).Name)
 }
 
@@ -345,8 +343,7 @@ func TestParseTerminalFuncCallWithArgs(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.parseTerminal()
-	assert.Nil(t, err)
+	node := p.parseTerminal()
 	assert.Equal(t, "foo", node.(ast.FuncCall).Name)
 	assert.Equal(t, token.IDENTIFIER, node.(ast.FuncCall).Body.(ast.List).Next.(ast.List).Next.(ast.List).Node.(ast.Literal).Type)
 	assert.Equal(t, token.NUMBER, node.(ast.FuncCall).Body.(ast.List).Next.(ast.List).Node.(ast.Literal).Type)
@@ -369,8 +366,9 @@ func TestParseTerminalFuncCallWithArgsExprError(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	_, err := p.parseTerminal()
-	assert.NotNil(t, err)
+	assert.Panics(t, func() {
+		p.parseTerminal()
+	})
 }
 
 func TestParseTerminalFuncCallExprListError(t *testing.T) {
@@ -386,8 +384,9 @@ func TestParseTerminalFuncCallExprListError(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	_, err := p.parseTerminal()
-	assert.NotNil(t, err)
+	assert.Panics(t, func() {
+		p.parseTerminal()
+	})
 }
 
 func TestParseBraceStmtListEmpty(t *testing.T) {
@@ -401,9 +400,8 @@ func TestParseBraceStmtListEmpty(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.parseBraceStmtList()
-	assert.Nil(t, err)
-	assert.Nil(t, node.(ast.List).Next)
+	node := p.parseBraceStmtList()
+	assert.Nil(t, node.Next)
 }
 
 func TestParseBraceStmtList(t *testing.T) {
@@ -425,10 +423,9 @@ func TestParseBraceStmtList(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.parseBraceStmtList()
-	assert.Nil(t, err)
-	assert.Equal(t, token.ASSIGN, node.(ast.List).Next.(ast.List).Next.(ast.List).Node.(ast.Operator).Op)
-	assert.Equal(t, token.ASSIGN, node.(ast.List).Next.(ast.List).Node.(ast.Operator).Op)
+	node := p.parseBraceStmtList()
+	assert.Equal(t, token.ASSIGN, node.Next.(ast.List).Next.(ast.List).Node.(ast.Operator).Op)
+	assert.Equal(t, token.ASSIGN, node.Next.(ast.List).Node.(ast.Operator).Op)
 }
 
 func TestParseBraceStmtListStmtError(t *testing.T) {
@@ -447,8 +444,9 @@ func TestParseBraceStmtListStmtError(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	_, err := p.parseBraceStmtList()
-	assert.NotNil(t, err)
+	assert.Panics(t, func() {
+		p.parseBraceStmtList()
+	})
 }
 
 func TestParseBraceStmtListBraceError(t *testing.T) {
@@ -465,8 +463,9 @@ func TestParseBraceStmtListBraceError(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	_, err := p.parseBraceStmtList()
-	assert.NotNil(t, err)
+	assert.Panics(t, func() {
+		p.parseBraceStmtList()
+	})
 }
 
 func TestParseIfStmt(t *testing.T) {
@@ -488,8 +487,7 @@ func TestParseIfStmt(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.parseStmt()
-	assert.Nil(t, err)
+	node := p.parseStmt()
 	assert.Equal(t, token.EQUAL, node.(ast.If).Condition.(ast.Operator).Op)
 	assert.Equal(t, token.ASSIGN, node.(ast.If).Body.(ast.List).Next.(ast.List).Node.(ast.Operator).Op)
 }
@@ -507,8 +505,9 @@ func TestParseIfStmtExprError(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	_, err := p.parseStmt()
-	assert.NotNil(t, err)
+	assert.Panics(t, func() {
+		p.parseStmt()
+	})
 }
 
 func TestParseIfStmtBraceError(t *testing.T) {
@@ -526,8 +525,9 @@ func TestParseIfStmtBraceError(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	_, err := p.parseStmt()
-	assert.NotNil(t, err)
+	assert.Panics(t, func() {
+		p.parseStmt()
+	})
 }
 
 func TestParseWhileStmt(t *testing.T) {
@@ -549,8 +549,7 @@ func TestParseWhileStmt(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.parseStmt()
-	assert.Nil(t, err)
+	node := p.parseStmt()
 	assert.Equal(t, token.EQUAL, node.(ast.While).Condition.(ast.Operator).Op)
 	assert.Equal(t, token.ASSIGN, node.(ast.While).Body.(ast.List).Next.(ast.List).Node.(ast.Operator).Op)
 }
@@ -568,8 +567,9 @@ func TestParseWhileStmtExprError(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	_, err := p.parseStmt()
-	assert.NotNil(t, err)
+	assert.Panics(t, func() {
+		p.parseStmt()
+	})
 }
 
 func TestParseStmtError(t *testing.T) {
@@ -582,8 +582,9 @@ func TestParseStmtError(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	_, err := p.parseStmt()
-	assert.NotNil(t, err)
+	assert.Panics(t, func() {
+		p.parseStmt()
+	})
 }
 
 func TestParseAssignStmt(t *testing.T) {
@@ -601,8 +602,7 @@ func TestParseAssignStmt(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	node, err := p.parseStmt()
-	assert.Nil(t, err)
+	node := p.parseStmt()
 	assert.Equal(t, token.ASSIGN, node.(ast.Operator).Op)
 	assert.Equal(t, token.IDENTIFIER, node.(ast.Operator).Left.(ast.Literal).Type)
 	assert.Equal(t, token.ADD, node.(ast.Operator).Right.(ast.Operator).Op)
@@ -622,8 +622,9 @@ func TestParseAssignSmtExprError(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	_, err := p.parseStmt()
-	assert.NotNil(t, err)
+	assert.Panics(t, func() {
+		p.parseStmt()
+	})
 }
 
 func TestFuncCallStmt(t *testing.T) {
@@ -638,10 +639,9 @@ func TestFuncCallStmt(t *testing.T) {
 	})
 	p := NewParser()
 	p.InitScanner(s)
-	node, err := p.parseStmt()
+	node := p.parseStmt()
 	assert.Equal(t, "foo", node.(ast.FuncCall).Name)
 	assert.Nil(t, node.(ast.FuncCall).Body)
-	assert.Nil(t, err)
 }
 
 func TestStmtSemicolonError(t *testing.T) {
@@ -656,6 +656,7 @@ func TestStmtSemicolonError(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 
-	_, err := p.parseStmt()
-	assert.NotNil(t, err)
+	assert.Panics(t, func() {
+		p.parseStmt()
+	})
 }
