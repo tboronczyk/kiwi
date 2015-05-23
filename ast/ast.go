@@ -48,13 +48,23 @@ type (
 	}
 
 	FuncCall struct {
-		Name string
-		Body Node
+		Name Literal
+		Args Node
+	}
+
+	FuncDef struct {
+		Name   Literal
+		Params Node
+		Body   Node
 	}
 
 	If struct {
 		Condition Node
 		Body      Node
+	}
+
+	Return struct {
+		Expr Node
 	}
 
 	While struct {
@@ -82,9 +92,9 @@ func (n Operator) print(s string) {
 }
 
 func (n FuncCall) print(s string) {
-	fmt.Printf("%sF.N %s\n", s, n.Name)
-	if n.Body != nil {
-		n.Body.print(s + "F.B ")
+	n.Name.print(s + "FC.N ")
+	if n.Args != nil {
+		n.Args.print(s + "FC.A ")
 	}
 }
 
@@ -97,12 +107,30 @@ func (n List) print(s string) {
 	}
 }
 
+func (n FuncDef) print(s string) {
+	n.Name.print(s + "FD.N ")
+	if n.Params != nil {
+		n.Params.print(s + "FD.P ")
+	}
+	if n.Body != nil {
+		n.Body.print(s + "FD.B ")
+	}
+}
+
 func (n If) print(s string) {
 	if n.Condition != nil {
 		n.Condition.print(s + "IF.C ")
 	}
 	if n.Body != nil {
 		n.Body.print(s + "IF.B ")
+	}
+}
+
+func (n Return) print(s string) {
+	if n.Expr == nil {
+		fmt.Printf("%sRet\n", s)
+	} else {
+		n.Expr.print(s + "Ret.E ")
 	}
 }
 

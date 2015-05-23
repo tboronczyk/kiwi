@@ -323,7 +323,7 @@ func TestParseTerminalFuncCall(t *testing.T) {
 	p.InitScanner(s)
 
 	node := p.terminal()
-	assert.Equal(t, "foo", node.(ast.FuncCall).Name)
+	assert.Equal(t, "foo", node.(ast.FuncCall).Name.Value)
 }
 
 func TestParseTerminalFuncCallWithArgs(t *testing.T) {
@@ -344,10 +344,10 @@ func TestParseTerminalFuncCallWithArgs(t *testing.T) {
 	p.InitScanner(s)
 
 	node := p.terminal()
-	assert.Equal(t, "foo", node.(ast.FuncCall).Name)
-	assert.Equal(t, token.IDENTIFIER, node.(ast.FuncCall).Body.(ast.List).Prev.(ast.List).Prev.(ast.List).Node.(ast.Literal).Type)
-	assert.Equal(t, token.NUMBER, node.(ast.FuncCall).Body.(ast.List).Prev.(ast.List).Node.(ast.Literal).Type)
-	assert.Equal(t, token.STRING, node.(ast.FuncCall).Body.(ast.List).Node.(ast.Literal).Type)
+	assert.Equal(t, "foo", node.(ast.FuncCall).Name.Value)
+	assert.Equal(t, token.IDENTIFIER, node.(ast.FuncCall).Args.(ast.List).Prev.(ast.List).Prev.(ast.List).Node.(ast.Literal).Type)
+	assert.Equal(t, token.NUMBER, node.(ast.FuncCall).Args.(ast.List).Prev.(ast.List).Node.(ast.Literal).Type)
+	assert.Equal(t, token.STRING, node.(ast.FuncCall).Args.(ast.List).Node.(ast.Literal).Type)
 }
 
 func TestParseTerminalFuncCallWithArgsExprError(t *testing.T) {
@@ -468,6 +468,64 @@ func TestParseBraceStmtListBraceError(t *testing.T) {
 	})
 }
 
+func TestParseFuncDefStmt(t *testing.T) {
+	s := NewMockScanner()
+	// func foo {}
+	s.reset([]tokenPair{
+		{token.FUNC, "func"},
+		{token.IDENTIFIER, "foo"},
+		{token.LBRACE, "{"},
+		{token.RBRACE, "}"},
+		{token.EOF, ""},
+	})
+	p := NewParser()
+	p.InitScanner(s)
+
+	node := p.stmt()
+	assert.Equal(t, "foo", node.(ast.FuncDef).Name.Value)
+}
+
+func TestParseFuncDefStmtOneParam(t *testing.T) {
+	s := NewMockScanner()
+	// func foo {}
+	s.reset([]tokenPair{
+		{token.FUNC, "func"},
+		{token.IDENTIFIER, "foo"},
+		{token.IDENTIFIER, "bar"},
+		{token.LBRACE, "{"},
+		{token.RBRACE, "}"},
+		{token.EOF, ""},
+	})
+	p := NewParser()
+	p.InitScanner(s)
+
+	node := p.stmt()
+	assert.Equal(t, "foo", node.(ast.FuncDef).Name.Value)
+	assert.Equal(t, "bar", node.(ast.FuncDef).Params.(ast.Literal).Value)
+}
+
+func TestParseFuncDefStmtManyParams(t *testing.T) {
+	s := NewMockScanner()
+	// func foo {}
+	s.reset([]tokenPair{
+		{token.FUNC, "func"},
+		{token.IDENTIFIER, "foo"},
+		{token.IDENTIFIER, "bar"},
+		{token.COMMA, ","},
+		{token.IDENTIFIER, "bazz"},
+		{token.LBRACE, "{"},
+		{token.RBRACE, "}"},
+		{token.EOF, ""},
+	})
+	p := NewParser()
+	p.InitScanner(s)
+
+	node := p.stmt()
+	assert.Equal(t, "foo", node.(ast.FuncDef).Name.Value)
+	assert.Equal(t, "bar", node.(ast.FuncDef).Params.(ast.List).Prev.(ast.List).Node.(ast.Literal).Value)
+	assert.Equal(t, "bazz", node.(ast.FuncDef).Params.(ast.List).Node.(ast.Literal).Value)
+}
+
 func TestParseIfStmt(t *testing.T) {
 	s := NewMockScanner()
 	// if a = true { b := false; }
@@ -528,6 +586,39 @@ func TestParseIfStmtBraceError(t *testing.T) {
 	assert.Panics(t, func() {
 		p.stmt()
 	})
+}
+
+func TestParseReturnStmt(t *testing.T) {
+	s := NewMockScanner()
+	// return a = true;
+	s.reset([]tokenPair{
+		{token.RETURN, "return"},
+		{token.IDENTIFIER, "a"},
+		{token.EQUAL, "="},
+		{token.TRUE, "true"},
+		{token.SEMICOLON, ";"},
+		{token.EOF, ""},
+	})
+	p := NewParser()
+	p.InitScanner(s)
+
+	node := p.stmt()
+	assert.Equal(t, token.EQUAL, node.(ast.Return).Expr.(ast.Operator).Op)
+}
+
+func TestParseReturnStmtNoExpr(t *testing.T) {
+	s := NewMockScanner()
+	// return;
+	s.reset([]tokenPair{
+		{token.RETURN, "return"},
+		{token.SEMICOLON, ";"},
+		{token.EOF, ""},
+	})
+	p := NewParser()
+	p.InitScanner(s)
+
+	node := p.stmt()
+	assert.Nil(t, node.(ast.Return).Expr)
 }
 
 func TestParseWhileStmt(t *testing.T) {
@@ -640,8 +731,8 @@ func TestFuncCallStmt(t *testing.T) {
 	p := NewParser()
 	p.InitScanner(s)
 	node := p.stmt()
-	assert.Equal(t, "foo", node.(ast.FuncCall).Name)
-	assert.Nil(t, node.(ast.FuncCall).Body)
+	assert.Equal(t, "foo", node.(ast.FuncCall).Name.Value)
+	assert.Nil(t, node.(ast.FuncCall).Args)
 }
 
 func TestStmtSemicolonError(t *testing.T) {

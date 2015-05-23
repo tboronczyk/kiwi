@@ -208,8 +208,12 @@ func (s *scanner) scanIdent() (token.Token, string) {
 		str = str[1:]
 	} else {
 		switch strings.ToUpper(str) {
+		case "FUNC":
+			return token.FUNC, str
 		case "IF":
 			return token.IF, str
+		case "RETURN":
+			return token.RETURN, str
 		case "WHILE":
 			return token.WHILE, str
 		case "TRUE":

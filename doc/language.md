@@ -18,10 +18,14 @@
               cmp-op = '=' | '~=' | '>' | '>=' | '<' | '<=' .
               log-op = '&&' | '||' .
 
-                stmt = if-stmt | while-stmt | assign-stmt | func-call-stmt .
+                stmt = if-stmt | while-stmt | func-def-stmt | assign-stmt |
+                       return-stmt | func-call-stmt .
              if-stmt = 'if' expr braced-stmt-list .
     braced-stmt-list = '{' stmt-list '}' .
            stmt-list = stmt | stmt-list stmt .
           while-stmt = 'while' expr braced-stmt-list .
+       func-def-stmt = 'func' ident-list braced-stmt-list .
+          ident-list = IDENT | ident-list ',' IDENT .
          assign-stmt = IDENT ':=' expr ';' .
+         return-stmt = 'return' [expr] ';' .
       func-call-stmt = func-call ';' .
