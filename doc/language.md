@@ -9,11 +9,12 @@
               factor = '(' expr ')' | expr-op expr | terminal .
              expr-op = '~' | add-op .
               add-op = '+' | '-' .
-            terminal = boolean | NUMBER | STRING | IDENT | func-call .
+            terminal = boolean | number | STRING | IDENT | func-call .
            func-call = IDENT func-call-args .
       func-call-args = '(' ')' | '(' expr-list ')' .
            expr-list = expr | expr-list ',' expr .
              boolean = 'true' | 'false' .
+              number = (0-9)+ ['.' (0-9)+] .
               mul-op = '*' | '/' | '%' .
               cmp-op = '=' | '~=' | '>' | '>=' | '<' | '<=' .
               log-op = '&&' | '||' .

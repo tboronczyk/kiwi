@@ -226,16 +226,37 @@ func (s *scanner) scanIdent() (token.Token, string) {
 }
 
 func (s *scanner) scanNumber() (token.Token, string) {
+	var ch rune
 	var buf bytes.Buffer
+
 	buf.WriteRune(s.read())
 	for {
-		if ch := s.read(); unicode.IsDigit(ch) {
-			buf.WriteRune(ch)
-		} else {
-			s.unread()
+		ch = s.read()
+		if !unicode.IsDigit(ch) {
 			break
 		}
+		buf.WriteRune(ch)
 	}
+
+	if ch == '.' {
+		buf.WriteRune(ch)
+
+		ch = s.read()
+		if !unicode.IsDigit(ch) {
+			return token.MALFORMED, buf.String()
+		}
+		buf.WriteRune(ch)
+
+		for {
+			ch = s.read()
+			if !unicode.IsDigit(ch) {
+				break
+			}
+			buf.WriteRune(ch)
+		}
+	}
+	s.unread()
+
 	return token.NUMBER, buf.String()
 }
 
