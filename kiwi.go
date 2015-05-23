@@ -24,9 +24,9 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/tboronczyk/kiwi/ast"
 	"github.com/tboronczyk/kiwi/parser"
 	"github.com/tboronczyk/kiwi/scanner"
-	"github.com/tboronczyk/kiwi/token"
 	"os"
 )
 
@@ -38,13 +38,12 @@ func main() {
 
 	for {
 		n, err := p.Parse()
-		if err != nil {
-			fmt.Println(err)
+		if n == nil {
+			if err != nil {
+				fmt.Println(err)
+			}
 			return
 		}
-		if n.Token == token.EOF {
-			return
-		}
-		n.PrintTree()
+		ast.Print(n)
 	}
 }

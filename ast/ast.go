@@ -44,7 +44,7 @@ type (
 
 	List struct {
 		Node
-		Next Node
+		Prev Node
 	}
 
 	FuncCall struct {
@@ -89,8 +89,8 @@ func (n FuncCall) print(s string) {
 }
 
 func (n List) print(s string) {
-	if n.Next != nil {
-		n.Next.print(s + "L.n ")
+	if n.Prev != nil {
+		n.Prev.print(s + "L.P ")
 	}
 	if n.Node != nil {
 		n.Node.print(s + "L.N ")
