@@ -54,7 +54,7 @@ func capture(n Node) string {
 }
 
 func TestLiteral(t *testing.T) {
-	node := NewLiteral(token.IDENTIFIER, "foo")
+	node := Literal{Type: token.IDENTIFIER, Value: "foo"}
 	expected := "foo (IDENTIFIER)\n"
 
 	actual := capture(node)
@@ -62,12 +62,13 @@ func TestLiteral(t *testing.T) {
 }
 
 func TestOperator(t *testing.T) {
-	node := NewOperator(token.ADD)
-	n := NewOperator(token.MULTIPLY)
-	n.Left = NewLiteral(token.NUMBER, "2")
-	n.Right = NewLiteral(token.NUMBER, "4")
-	node.Left = n
-	node.Right = NewLiteral(token.NUMBER, "8")
+	node := Operator{
+		Op: token.ADD,
+		Left: Operator{
+			Op:    token.MULTIPLY,
+			Left:  Literal{Type: token.NUMBER, Value: "2"},
+			Right: Literal{Type: token.NUMBER, Value: "4"}},
+		Right: Literal{Type: token.NUMBER, Value: "8"}}
 	expected := "OP.L OP.L 2 (NUMBER)\nOP.L OP *\nOP.L OP.R 4 (NUMBER)\nOP +\nOP.R 8 (NUMBER)\n"
 
 	actual := capture(node)
@@ -75,27 +76,30 @@ func TestOperator(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	node := NewList()
-	n := NewOperator(token.ADD)
-	n.Left = NewLiteral(token.NUMBER, "2")
-	n.Right = NewLiteral(token.NUMBER, "4")
-	node.Node = n
-	n = NewOperator(token.SUBTRACT)
-	n.Left = NewLiteral(token.NUMBER, "6")
-	n.Right = NewLiteral(token.NUMBER, "8")
-	node.Next = n
-	expected := "L.N OP.L 2 (NUMBER)\nL.N OP +\nL.N OP.R 4 (NUMBER)\nL.n OP.L 6 (NUMBER)\nL.n OP -\nL.n OP.R 8 (NUMBER)\n"
+	node := List{
+		Node: Operator{
+			Op:    token.ADD,
+			Left:  Literal{Type: token.NUMBER, Value: "2"},
+			Right: Literal{Type: token.NUMBER, Value: "4"}},
+		Next: List{
+			Node: Operator{
+				Op:    token.SUBTRACT,
+				Left:  Literal{Type: token.NUMBER, Value: "6"},
+				Right: Literal{Type: token.NUMBER, Value: "8"}}}}
+
+	expected := "L.n L.N OP.L 6 (NUMBER)\nL.n L.N OP -\nL.n L.N OP.R 8 (NUMBER)\nL.N OP.L 2 (NUMBER)\nL.N OP +\nL.N OP.R 4 (NUMBER)\n"
 
 	actual := capture(node)
 	assert.Equal(t, expected, actual)
 }
 
 func TestFuncCall(t *testing.T) {
-	node := NewFuncCall("foo")
-	n := NewOperator(token.ADD)
-	n.Left = NewLiteral(token.NUMBER, "2")
-	n.Right = NewLiteral(token.NUMBER, "4")
-	node.Body = n
+	node := FuncCall{
+		Name: "foo",
+		Body: Operator{
+			Op:    token.ADD,
+			Left:  Literal{Type: token.NUMBER, Value: "2"},
+			Right: Literal{Type: token.NUMBER, Value: "4"}}}
 	expected := "F.N foo\nF.B OP.L 2 (NUMBER)\nF.B OP +\nF.B OP.R 4 (NUMBER)\n"
 
 	actual := capture(node)
@@ -103,35 +107,33 @@ func TestFuncCall(t *testing.T) {
 }
 
 func TestIf(t *testing.T) {
-	node := NewIf()
-	n := NewOperator(token.EQUAL)
-	n.Left = NewLiteral(token.IDENTIFIER, "foo")
-	n.Right = NewLiteral(token.NUMBER, "true")
-	node.Condition = n
-	n = NewOperator(token.ASSIGN)
-	n.Left = NewLiteral(token.IDENTIFIER, "bar")
-	n.Right = NewLiteral(token.NUMBER, "false")
-	node.Body = n
-	expected := "IF.C OP.L foo (IDENTIFIER)\nIF.C OP =\nIF.C OP.R true (NUMBER)\nIF.B OP.L bar (IDENTIFIER)\nIF.B OP :=\nIF.B OP.R false (NUMBER)\n"
+	node := If{
+		Condition: Operator{
+			Op:    token.EQUAL,
+			Left:  Literal{Type: token.IDENTIFIER, Value: "foo"},
+			Right: Literal{Type: token.TRUE, Value: "true"}},
+		Body: Operator{
+			Op:    token.ASSIGN,
+			Left:  Literal{Type: token.IDENTIFIER, Value: "bar"},
+			Right: Literal{Type: token.FALSE, Value: "false"}}}
+	expected := "IF.C OP.L foo (IDENTIFIER)\nIF.C OP =\nIF.C OP.R true (true)\nIF.B OP.L bar (IDENTIFIER)\nIF.B OP :=\nIF.B OP.R false (false)\n"
 
 	actual := capture(node)
 	assert.Equal(t, expected, actual)
 }
 
 func TestWhile(t *testing.T) {
-	node := NewWhile()
-	n := NewOperator(token.EQUAL)
-	n.Left = NewLiteral(token.IDENTIFIER, "foo")
-	n.Right = NewLiteral(token.NUMBER, "true")
-	node.Condition = n
-	n = NewOperator(token.ASSIGN)
-	n.Left = NewLiteral(token.IDENTIFIER, "foo")
-	n.Right = NewLiteral(token.NUMBER, "false")
-	node.Body = n
-	expected := "WL.C OP.L foo (IDENTIFIER)\nWL.C OP =\nWL.C OP.R true (NUMBER)\nWL.B OP.L foo (IDENTIFIER)\nWL.B OP :=\nWL.B OP.R false (NUMBER)\n"
+	node := While{
+		Condition: Operator{
+			Op:    token.EQUAL,
+			Left:  Literal{Type: token.IDENTIFIER, Value: "foo"},
+			Right: Literal{Type: token.TRUE, Value: "true"}},
+		Body: Operator{
+			Op:    token.ASSIGN,
+			Left:  Literal{Type: token.IDENTIFIER, Value: "foo"},
+			Right: Literal{Type: token.FALSE, Value: "false"}}}
+	expected := "WL.C OP.L foo (IDENTIFIER)\nWL.C OP =\nWL.C OP.R true (true)\nWL.B OP.L foo (IDENTIFIER)\nWL.B OP :=\nWL.B OP.R false (false)\n"
 
 	actual := capture(node)
 	assert.Equal(t, expected, actual)
 }
-
-
