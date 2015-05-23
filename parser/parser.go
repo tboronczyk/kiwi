@@ -165,7 +165,7 @@ func (p *Parser) terminal() ast.Node {
 	if p.token != token.LPAREN {
 		return node
 	}
-	return ast.FuncCall{Name: node.Value, Body: p.parenExprList()}
+	return ast.FuncCall{Name: node, Args: p.parenExprList()}
 }
 
 func (p *Parser) parenExprList() ast.Node {
@@ -196,18 +196,44 @@ func (p *Parser) exprList() ast.Node {
 	return node
 }
 
+func (p *Parser) identList() ast.Node {
+	n := p.identifier()
+	if p.token != token.COMMA {
+		return n
+	}
+
+	node := ast.List{Node: n}
+	for p.token == token.COMMA {
+		p.advance()
+		node = ast.List{Node: p.identifier(), Prev: node}
+	}
+	return node
+}
+
 func (p *Parser) stmt() ast.Node {
 	switch p.token {
+	case token.FUNC:
+		return p.funcDefStmt()
 	case token.IF:
 		return p.ifStmt()
+	case token.RETURN:
+		return p.returnStmt()
 	case token.WHILE:
 		return p.whileStmt()
 	case token.IDENTIFIER:
 		return p.assignOrCallStmt()
 	}
-	panic(p.expected(
-		token.IF.String() + ", " + token.WHILE.String() + ", or " +
-			token.IDENTIFIER.String()))
+	panic(p.expected("statement"))
+}
+
+func (p *Parser) funcDefStmt() ast.FuncDef {
+	p.consume(token.FUNC)
+	node := ast.FuncDef{Name: p.identifier()}
+	if p.token != token.LBRACE {
+		node.Params = p.identList()
+	}
+	node.Body = p.braceStmtList()
+	return node
 }
 
 func (p *Parser) ifStmt() ast.If {
@@ -215,6 +241,16 @@ func (p *Parser) ifStmt() ast.If {
 	return ast.If{
 		Condition: p.expr(),
 		Body:      p.braceStmtList()}
+}
+
+func (p *Parser) returnStmt() ast.Return {
+	defer p.consume(token.SEMICOLON)
+	p.consume(token.RETURN)
+	node := ast.Return{}
+	if p.token != token.SEMICOLON {
+		node.Expr = p.expr()
+	}
+	return node
 }
 
 func (p *Parser) braceStmtList() ast.List {
@@ -251,7 +287,7 @@ func (p *Parser) assignOrCallStmt() ast.Node {
 		return node
 	}
 	if p.token == token.LPAREN {
-		return ast.FuncCall{Name: n.Value, Body: p.parenExprList()}
+		return ast.FuncCall{Name: n, Args: p.parenExprList()}
 	}
 	panic(p.expected(
 		token.ASSIGN.String() + " or " + token.LPAREN.String()))

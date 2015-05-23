@@ -93,14 +93,31 @@ func TestList(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestFuncDef(t *testing.T) {
+	node := FuncDef{
+		Name: Literal{Type: token.IDENTIFIER, Value: "foo"},
+		Params: List{
+			Node: Literal{Type: token.IDENTIFIER, Value: "c"},
+			Prev: List{
+				Node: Literal{Type: token.IDENTIFIER, Value: "b"},
+				Prev: List{
+					Node: Literal{Type: token.IDENTIFIER, Value: "a"}}}},
+		Body: List{
+			Node: Return{}}}
+	expected := "FD.N foo (IDENTIFIER)\nFD.P L.P L.P L.N a (IDENTIFIER)\nFD.P L.P L.N b (IDENTIFIER)\nFD.P L.N c (IDENTIFIER)\nFD.B L.N Ret\n"
+
+	actual := capture(node)
+	assert.Equal(t, expected, actual)
+}
+
 func TestFuncCall(t *testing.T) {
 	node := FuncCall{
-		Name: "foo",
-		Body: Operator{
+		Name: Literal{Type: token.IDENTIFIER, Value: "foo"},
+		Args: Operator{
 			Op:    token.ADD,
 			Left:  Literal{Type: token.NUMBER, Value: "2"},
 			Right: Literal{Type: token.NUMBER, Value: "4"}}}
-	expected := "F.N foo\nF.B OP.L 2 (NUMBER)\nF.B OP +\nF.B OP.R 4 (NUMBER)\n"
+	expected := "FC.N foo (IDENTIFIER)\nFC.A OP.L 2 (NUMBER)\nFC.A OP +\nFC.A OP.R 4 (NUMBER)\n"
 
 	actual := capture(node)
 	assert.Equal(t, expected, actual)
@@ -117,6 +134,26 @@ func TestIf(t *testing.T) {
 			Left:  Literal{Type: token.IDENTIFIER, Value: "bar"},
 			Right: Literal{Type: token.FALSE, Value: "false"}}}
 	expected := "IF.C OP.L foo (IDENTIFIER)\nIF.C OP =\nIF.C OP.R true (true)\nIF.B OP.L bar (IDENTIFIER)\nIF.B OP :=\nIF.B OP.R false (false)\n"
+
+	actual := capture(node)
+	assert.Equal(t, expected, actual)
+}
+
+func TestReturn(t *testing.T) {
+	node := Return{
+		Expr: Operator{
+			Op:    token.EQUAL,
+			Left:  Literal{Type: token.IDENTIFIER, Value: "foo"},
+			Right: Literal{Type: token.TRUE, Value: "true"}}}
+	expected := "Ret.E OP.L foo (IDENTIFIER)\nRet.E OP =\nRet.E OP.R true (true)\n"
+
+	actual := capture(node)
+	assert.Equal(t, expected, actual)
+}
+
+func TestReturnNoExpr(t *testing.T) {
+	node := Return{}
+	expected := "Ret\n"
 
 	actual := capture(node)
 	assert.Equal(t, expected, actual)

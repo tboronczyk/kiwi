@@ -60,6 +60,8 @@ func TestTokenToString(t *testing.T) {
 		{COMMENT.String(), "COMMENT"},
 		{IF.String(), "if"},
 		{WHILE.String(), "while"},
+		{FUNC.String(), "func"},
+		{RETURN.String(), "return"},
 		{TRUE.String(), "true"},
 		{FALSE.String(), "false"},
 		{NUMBER.String(), "NUMBER"},
@@ -144,7 +146,7 @@ func TestIsLiteral(t *testing.T) {
 func TestIsStmtKeyword(t *testing.T) {
 	for i := 0; i < len(tokens); i++ {
 		tkn := Token(i)
-		if tkn == IF || tkn == WHILE {
+		if tkn == IF || tkn == WHILE || tkn == FUNC || tkn == RETURN {
 			assert.True(t, tkn.IsStmtKeyword(), tkn.String())
 		} else {
 			assert.False(t, tkn.IsStmtKeyword(), tkn.String())

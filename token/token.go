@@ -70,6 +70,8 @@ const (
 	stmtkwd_start
 	IF
 	WHILE
+	FUNC
+	RETURN
 	stmtkwd_end
 
 	lit_start
@@ -109,6 +111,8 @@ var tokens = [...]string{
 	COMMA:      ",",
 	IF:         "if",
 	WHILE:      "while",
+	FUNC:       "func",
+	RETURN:     "return",
 	TRUE:       "true",
 	FALSE:      "false",
 	NUMBER:     "NUMBER",

@@ -72,14 +72,16 @@ func TestScanSimpleTokens(t *testing.T) {
 }
 
 func TestScanIdentifiers(t *testing.T) {
-	str := "if while true false `if ident"
+	str := "func if return while true false `if ident"
 	s := NewScanner(strings.NewReader(str))
 
 	tokens := []struct {
 		token token.Token
 		value string
 	}{
+		{token.FUNC, "func"},
 		{token.IF, "if"},
+		{token.RETURN, "return"},
 		{token.WHILE, "while"},
 		{token.TRUE, "true"},
 		{token.FALSE, "false"},
