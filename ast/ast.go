@@ -54,38 +54,14 @@ type (
 
 	If struct {
 		Condition Node
-		Body Node
+		Body      Node
 	}
 
 	While struct {
 		Condition Node
-		Body Node
+		Body      Node
 	}
 )
-
-func NewLiteral(t token.Token, v string) Literal {
-	return Literal{Type: t, Value: v}
-}
-
-func NewOperator(t token.Token) Operator {
-	return Operator{Op: t}
-}
-
-func NewFuncCall(s string) FuncCall {
-	return FuncCall{Name: s}
-}
-
-func NewList() List {
-	return List{}
-}
-
-func NewIf() If {
-	return If{}
-}
-
-func NewWhile() While {
-	return While{}
-}
 
 func Print(n Node) {
 	n.print("")
@@ -111,13 +87,13 @@ func (n FuncCall) print(s string) {
 		n.Body.print(s + "F.B ")
 	}
 }
-	
+
 func (n List) print(s string) {
-	if n.Node != nil {
-		n.Node.print(s + "L.N ")
-	}
 	if n.Next != nil {
 		n.Next.print(s + "L.n ")
+	}
+	if n.Node != nil {
+		n.Node.print(s + "L.N ")
 	}
 }
 

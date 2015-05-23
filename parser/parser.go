@@ -68,7 +68,7 @@ func (p *Parser) InitScanner(scnr scanner.Scanner) {
 
 func (p *Parser) Parse() ast.Node {
 	if p.token == token.EOF {
-		return ast.NewOperator(p.token)
+		return ast.Operator{Op: p.token}
 	}
 	return p.parseStmt()
 }
@@ -79,7 +79,7 @@ func (p *Parser) parseExpr() ast.Node {
 		return n
 	}
 
-	node := ast.NewOperator(p.token)
+	node := ast.Operator{Op: p.token}
 	p.advance()
 
 	node.Left = n
@@ -93,7 +93,7 @@ func (p *Parser) parseRelation() ast.Node {
 		return n
 	}
 
-	node := ast.NewOperator(p.token)
+	node := ast.Operator{Op: p.token}
 	p.advance()
 
 	node.Left = n
@@ -107,7 +107,7 @@ func (p *Parser) parseSimpleExpr() ast.Node {
 		return n
 	}
 
-	node := ast.NewOperator(p.token)
+	node := ast.Operator{Op: p.token}
 	p.advance()
 
 	node.Left = n
@@ -121,7 +121,7 @@ func (p *Parser) parseTerm() ast.Node {
 		return n
 	}
 
-	node := ast.NewOperator(p.token)
+	node := ast.Operator{Op: p.token}
 	p.advance()
 
 	node.Left = n
@@ -142,7 +142,7 @@ func (p *Parser) parseFactor() ast.Node {
 		return node
 	}
 	if p.token.IsExprOp() {
-		node := ast.NewOperator(p.token)
+		node := ast.Operator{Op: p.token}
 		p.advance()
 
 		n := p.parseFactor()
@@ -155,7 +155,7 @@ func (p *Parser) parseFactor() ast.Node {
 func (p *Parser) parseTerminal() ast.Node {
 	if p.token == token.TRUE || p.token == token.FALSE ||
 		p.token == token.NUMBER || p.token == token.STRING {
-		node := ast.NewLiteral(p.token, p.value)
+		node := ast.Literal{Type: p.token, Value: p.value}
 		p.advance()
 		return node
 	}
@@ -164,7 +164,7 @@ func (p *Parser) parseTerminal() ast.Node {
 	if p.token != token.LPAREN {
 		return n
 	}
-	node := ast.NewFuncCall(n.Value)
+	node := ast.FuncCall{Name: n.Value}
 	node.Body = p.parseParenExprList()
 	return node
 }
@@ -198,12 +198,12 @@ func (p *Parser) parseExprList() ast.Node {
 		return n
 	}
 
-	node := ast.NewList()
+	node := ast.List{}
 	node.Node = n
 	for p.token == token.COMMA {
 		p.advance()
 
-		next := ast.NewList()
+		next := ast.List{}
 		next.Next = node
 		next.Node = p.parseExpr()
 		node = next
@@ -226,7 +226,7 @@ func (p *Parser) parseStmt() ast.Node {
 }
 
 func (p *Parser) parseIfStmt() ast.If {
-	node := ast.NewIf()
+	node := ast.If{}
 	p.advance()
 
 	n := p.parseExpr()
@@ -252,11 +252,11 @@ func (p *Parser) parseBraceStmtList() ast.List {
 }
 
 func (p *Parser) parseStmtList() ast.List {
-	node := ast.NewList()
+	node := ast.List{}
 	for p.token.IsStmtKeyword() || p.token == token.IDENTIFIER {
 		n := p.parseStmt()
 		node.Node = n
-		next := ast.NewList()
+		next := ast.List{}
 		next.Next = node
 		node = next
 	}
@@ -264,7 +264,7 @@ func (p *Parser) parseStmtList() ast.List {
 }
 
 func (p *Parser) parseWhileStmt() ast.While {
-	node := ast.NewWhile()
+	node := ast.While{}
 	p.advance()
 
 	n := p.parseExpr()
@@ -276,7 +276,7 @@ func (p *Parser) parseWhileStmt() ast.While {
 func (p *Parser) parseAssignOrCallStmt() ast.Node {
 	n := p.parseIdentifier()
 	if p.token == token.ASSIGN {
-		node := ast.NewOperator(p.token)
+		node := ast.Operator{Op: p.token}
 		p.advance()
 		node.Left = n
 		node.Right = p.parseExpr()
@@ -287,7 +287,7 @@ func (p *Parser) parseAssignOrCallStmt() ast.Node {
 		return node
 	}
 	if p.token == token.LPAREN {
-		node := ast.NewFuncCall(n.Value)
+		node := ast.FuncCall{Name: n.Value}
 		node.Body = p.parseParenExprList()
 		if p.token != token.SEMICOLON {
 			panic(p.expected(token.SEMICOLON))
@@ -300,7 +300,7 @@ func (p *Parser) parseAssignOrCallStmt() ast.Node {
 }
 
 func (p *Parser) parseIdentifier() ast.Literal {
-	node := ast.NewLiteral(p.token, p.value)
+	node := ast.Literal{Type: p.token, Value: p.value}
 	if p.token != token.IDENTIFIER {
 		panic(p.expected(token.IDENTIFIER))
 	}
