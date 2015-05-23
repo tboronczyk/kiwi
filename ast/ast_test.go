@@ -81,13 +81,13 @@ func TestList(t *testing.T) {
 			Op:    token.ADD,
 			Left:  Literal{Type: token.NUMBER, Value: "2"},
 			Right: Literal{Type: token.NUMBER, Value: "4"}},
-		Next: List{
+		Prev: List{
 			Node: Operator{
 				Op:    token.SUBTRACT,
 				Left:  Literal{Type: token.NUMBER, Value: "6"},
 				Right: Literal{Type: token.NUMBER, Value: "8"}}}}
 
-	expected := "L.n L.N OP.L 6 (NUMBER)\nL.n L.N OP -\nL.n L.N OP.R 8 (NUMBER)\nL.N OP.L 2 (NUMBER)\nL.N OP +\nL.N OP.R 4 (NUMBER)\n"
+	expected := "L.P L.N OP.L 6 (NUMBER)\nL.P L.N OP -\nL.P L.N OP.R 8 (NUMBER)\nL.N OP.L 2 (NUMBER)\nL.N OP +\nL.N OP.R 4 (NUMBER)\n"
 
 	actual := capture(node)
 	assert.Equal(t, expected, actual)
