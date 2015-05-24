@@ -27,6 +27,6 @@
           while-stmt = 'while' expr braced-stmt-list .
        func-def-stmt = 'func' ident-list braced-stmt-list .
           ident-list = IDENT | ident-list ',' IDENT .
-         assign-stmt = IDENT ':=' expr ';' .
-         return-stmt = 'return' [expr] ';' .
-      func-call-stmt = func-call ';' .
+         assign-stmt = IDENT ':=' expr '.' .
+         return-stmt = 'return' [expr] '.' .
+      func-call-stmt = func-call '.' .

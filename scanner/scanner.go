@@ -13,11 +13,15 @@ type Scanner interface {
 	Scan() (token.Token, string)
 }
 
-var eof = rune(0)
+const (
+	bufSize = 3
+	eof     = rune(0)
+)
 
 type scanner struct {
-	r     *bufio.Reader
-	atEOF bool
+	r          *bufio.Reader
+	chars      [bufSize]rune
+	rPos, wPos uint8
 }
 
 func NewScanner(r io.Reader) *scanner {
@@ -25,20 +29,29 @@ func NewScanner(r io.Reader) *scanner {
 }
 
 func (s *scanner) read() rune {
-	if s.atEOF {
-		return eof
+	if s.rPos == s.wPos {
+		if s.wPos++; s.wPos == bufSize {
+			s.wPos = 0
+		}
+		ch, _, err := s.r.ReadRune()
+		if err != nil {
+			ch = eof
+		}
+		s.chars[s.wPos] = ch
 	}
 
-	ch, _, err := s.r.ReadRune()
-	if err != nil {
-		s.atEOF = true
-		ch = eof
+	if s.rPos++; s.rPos == bufSize {
+		s.rPos = 0
 	}
+	ch := s.chars[s.rPos]
 	return ch
 }
 
 func (s *scanner) unread() {
-	s.r.UnreadRune()
+	if s.rPos == 0 {
+		s.rPos = bufSize
+	}
+	s.rPos--
 }
 
 func (s *scanner) Scan() (token.Token, string) {
@@ -118,8 +131,8 @@ func (s *scanner) Scan() (token.Token, string) {
 		return token.LBRACE, "{"
 	case '}':
 		return token.RBRACE, "}"
-	case ';':
-		return token.SEMICOLON, ";"
+	case '.':
+		return token.DOT, "."
 	case ',':
 		return token.COMMA, ","
 	case '"':
@@ -218,12 +231,13 @@ func (s *scanner) scanNumber() (token.Token, string) {
 	}
 
 	if ch == '.' {
-		buf.WriteRune(ch)
-
 		ch = s.read()
 		if !unicode.IsDigit(ch) {
-			return token.MALFORMED, buf.String()
+			s.unread()
+			s.unread()
+			return token.NUMBER, buf.String()
 		}
+		buf.WriteRune('.')
 		buf.WriteRune(ch)
 
 		for {

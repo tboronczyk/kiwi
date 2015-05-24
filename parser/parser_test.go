@@ -391,11 +391,11 @@ func TestParseBraceStmtList(t *testing.T) {
 		{token.IDENTIFIER, "a"},
 		{token.ASSIGN, ":="},
 		{token.TRUE, "true"},
-		{token.SEMICOLON, ";"},
+		{token.DOT, "."},
 		{token.IDENTIFIER, "b"},
 		{token.ASSIGN, ":="},
 		{token.FALSE, "false"},
-		{token.SEMICOLON, ";"},
+		{token.DOT, "."},
 		{token.RBRACE, "}"},
 		{token.EOF, ""},
 	})
@@ -415,7 +415,7 @@ func TestParseBraceStmtListStmtError(t *testing.T) {
 		{token.IDENTIFIER, "a"},
 		{token.ASSIGN, ":="},
 		{token.TRUE, "true"},
-		{token.SEMICOLON, ";"},
+		{token.DOT, "."},
 		{token.IDENTIFIER, "b"},
 		{token.FALSE, "false"},
 		{token.EOF, ""},
@@ -436,7 +436,7 @@ func TestParseBraceStmtListBraceError(t *testing.T) {
 		{token.IDENTIFIER, "a"},
 		{token.ASSIGN, ":="},
 		{token.TRUE, "true"},
-		{token.SEMICOLON, ";"},
+		{token.DOT, "."},
 		{token.EOF, ""},
 	})
 	p := NewParser()
@@ -517,7 +517,7 @@ func TestParseIfStmt(t *testing.T) {
 		{token.IDENTIFIER, "b"},
 		{token.ASSIGN, ":="},
 		{token.FALSE, "false"},
-		{token.SEMICOLON, ";"},
+		{token.DOT, "."},
 		{token.RBRACE, "}"},
 		{token.EOF, ""},
 	})
@@ -575,7 +575,7 @@ func TestParseReturnStmt(t *testing.T) {
 		{token.IDENTIFIER, "a"},
 		{token.EQUAL, "="},
 		{token.TRUE, "true"},
-		{token.SEMICOLON, ";"},
+		{token.DOT, "."},
 		{token.EOF, ""},
 	})
 	p := NewParser()
@@ -590,7 +590,7 @@ func TestParseReturnStmtNoExpr(t *testing.T) {
 	// return;
 	s.reset([]tokenPair{
 		{token.RETURN, "return"},
-		{token.SEMICOLON, ";"},
+		{token.DOT, "."},
 		{token.EOF, ""},
 	})
 	p := NewParser()
@@ -612,7 +612,7 @@ func TestParseWhileStmt(t *testing.T) {
 		{token.IDENTIFIER, "b"},
 		{token.ASSIGN, ":="},
 		{token.FALSE, "false"},
-		{token.SEMICOLON, ";"},
+		{token.DOT, "."},
 		{token.RBRACE, "}"},
 		{token.EOF, ""},
 	})
@@ -646,7 +646,7 @@ func TestParseStmtError(t *testing.T) {
 	s := NewMockScanner()
 	// ;
 	s.reset([]tokenPair{
-		{token.SEMICOLON, ";"},
+		{token.DOT, "."},
 		{token.EOF, ""},
 	})
 	p := NewParser()
@@ -666,7 +666,7 @@ func TestParseAssignStmt(t *testing.T) {
 		{token.NUMBER, "2"},
 		{token.ADD, "+"},
 		{token.NUMBER, "4"},
-		{token.SEMICOLON, ";"},
+		{token.DOT, "."},
 		{token.EOF, ""},
 	})
 	p := NewParser()
@@ -684,7 +684,7 @@ func TestParseAssignSmtExprError(t *testing.T) {
 	s.reset([]tokenPair{
 		{token.IDENTIFIER, "a"},
 		{token.ASSIGN, ":="},
-		{token.SEMICOLON, ";"},
+		{token.DOT, "."},
 		{token.NUMBER, "2"},
 		{token.ADD, "+"},
 		{token.EOF, ""},
@@ -704,7 +704,7 @@ func TestFuncCallStmt(t *testing.T) {
 		{token.IDENTIFIER, "foo"},
 		{token.LPAREN, "("},
 		{token.RPAREN, ")"},
-		{token.SEMICOLON, ";"},
+		{token.DOT, "."},
 		{token.EOF, ""},
 	})
 	p := NewParser()
