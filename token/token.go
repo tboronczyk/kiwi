@@ -43,7 +43,7 @@ const (
 	RPAREN
 	LBRACE
 	RBRACE
-	SEMICOLON
+	DOT
 	COMMA
 
 	stmtkwd_start
@@ -86,7 +86,7 @@ var tokens = [...]string{
 	RPAREN:     ")",
 	LBRACE:     "{",
 	RBRACE:     "}",
-	SEMICOLON:  ";",
+	DOT:        ".",
 	COMMA:      ",",
 	IF:         "if",
 	WHILE:      "while",

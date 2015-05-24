@@ -20,16 +20,16 @@ LICENSE file. Just don’t come after me if it melts down your computer.
     func fibonacci n
     { 
         if n < 2 { 
-            return n;
+            return n.
         } 
-        m := fibonacci(n - 1);
-        p := fibonacci(n - 2);
-        r := m + p;
+        m := fibonacci(n - 1).
+        p := fibonacci(n - 2).
+        r := m + p.
     }
 
-    i := 1;
+    i := 1.
     while i <= 10 { 
-        fib := fibonacci(i);
-        write(fib);
-        i := i + 1;
+        fib := fibonacci(i).
+        write(fib).
+        i := i + 1.
     }

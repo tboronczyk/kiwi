@@ -8,7 +8,7 @@ import (
 )
 
 func TestScanSimpleTokens(t *testing.T) {
-	str := "+ - * / % := : = < <= > >= && & || | ~ ~= ( ) { } ; , ?"
+	str := "+ - * / % := : = < <= > >= && & || | ~ ~= ( ) { } . , ?"
 	s := NewScanner(strings.NewReader(str))
 
 	tokens := []struct {
@@ -37,7 +37,7 @@ func TestScanSimpleTokens(t *testing.T) {
 		{token.RPAREN, ")"},
 		{token.LBRACE, "{"},
 		{token.RBRACE, "}"},
-		{token.SEMICOLON, ";"},
+		{token.DOT, "."},
 		{token.COMMA, ","},
 		{token.UNKNOWN, "?"},
 		{token.EOF, ""},
@@ -140,7 +140,7 @@ func TestScanMultiLineComments(t *testing.T) {
 }
 
 func TestScanNumbers(t *testing.T) {
-	str := "123 0.123"
+	str := "123 0.123 0."
 	s := NewScanner(strings.NewReader(str))
 
 	tokens := []struct {
@@ -149,6 +149,7 @@ func TestScanNumbers(t *testing.T) {
 	}{
 		{token.NUMBER, "123"},
 		{token.NUMBER, "0.123"},
+		{token.NUMBER, "0"},
 	}
 
 	for _, expected := range tokens {

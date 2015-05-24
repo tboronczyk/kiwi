@@ -223,10 +223,10 @@ func (p *Parser) ifStmt() ast.If {
 }
 
 func (p *Parser) returnStmt() ast.Return {
-	defer p.consume(token.SEMICOLON)
+	defer p.consume(token.DOT)
 	p.consume(token.RETURN)
 	node := ast.Return{}
-	if p.token != token.SEMICOLON {
+	if p.token != token.DOT {
 		node.Expr = p.expr()
 	}
 	return node
@@ -257,7 +257,7 @@ func (p *Parser) whileStmt() ast.While {
 }
 
 func (p *Parser) assignOrCallStmt() ast.Node {
-	defer p.consume(token.SEMICOLON)
+	defer p.consume(token.DOT)
 	n := p.identifier()
 	if p.token == token.ASSIGN {
 		node := ast.Operator{Op: p.token, Left: n}
