@@ -30,3 +30,30 @@
          assign-stmt = IDENT ':=' expr '.' .
          return-stmt = 'return' [expr] '.' .
       func-call-stmt = func-call '.' .
+
+## Language Constructs
+
+### Comments
+
+Both single and multiple-line comments are supported. Single-line comments
+begin with `//` and span to the end of the current line. Multiple-line
+comments open with `/*` and close with `*/`. It is possible to nest 
+multiple-line comments.
+
+    // this is a single-line comment
+
+    /* this is a multiple-line comment
+    that spans multiple lines. It also
+    /* this is a nested comment */
+    allows nested comments. */
+
+### Data Types
+
+### Operators
+
+### Control Flow
+
+### Functions
+
+### Data Structures
+
