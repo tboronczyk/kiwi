@@ -53,7 +53,7 @@ func (p *Parser) InitScanner(scnr scanner.Scanner) {
 	p.advance()
 }
 
-func (p *Parser) Parse() (node ast.Node, err error) {
+func (p *Parser) Parse() (node ast.StmtNode, err error) {
 	if p.token == token.EOF {
 		return nil, nil
 	}
@@ -66,133 +66,119 @@ func (p *Parser) Parse() (node ast.Node, err error) {
 	return p.stmt(), nil
 }
 
-func (p *Parser) expr() ast.Node {
+func (p *Parser) expr() ast.ExprNode {
 	n := p.relation()
 	if !p.token.IsLogOp() {
 		return n
 	}
 
-	node := ast.Operator{Op: p.token, Left: n}
+	node := ast.BinaryExpr{Op: p.token, Left: n}
 	p.advance()
 	node.Right = p.expr()
 
 	return node
 }
 
-func (p *Parser) relation() ast.Node {
+func (p *Parser) relation() ast.ExprNode {
 	n := p.simpleExpr()
 	if !p.token.IsCmpOp() {
 		return n
 	}
 
-	node := ast.Operator{Op: p.token, Left: n}
+	node := ast.BinaryExpr{Op: p.token, Left: n}
 	p.advance()
 	node.Right = p.relation()
 
 	return node
 }
 
-func (p *Parser) simpleExpr() ast.Node {
+func (p *Parser) simpleExpr() ast.ExprNode {
 	n := p.term()
 	if !p.token.IsAddOp() {
 		return n
 	}
 
-	node := ast.Operator{Op: p.token, Left: n}
+	node := ast.BinaryExpr{Op: p.token, Left: n}
 	p.advance()
 	node.Right = p.simpleExpr()
 
 	return node
 }
 
-func (p *Parser) term() ast.Node {
+func (p *Parser) term() ast.ExprNode {
 	n := p.factor()
 	if !p.token.IsMulOp() {
 		return n
 	}
 
-	node := ast.Operator{Op: p.token, Left: n}
+	node := ast.BinaryExpr{Op: p.token, Left: n}
 	p.advance()
 	node.Right = p.term()
 
 	return node
 }
 
-func (p *Parser) factor() ast.Node {
+func (p *Parser) factor() ast.ExprNode {
 	if p.match(token.LPAREN) {
 		defer p.consume(token.RPAREN)
 		p.advance()
 		return p.expr()
 	}
 	if p.token.IsExprOp() {
-		node := ast.Operator{Op: p.token}
+		node := ast.UnaryExpr{Op: p.token}
 		p.advance()
-		node.Left = p.factor()
+		node.Right = p.factor()
 		return node
 	}
 	return p.terminal()
 }
 
-func (p *Parser) terminal() ast.Node {
+func (p *Parser) terminal() ast.ExprNode {
 	if p.token == token.TRUE || p.token == token.FALSE ||
 		p.token == token.NUMBER || p.token == token.STRING {
 		defer p.advance()
-		return ast.Literal{Type: p.token, Value: p.value}
+		return ast.ValueExpr{Value: p.value, Type: p.token}
 	}
 
-	node := p.identifier()
+	name := p.identifier()
 	if p.token != token.LPAREN {
-		return node
+		return ast.VariableExpr{Name: name}
 	}
-	return ast.FuncCall{Name: node, Args: p.parenExprList()}
+	return ast.FuncCall{Name: name, Args: p.parenExprList()}
 }
 
-func (p *Parser) parenExprList() ast.Node {
+func (p *Parser) parenExprList() []ast.ExprNode {
+	defer p.consume(token.RPAREN)
 	p.consume(token.LPAREN)
 
+	var list []ast.ExprNode
 	if p.token == token.RPAREN {
-		p.consume(token.RPAREN)
-		return nil
+		return list
 	}
-
-	node := p.exprList()
-
-	p.consume(token.RPAREN)
-	return node
-}
-
-func (p *Parser) exprList() ast.Node {
-	n := p.expr()
-	if p.token != token.COMMA {
-		return n
-	}
-
-	node := ast.List{Node: n}
-	for p.token == token.COMMA {
+	for {
+		list = append(list, p.expr())
+		if p.token != token.COMMA {
+			return list
+		}
 		p.advance()
-		node = ast.List{Node: p.expr(), Prev: node}
 	}
-	return node
 }
 
-func (p *Parser) identList() ast.Node {
-	n := p.identifier()
-	if p.token != token.COMMA {
-		return n
-	}
-
-	node := ast.List{Node: n}
-	for p.token == token.COMMA {
+func (p *Parser) identList() []string {
+	var list []string
+	for {
+		list = append(list, p.identifier())
+		if p.token != token.COMMA {
+			return list
+		}
 		p.advance()
-		node = ast.List{Node: p.identifier(), Prev: node}
 	}
-	return node
 }
 
-func (p *Parser) stmt() ast.Node {
+func (p *Parser) stmt() ast.StmtNode {
 	switch p.token {
 	case token.FUNC:
-		return p.funcDefStmt()
+		return p.funcDef()
 	case token.IF:
 		return p.ifStmt()
 	case token.RETURN:
@@ -200,79 +186,70 @@ func (p *Parser) stmt() ast.Node {
 	case token.WHILE:
 		return p.whileStmt()
 	case token.IDENTIFIER:
-		return p.assignOrCallStmt()
+		return p.assignStmtOrFuncCall()
 	}
 	panic(p.expected("statement"))
 }
 
-func (p *Parser) funcDefStmt() ast.FuncDef {
+func (p *Parser) funcDef() ast.FuncDef {
 	p.consume(token.FUNC)
 	node := ast.FuncDef{Name: p.identifier()}
 	if p.token != token.LBRACE {
-		node.Params = p.identList()
+		node.Args = p.identList()
 	}
 	node.Body = p.braceStmtList()
 	return node
 }
 
-func (p *Parser) ifStmt() ast.If {
+func (p *Parser) ifStmt() ast.IfStmt {
 	p.consume(token.IF)
-	return ast.If{
-		Condition: p.expr(),
-		Body:      p.braceStmtList()}
+	return ast.IfStmt{Condition: p.expr(), Body: p.braceStmtList()}
 }
 
-func (p *Parser) returnStmt() ast.Return {
+func (p *Parser) returnStmt() ast.ReturnStmt {
 	defer p.consume(token.DOT)
 	p.consume(token.RETURN)
-	node := ast.Return{}
+	node := ast.ReturnStmt{}
 	if p.token != token.DOT {
 		node.Expr = p.expr()
 	}
 	return node
 }
 
-func (p *Parser) braceStmtList() ast.List {
+func (p *Parser) braceStmtList() []ast.StmtNode {
 	defer p.consume(token.RBRACE)
 	p.consume(token.LBRACE)
-	return p.stmtList()
-}
 
-func (p *Parser) stmtList() ast.List {
-	node := ast.List{}
-	for p.token.IsStmtKeyword() || p.token == token.IDENTIFIER {
-		node.Node = p.stmt()
-		if p.token.IsStmtKeyword() || p.token == token.IDENTIFIER {
-			node = ast.List{Prev: node}
+	var list []ast.StmtNode
+	for {
+		if !(p.token.IsStmtKeyword() || p.token == token.IDENTIFIER) {
+			return list
 		}
+		list = append(list, p.stmt())
 	}
-	return node
 }
 
-func (p *Parser) whileStmt() ast.While {
+func (p *Parser) whileStmt() ast.WhileStmt {
 	p.consume(token.WHILE)
-	return ast.While{
-		Condition: p.expr(),
-		Body:      p.braceStmtList()}
+	return ast.WhileStmt{Condition: p.expr(), Body: p.braceStmtList()}
 }
 
-func (p *Parser) assignOrCallStmt() ast.Node {
+func (p *Parser) assignStmtOrFuncCall() ast.StmtNode {
 	defer p.consume(token.DOT)
-	n := p.identifier()
+
+	name := p.identifier()
 	if p.token == token.ASSIGN {
-		node := ast.Operator{Op: p.token, Left: n}
 		p.advance()
-		node.Right = p.expr()
-		return node
+		return ast.AssignStmt{Name: name, Expr: p.expr()}
 	}
 	if p.token == token.LPAREN {
-		return ast.FuncCall{Name: n, Args: p.parenExprList()}
+		return ast.FuncCall{Name: name, Args: p.parenExprList()}
 	}
 	panic(p.expected(
 		token.ASSIGN.String() + " or " + token.LPAREN.String()))
 }
 
-func (p *Parser) identifier() ast.Literal {
+func (p *Parser) identifier() string {
 	defer p.consume(token.IDENTIFIER)
-	return ast.Literal{Type: p.token, Value: p.value}
+	return p.value
 }
