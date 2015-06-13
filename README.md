@@ -24,12 +24,12 @@ LICENSE file. Just don’t come after me if it melts down your computer.
         } 
         m := fibonacci(n - 1).
         p := fibonacci(n - 2).
-        r := m + p.
+        return m + p.
     }
 
-    i := 1.
+    i := 0.
     while i <= 10 { 
+        i := i + 1.
         fib := fibonacci(i).
         write(fib).
-        i := i + 1.
     }
