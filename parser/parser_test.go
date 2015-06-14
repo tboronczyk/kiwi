@@ -40,7 +40,7 @@ func TestSkipComment(t *testing.T) {
 		{token.STRING, ""},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Equal(t, token.STRING, p.token)
@@ -53,7 +53,7 @@ func TestParseIdentifier(t *testing.T) {
 		{token.IDENTIFIER, "foo"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	str := p.identifier()
@@ -67,7 +67,7 @@ func TestParseIdentifierError(t *testing.T) {
 		{token.NUMBER, "42"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Panics(t, func() {
@@ -84,7 +84,7 @@ func TestParseTerm(t *testing.T) {
 		{token.NUMBER, "73"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.term()
@@ -101,7 +101,7 @@ func TestParseTermError(t *testing.T) {
 		{token.MULTIPLY, "*"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Panics(t, func() {
@@ -118,7 +118,7 @@ func TestParseSimpleExpr(t *testing.T) {
 		{token.NUMBER, "73"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.simpleExpr()
@@ -135,7 +135,7 @@ func TestParseSimpleExprError(t *testing.T) {
 		{token.ADD, "+"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Panics(t, func() {
@@ -152,7 +152,7 @@ func TestParseRelation(t *testing.T) {
 		{token.NUMBER, "73"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.relation()
@@ -169,7 +169,7 @@ func TestParseRelationError(t *testing.T) {
 		{token.LESS, "<"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Panics(t, func() {
@@ -186,7 +186,7 @@ func TestParseExpr(t *testing.T) {
 		{token.TRUE, "true"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.expr()
@@ -203,7 +203,7 @@ func TestParseExprError(t *testing.T) {
 		{token.AND, "&&"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Panics(t, func() {
@@ -220,7 +220,7 @@ func TestParseFactorParens(t *testing.T) {
 		{token.RPAREN, ")"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.factor()
@@ -234,7 +234,7 @@ func TestParseFactorParensExprError(t *testing.T) {
 		{token.LPAREN, "("},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Panics(t, func() {
@@ -250,7 +250,7 @@ func TestParseFactorParensCloseError(t *testing.T) {
 		{token.NUMBER, "42"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Panics(t, func() {
@@ -266,7 +266,7 @@ func TestParseFactorSigned(t *testing.T) {
 		{token.NUMBER, "42"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.factor()
@@ -281,7 +281,7 @@ func TestParseTerminalVariable(t *testing.T) {
 		{token.IDENTIFIER, "foo"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.terminal()
@@ -297,7 +297,7 @@ func TestParseTerminalCall(t *testing.T) {
 		{token.RPAREN, ")"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.terminal()
@@ -318,7 +318,7 @@ func TestParseTerminalCallWithArgs(t *testing.T) {
 		{token.RPAREN, ")"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.terminal()
@@ -341,7 +341,7 @@ func TestParseTerminalCallWithArgsExprError(t *testing.T) {
 		{token.COMMA, ","},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Panics(t, func() {
@@ -359,7 +359,7 @@ func TestParseTerminalFuncCallArgsListError(t *testing.T) {
 		{token.IDENTIFIER, "42"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Panics(t, func() {
@@ -375,7 +375,7 @@ func TestParseBraceStmtListEmpty(t *testing.T) {
 		{token.RBRACE, "}"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.braceStmtList()
@@ -398,7 +398,7 @@ func TestParseBraceStmtList(t *testing.T) {
 		{token.RBRACE, "}"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.braceStmtList()
@@ -419,7 +419,7 @@ func TestParseBraceStmtListStmtError(t *testing.T) {
 		{token.NUMBER, "73"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Panics(t, func() {
@@ -438,7 +438,7 @@ func TestParseBraceStmtListBraceError(t *testing.T) {
 		{token.DOT, "."},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Panics(t, func() {
@@ -456,7 +456,7 @@ func TestParseFuncDef(t *testing.T) {
 		{token.RBRACE, "}"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.stmt()
@@ -474,7 +474,7 @@ func TestParseFuncDefOneParam(t *testing.T) {
 		{token.RBRACE, "}"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.stmt()
@@ -495,7 +495,7 @@ func TestParseFuncDefManyParams(t *testing.T) {
 		{token.RBRACE, "}"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.stmt()
@@ -518,7 +518,7 @@ func TestParseIfStmt(t *testing.T) {
 		{token.RBRACE, "}"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.stmt()
@@ -536,7 +536,7 @@ func TestParseIfStmtExprError(t *testing.T) {
 		{token.LBRACE, "{"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Panics(t, func() {
@@ -554,7 +554,7 @@ func TestParseIfStmtBraceError(t *testing.T) {
 		{token.ASSIGN, ":="},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Panics(t, func() {
@@ -571,7 +571,7 @@ func TestParseReturnStmt(t *testing.T) {
 		{token.DOT, "."},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.stmt()
@@ -586,7 +586,7 @@ func TestParseReturnStmtNoExpr(t *testing.T) {
 		{token.DOT, "."},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.stmt()
@@ -609,7 +609,7 @@ func TestParseWhileStmt(t *testing.T) {
 		{token.RBRACE, "}"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.stmt()
@@ -627,7 +627,7 @@ func TestParseWhileStmtExprError(t *testing.T) {
 		{token.LBRACE, "{"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Panics(t, func() {
@@ -642,7 +642,7 @@ func TestParseStmtError(t *testing.T) {
 		{token.DOT, "."},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Panics(t, func() {
@@ -662,7 +662,7 @@ func TestParseAssignStmt(t *testing.T) {
 		{token.DOT, "."},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	node := p.stmt()
@@ -681,7 +681,7 @@ func TestParseAssignSmtExprError(t *testing.T) {
 		{token.ADD, "+"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Panics(t, func() {
@@ -699,7 +699,7 @@ func TestFuncCall(t *testing.T) {
 		{token.DOT, "."},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 	node := p.stmt()
 	assert.Equal(t, "foo", node.(ast.FuncCall).Name)
@@ -715,7 +715,7 @@ func TestStmtTerminationError(t *testing.T) {
 		{token.NUMBER, "42"},
 		{token.EOF, ""},
 	})
-	p := NewParser()
+	p := New()
 	p.InitScanner(s)
 
 	assert.Panics(t, func() {
