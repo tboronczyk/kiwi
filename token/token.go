@@ -55,8 +55,7 @@ const (
 
 	lit_start
 	IDENTIFIER
-	TRUE
-	FALSE
+	BOOL
 	NUMBER
 	STRING
 	lit_end
@@ -92,8 +91,7 @@ var tokens = [...]string{
 	WHILE:      "while",
 	FUNC:       "func",
 	RETURN:     "return",
-	TRUE:       "true",
-	FALSE:      "false",
+	BOOL:       "BOOL",
 	NUMBER:     "NUMBER",
 	STRING:     "STRING",
 	IDENTIFIER: "IDENTIFIER",

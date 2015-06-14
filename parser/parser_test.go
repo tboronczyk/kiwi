@@ -181,9 +181,9 @@ func TestParseExpr(t *testing.T) {
 	s := NewMockScanner()
 	// true && true
 	s.reset([]tokenPair{
-		{token.TRUE, "true"},
+		{token.BOOL, "true"},
 		{token.AND, "&&"},
-		{token.TRUE, "true"},
+		{token.BOOL, "true"},
 		{token.EOF, ""},
 	})
 	p := New()
@@ -191,15 +191,15 @@ func TestParseExpr(t *testing.T) {
 
 	node := p.expr()
 	assert.Equal(t, token.AND, node.(ast.BinaryExpr).Op)
-	assert.Equal(t, token.TRUE, node.(ast.BinaryExpr).Left.(ast.ValueExpr).Type)
-	assert.Equal(t, token.TRUE, node.(ast.BinaryExpr).Right.(ast.ValueExpr).Type)
+	assert.Equal(t, token.BOOL, node.(ast.BinaryExpr).Left.(ast.ValueExpr).Type)
+	assert.Equal(t, token.BOOL, node.(ast.BinaryExpr).Right.(ast.ValueExpr).Type)
 }
 
 func TestParseExprError(t *testing.T) {
 	s := NewMockScanner()
 	// true &&
 	s.reset([]tokenPair{
-		{token.TRUE, "true"},
+		{token.BOOL, "true"},
 		{token.AND, "&&"},
 		{token.EOF, ""},
 	})
@@ -509,7 +509,7 @@ func TestParseIfStmt(t *testing.T) {
 	// if true { foo := 42. }
 	s.reset([]tokenPair{
 		{token.IF, "if"},
-		{token.TRUE, "true"},
+		{token.BOOL, "true"},
 		{token.LBRACE, "{"},
 		{token.IDENTIFIER, "foo"},
 		{token.ASSIGN, ":="},
@@ -522,7 +522,7 @@ func TestParseIfStmt(t *testing.T) {
 	p.InitScanner(s)
 
 	node := p.stmt()
-	assert.Equal(t, token.TRUE, node.(ast.IfStmt).Condition.(ast.ValueExpr).Type)
+	assert.Equal(t, token.BOOL, node.(ast.IfStmt).Condition.(ast.ValueExpr).Type)
 	assert.Equal(t, "foo", node.(ast.IfStmt).Body[0].(ast.AssignStmt).Name)
 }
 
@@ -549,7 +549,7 @@ func TestParseIfStmtBraceError(t *testing.T) {
 	// if true foo :=
 	s.reset([]tokenPair{
 		{token.IF, "if"},
-		{token.TRUE, "true"},
+		{token.BOOL, "true"},
 		{token.IDENTIFIER, "foo"},
 		{token.ASSIGN, ":="},
 		{token.EOF, ""},
@@ -600,7 +600,7 @@ func TestParseWhileStmt(t *testing.T) {
 		{token.WHILE, "while"},
 		{token.IDENTIFIER, "foo"},
 		{token.EQUAL, "="},
-		{token.TRUE, "true"},
+		{token.BOOL, "true"},
 		{token.LBRACE, "{"},
 		{token.IDENTIFIER, "bar"},
 		{token.ASSIGN, ":="},

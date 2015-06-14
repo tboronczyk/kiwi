@@ -62,8 +62,8 @@ func TestScanIdentifiers(t *testing.T) {
 		{token.IF, "if"},
 		{token.RETURN, "return"},
 		{token.WHILE, "while"},
-		{token.TRUE, "true"},
-		{token.FALSE, "false"},
+		{token.BOOL, "TRUE"},
+		{token.BOOL, "FALSE"},
 		{token.IDENTIFIER, "if"},
 		{token.IDENTIFIER, "ident"},
 	}

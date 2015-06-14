@@ -41,8 +41,7 @@ func TestTokenToString(t *testing.T) {
 		{WHILE.String(), "while"},
 		{FUNC.String(), "func"},
 		{RETURN.String(), "return"},
-		{TRUE.String(), "true"},
-		{FALSE.String(), "false"},
+		{BOOL.String(), "BOOL"},
 		{NUMBER.String(), "NUMBER"},
 		{STRING.String(), "STRING"},
 		{IDENTIFIER.String(), "IDENTIFIER"},
@@ -113,8 +112,8 @@ func TestIsExprOp(t *testing.T) {
 func TestIsLiteral(t *testing.T) {
 	for i := 0; i < len(tokens); i++ {
 		tkn := Token(i)
-		if tkn == IDENTIFIER || tkn == TRUE || tkn == FALSE ||
-			tkn == NUMBER || tkn == STRING {
+		if tkn == IDENTIFIER || tkn == BOOL || tkn == NUMBER ||
+			tkn == STRING {
 			assert.True(t, tkn.IsLiteral(), tkn.String())
 		} else {
 			assert.False(t, tkn.IsLiteral(), tkn.String())
