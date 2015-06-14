@@ -209,9 +209,9 @@ func (s *scanner) scanIdent() (token.Token, string) {
 		case "WHILE":
 			return token.WHILE, str
 		case "TRUE":
-			return token.TRUE, str
+			return token.BOOL, strings.ToUpper(str)
 		case "FALSE":
-			return token.FALSE, str
+			return token.BOOL, strings.ToUpper(str)
 		}
 	}
 	return token.IDENTIFIER, str

@@ -141,8 +141,8 @@ func (p *parser) factor() ast.ExprNode {
 }
 
 func (p *parser) terminal() ast.ExprNode {
-	if p.token == token.TRUE || p.token == token.FALSE ||
-		p.token == token.NUMBER || p.token == token.STRING {
+	if p.token == token.BOOL || p.token == token.NUMBER ||
+		p.token == token.STRING {
 		defer p.advance()
 		return ast.ValueExpr{Value: p.value, Type: p.token}
 	}
