@@ -11,8 +11,8 @@ import (
 
 func main() {
 	r := bufio.NewReader(os.Stdin)
-	s := scanner.NewScanner(r)
-	p := parser.NewParser()
+	s := scanner.New(r)
+	p := parser.New()
 	p.InitScanner(s)
 
 	for {

@@ -24,7 +24,7 @@ type scanner struct {
 	rPos, wPos uint8
 }
 
-func NewScanner(r io.Reader) *scanner {
+func New(r io.Reader) *scanner {
 	return &scanner{r: bufio.NewReader(r)}
 }
 

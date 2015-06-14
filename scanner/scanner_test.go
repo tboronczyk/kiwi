@@ -9,7 +9,7 @@ import (
 
 func TestScanSimpleTokens(t *testing.T) {
 	str := "+ - * / % := : = < <= > >= && & || | ~ ~= ( ) { } . , ?"
-	s := NewScanner(strings.NewReader(str))
+	s := New(strings.NewReader(str))
 
 	tokens := []struct {
 		token token.Token
@@ -52,7 +52,7 @@ func TestScanSimpleTokens(t *testing.T) {
 
 func TestScanIdentifiers(t *testing.T) {
 	str := "func if return while true false `if ident"
-	s := NewScanner(strings.NewReader(str))
+	s := New(strings.NewReader(str))
 
 	tokens := []struct {
 		token token.Token
@@ -80,7 +80,7 @@ func TestScanStrings(t *testing.T) {
 		"\"\"" +
 		"\"\\\"\"" +
 		"\"broken"
-	s := NewScanner(strings.NewReader(str))
+	s := New(strings.NewReader(str))
 
 	tokens := []struct {
 		token token.Token
@@ -101,7 +101,7 @@ func TestScanStrings(t *testing.T) {
 
 func TestScanLineComments(t *testing.T) {
 	str := "// single1\n// single2"
-	s := NewScanner(strings.NewReader(str))
+	s := New(strings.NewReader(str))
 
 	tokens := []struct {
 		value string
@@ -121,7 +121,7 @@ func TestScanMultiLineComments(t *testing.T) {
 	str := "/**/" +
 		"/* a /* nested */ comment */" +
 		"/* broken"
-	s := NewScanner(strings.NewReader(str))
+	s := New(strings.NewReader(str))
 
 	tokens := []struct {
 		token token.Token
@@ -141,7 +141,7 @@ func TestScanMultiLineComments(t *testing.T) {
 
 func TestScanNumbers(t *testing.T) {
 	str := "123 0.123 0."
-	s := NewScanner(strings.NewReader(str))
+	s := New(strings.NewReader(str))
 
 	tokens := []struct {
 		token token.Token
