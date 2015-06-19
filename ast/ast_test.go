@@ -42,6 +42,18 @@ func TestValueExpr(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestCast(t *testing.T) {
+	expr := CastExpr{Cast: "string", Expr: ValueExpr{Value: "foo", Type: token.STRING}}
+	expected := "CastExpr\n" +
+		"├ Cast: string\n" +
+		"╰ Expr: ValueExpr\n" +
+		"        ├ Value: foo\n" +
+		"        ╰ Type: STRING\n"
+
+	actual := capture(expr)
+	assert.Equal(t, expected, actual)
+}
+
 func TestVariableExpr(t *testing.T) {
 	expr := VariableExpr{Name: "foo"}
 	expected := "VariableExpr\n" +

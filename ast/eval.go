@@ -4,6 +4,7 @@ import (
 	"github.com/tboronczyk/kiwi/symtable"
 	"github.com/tboronczyk/kiwi/token"
 	"strconv"
+	"strings"
 )
 
 func (n AssignStmt) Eval(varTable, funTable symtable.SymTable) (interface{}, symtable.DataType, bool) {
@@ -173,4 +174,17 @@ func (n BinaryExpr) Eval(varTable, funTable symtable.SymTable) (interface{}, sym
 		}
 	}
 	panic("Invalid data type")
+}
+
+func (n CastExpr) Eval(varTable, funTable symtable.SymTable) (interface{}, symtable.DataType, bool) {
+	value, _, isReturn := n.Expr.Eval(varTable, funTable)
+	switch strings.ToUpper(n.Cast) {
+	case "STRING":
+		return value, symtable.STRING, isReturn
+	case "NUMBER":
+		return value, symtable.NUMBER, isReturn
+	case "BOOL":
+		return value, symtable.BOOL, isReturn
+	}
+	panic("Invalid cast")
 }

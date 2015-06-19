@@ -8,7 +8,7 @@ import (
 )
 
 func TestScanSimpleTokens(t *testing.T) {
-	str := "+ - * / % := : = < <= > >= && & || | ~ ~= ( ) { } . , ?"
+	str := "+ - * / % := : = < <= > >= && & || | ~ ~= ( ) { } . , ! ?"
 	s := New(strings.NewReader(str))
 
 	tokens := []struct {
@@ -39,6 +39,7 @@ func TestScanSimpleTokens(t *testing.T) {
 		{token.RBRACE, "}"},
 		{token.DOT, "."},
 		{token.COMMA, ","},
+		{token.CAST, "!"},
 		{token.UNKNOWN, "?"},
 		{token.EOF, ""},
 	}

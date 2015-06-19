@@ -36,6 +36,7 @@ func TestTokenToString(t *testing.T) {
 		{RBRACE.String(), "}"},
 		{DOT.String(), "."},
 		{COMMA.String(), ","},
+		{CAST.String(), "!"},
 		{COMMENT.String(), "COMMENT"},
 		{IF.String(), "if"},
 		{WHILE.String(), "while"},

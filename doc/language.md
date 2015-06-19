@@ -6,9 +6,10 @@
             relation = simple-expr [cmp-op relation] .
          simple-expr = term [add-op simple-expr] .
                 term = factor [mul-op term] .
-              factor = '(' expr ')' | expr-op expr | terminal .
+              factor = '(' expr ')' | expr-op expr | cast .
              expr-op = '~' | add-op .
               add-op = '+' | '-' .
+                cast = terminal ['!' IDENT] .
             terminal = boolean | number | STRING | IDENT | func-call .
            func-call = IDENT func-call-args .
       func-call-args = '(' ')' | '(' expr-list ')' .

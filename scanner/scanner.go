@@ -135,6 +135,8 @@ func (s *scanner) Scan() (token.Token, string) {
 		return token.DOT, "."
 	case ',':
 		return token.COMMA, ","
+	case '!':
+		return token.CAST, "!"
 	case '"':
 		return s.scanString()
 	case '`':

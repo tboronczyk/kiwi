@@ -31,5 +31,5 @@ LICENSE file. Just don’t come after me if it melts down your computer.
     while i < 10 { 
         i := i + 1.
         fib := fibonacci(i).
-        write(fib).
+        write(fib!string + "\n").
     }

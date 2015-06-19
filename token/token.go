@@ -45,6 +45,7 @@ const (
 	RBRACE
 	DOT
 	COMMA
+	CAST
 
 	stmtkwd_start
 	IF
@@ -87,6 +88,7 @@ var tokens = [...]string{
 	RBRACE:     "}",
 	DOT:        ".",
 	COMMA:      ",",
+	CAST:       "!",
 	IF:         "if",
 	WHILE:      "while",
 	FUNC:       "func",
