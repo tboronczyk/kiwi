@@ -1,12 +1,13 @@
-package ast
+package runtime
 
 import (
 	"fmt"
+	"github.com/tboronczyk/kiwi/ast"
 	"github.com/tboronczyk/kiwi/symtable"
 )
 
-var defs = []FuncDef{
-	FuncDef{
+var defs = []ast.FuncDef{
+	ast.FuncDef{
 		Name: "write",
 		Args: []string{"value"},
 	},
