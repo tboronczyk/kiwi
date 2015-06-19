@@ -10,7 +10,7 @@ import (
 type (
 	Parser interface {
 		InitScanner(scanner.Scanner)
-		Parse() (ast.StmtNode, error)
+		Parse() (ast.Node, error)
 	}
 
 	parser struct {
@@ -60,7 +60,7 @@ func (p *parser) InitScanner(scnr scanner.Scanner) {
 	p.advance()
 }
 
-func (p *parser) Parse() (node ast.StmtNode, err error) {
+func (p *parser) Parse() (node ast.Node, err error) {
 	if p.token == token.EOF {
 		return nil, nil
 	}
@@ -73,7 +73,7 @@ func (p *parser) Parse() (node ast.StmtNode, err error) {
 	return p.stmt(), nil
 }
 
-func (p *parser) expr() ast.ExprNode {
+func (p *parser) expr() ast.Node {
 	n := p.relation()
 	if !p.token.IsLogOp() {
 		return n
@@ -86,7 +86,7 @@ func (p *parser) expr() ast.ExprNode {
 	return node
 }
 
-func (p *parser) relation() ast.ExprNode {
+func (p *parser) relation() ast.Node {
 	n := p.simpleExpr()
 	if !p.token.IsCmpOp() {
 		return n
@@ -99,7 +99,7 @@ func (p *parser) relation() ast.ExprNode {
 	return node
 }
 
-func (p *parser) simpleExpr() ast.ExprNode {
+func (p *parser) simpleExpr() ast.Node {
 	n := p.term()
 	if !p.token.IsAddOp() {
 		return n
@@ -112,7 +112,7 @@ func (p *parser) simpleExpr() ast.ExprNode {
 	return node
 }
 
-func (p *parser) term() ast.ExprNode {
+func (p *parser) term() ast.Node {
 	n := p.factor()
 	if !p.token.IsMulOp() {
 		return n
@@ -125,7 +125,7 @@ func (p *parser) term() ast.ExprNode {
 	return node
 }
 
-func (p *parser) factor() ast.ExprNode {
+func (p *parser) factor() ast.Node {
 	if p.match(token.LPAREN) {
 		defer p.consume(token.RPAREN)
 		p.advance()
@@ -140,7 +140,7 @@ func (p *parser) factor() ast.ExprNode {
 	return p.terminal()
 }
 
-func (p *parser) terminal() ast.ExprNode {
+func (p *parser) terminal() ast.Node {
 	if p.token == token.BOOL || p.token == token.NUMBER ||
 		p.token == token.STRING {
 		defer p.advance()
@@ -154,11 +154,11 @@ func (p *parser) terminal() ast.ExprNode {
 	return ast.FuncCall{Name: name, Args: p.parenExprList()}
 }
 
-func (p *parser) parenExprList() []ast.ExprNode {
+func (p *parser) parenExprList() []ast.Node {
 	defer p.consume(token.RPAREN)
 	p.consume(token.LPAREN)
 
-	var list []ast.ExprNode
+	var list []ast.Node
 	if p.token == token.RPAREN {
 		return list
 	}
@@ -182,7 +182,7 @@ func (p *parser) identList() []string {
 	}
 }
 
-func (p *parser) stmt() ast.StmtNode {
+func (p *parser) stmt() ast.Node {
 	switch p.token {
 	case token.FUNC:
 		return p.funcDef()
@@ -223,11 +223,11 @@ func (p *parser) returnStmt() ast.ReturnStmt {
 	return node
 }
 
-func (p *parser) braceStmtList() []ast.StmtNode {
+func (p *parser) braceStmtList() []ast.Node {
 	defer p.consume(token.RBRACE)
 	p.consume(token.LBRACE)
 
-	var list []ast.StmtNode
+	var list []ast.Node
 	for {
 		if !(p.token.IsStmtKeyword() || p.token == token.IDENTIFIER) {
 			return list
@@ -241,7 +241,7 @@ func (p *parser) whileStmt() ast.WhileStmt {
 	return ast.WhileStmt{Condition: p.expr(), Body: p.braceStmtList()}
 }
 
-func (p *parser) assignStmtOrFuncCall() ast.StmtNode {
+func (p *parser) assignStmtOrFuncCall() ast.Node {
 	defer p.consume(token.DOT)
 
 	name := p.identifier()

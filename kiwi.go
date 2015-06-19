@@ -6,6 +6,7 @@ import (
 	"github.com/tboronczyk/kiwi/ast"
 	"github.com/tboronczyk/kiwi/parser"
 	"github.com/tboronczyk/kiwi/scanner"
+	"github.com/tboronczyk/kiwi/symtable"
 	"os"
 )
 
@@ -15,6 +16,9 @@ func main() {
 	p := parser.New()
 	p.InitScanner(s)
 
+	varTable := symtable.New()
+	funTable := symtable.New()
+	ast.LoadBuiltins(funTable)
 	for {
 		n, err := p.Parse()
 		if n == nil {
@@ -23,6 +27,6 @@ func main() {
 			}
 			return
 		}
-		ast.Print(n)
+		n.Eval(varTable, funTable)
 	}
 }
