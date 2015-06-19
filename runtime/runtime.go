@@ -1,11 +1,12 @@
 package runtime
 
 import (
+	"fmt"
 	"github.com/tboronczyk/kiwi/ast"
 	"github.com/tboronczyk/kiwi/symtable"
 	"github.com/tboronczyk/kiwi/token"
+	"math"
 	"strconv"
-	"fmt"
 	"strings"
 )
 
@@ -123,7 +124,7 @@ func evalValueExpr(node ast.ValueExpr, varTable, funTable symtable.SymTable) (in
 		value, _ := strconv.ParseFloat(node.Value, 64)
 		return value, symtable.NUMBER, false
 	case token.BOOL:
-		return node.Value == "TRUE", symtable.BOOL, false
+		return strings.ToUpper(node.Value) == "TRUE", symtable.BOOL, false
 	}
 	return node.Value, symtable.STRING, false
 }
@@ -138,18 +139,19 @@ func evalVariableExpr(node ast.VariableExpr, varTable, funTable symtable.SymTabl
 
 func evalUnaryExpr(node ast.UnaryExpr, varTable, funTable symtable.SymTable) (interface{}, symtable.DataType, bool) {
 	rVal, rType, _ := Eval(node.Right, varTable, funTable)
+
 	switch rType {
 	case symtable.NUMBER:
 		switch node.Op {
 		case token.ADD:
-			return +rVal.(float64), symtable.NUMBER, false
+			return math.Abs(rVal.(float64)), symtable.NUMBER, false
 		case token.SUBTRACT:
 			return -rVal.(float64), symtable.NUMBER, false
 		}
 	case symtable.BOOL:
 		switch node.Op {
 		case token.NOT:
-			return !rVal.(bool), symtable.BOOL, false
+			return rVal.(bool) == false, symtable.BOOL, false
 		}
 	}
 	panic("Invalid data type")
@@ -157,8 +159,13 @@ func evalUnaryExpr(node ast.UnaryExpr, varTable, funTable symtable.SymTable) (in
 
 func evalBinaryExpr(node ast.BinaryExpr, varTable, funTable symtable.SymTable) (interface{}, symtable.DataType, bool) {
 	lVal, lType, _ := Eval(node.Left, varTable, funTable)
-	if lType == symtable.BOOL && lVal.(bool) && node.Op == token.OR {
-		return true, symtable.BOOL, false
+	if lType == symtable.BOOL {
+		if lVal.(bool) && node.Op == token.OR {
+			return true, symtable.BOOL, false
+		}
+		if !lVal.(bool) && node.Op == token.AND {
+			return false, symtable.BOOL, false
+		}
 	}
 
 	rVal, rType, _ := Eval(node.Right, varTable, funTable)
@@ -177,6 +184,8 @@ func evalBinaryExpr(node ast.BinaryExpr, varTable, funTable symtable.SymTable) (
 			return lVal.(float64) * rVal.(float64), symtable.NUMBER, false
 		case token.DIVIDE:
 			return lVal.(float64) / rVal.(float64), symtable.NUMBER, false
+		case token.MODULO:
+			return math.Mod(lVal.(float64), rVal.(float64)), symtable.NUMBER, false
 		case token.EQUAL:
 			return lVal.(float64) == rVal.(float64), symtable.BOOL, false
 		case token.LESS:
@@ -232,7 +241,7 @@ func evalCastExpr(node ast.CastExpr, varTable, funTable symtable.SymTable) (inte
 			return value.(float64), symtable.NUMBER, isReturn
 		case symtable.BOOL:
 			if value.(bool) {
-			return 1.0, symtable.NUMBER, isReturn
+				return 1.0, symtable.NUMBER, isReturn
 			}
 			return 0.0, symtable.NUMBER, isReturn
 		}
