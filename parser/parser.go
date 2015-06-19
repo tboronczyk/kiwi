@@ -137,7 +137,16 @@ func (p *parser) factor() ast.Node {
 		node.Right = p.factor()
 		return node
 	}
-	return p.terminal()
+	return p.cast()
+}
+
+func (p *parser) cast() ast.Node {
+	node := p.terminal()
+	if p.token != token.CAST {
+		return node	
+	}
+	p.advance()
+	return ast.CastExpr{Cast: p.identifier(), Expr: node}
 }
 
 func (p *parser) terminal() ast.Node {

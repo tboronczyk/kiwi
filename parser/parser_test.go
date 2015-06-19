@@ -288,6 +288,23 @@ func TestParseTerminalVariable(t *testing.T) {
 	assert.Equal(t, "foo", node.(ast.VariableExpr).Name)
 }
 
+func TestParseCast(t *testing.T) {
+	s := NewMockScanner()
+	// foo:string
+	s.reset([]tokenPair{
+		{token.IDENTIFIER, "foo"},
+		{token.CAST, "!"},
+		{token.IDENTIFIER, "string"},
+		{token.EOF, ""},
+	})
+	p := New()
+	p.InitScanner(s)
+
+	node := p.cast()
+	assert.Equal(t, "string", node.(ast.CastExpr).Cast)
+	assert.Equal(t, "foo", node.(ast.CastExpr).Expr.(ast.VariableExpr).Name)
+}
+
 func TestParseTerminalCall(t *testing.T) {
 	s := NewMockScanner()
 	// foo()

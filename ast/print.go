@@ -14,6 +14,13 @@ func (e ValueExpr) print(pad string) {
 	fmt.Println(pad + "╰ Type: " + e.Type.String())
 }
 
+func (e CastExpr) print(pad string) {
+	fmt.Println("CastExpr")
+	fmt.Println(pad + "├ Cast: " + e.Cast)
+	fmt.Print(pad + "╰ Expr: ")
+	e.Expr.print(pad + "        ")
+}
+
 func (e VariableExpr) print(pad string) {
 	fmt.Println("VariableExpr")
 	fmt.Println(pad + "╰ Name: " + e.Name)

@@ -11,6 +11,11 @@ type (
 		Eval(symtable.SymTable, symtable.SymTable) (interface{}, symtable.DataType, bool)
 	}
 
+	CastExpr struct {
+		Cast string
+		Expr Node
+	}
+
 	ValueExpr struct {
 		Value string
 		Type  token.Token
