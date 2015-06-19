@@ -46,6 +46,31 @@ func TestSkipComment(t *testing.T) {
 	assert.Equal(t, token.STRING, p.token)
 }
 
+func TestParseNil(t *testing.T) {
+	s := NewMockScanner()
+	s.reset([]tokenPair{
+		{token.EOF, ""},
+	})
+	p := New()
+	p.InitScanner(s)
+
+	result, _ := p.Parse()
+	assert.Nil(t, result)
+}
+
+func TestParseRecovery(t *testing.T) {
+	s := NewMockScanner()
+	s.reset([]tokenPair{
+		{token.NUMBER, "42"},
+		{token.EOF, ""},
+	})
+	p := New()
+	p.InitScanner(s)
+
+	_, err := p.Parse()
+	assert.Equal(t, "Expected statement but saw NUMBER", err.Error())
+}
+
 func TestParseIdentifier(t *testing.T) {
 	s := NewMockScanner()
 	// foo

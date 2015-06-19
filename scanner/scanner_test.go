@@ -79,7 +79,7 @@ func TestScanIdentifiers(t *testing.T) {
 func TestScanStrings(t *testing.T) {
 	str := "\"abc\"" +
 		"\"\"" +
-		"\"\\\"\\r\\n\\t\"" +
+		"\"\\\\\\\"\\r\\n\\t\\x\"" +
 		"\"broken"
 	s := New(strings.NewReader(str))
 
@@ -89,7 +89,7 @@ func TestScanStrings(t *testing.T) {
 	}{
 		{token.STRING, "abc"},
 		{token.STRING, ""},
-		{token.STRING, "\"\r\n\t"},
+		{token.STRING, "\\\"\r\n\t\\x"},
 		{token.MALFORMED, "broken"},
 	}
 

@@ -143,7 +143,7 @@ func (p *parser) factor() ast.Node {
 func (p *parser) cast() ast.Node {
 	node := p.terminal()
 	if p.token != token.CAST {
-		return node	
+		return node
 	}
 	p.advance()
 	return ast.CastExpr{Cast: p.identifier(), Expr: node}
