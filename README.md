@@ -28,7 +28,7 @@ LICENSE file. Just don’t come after me if it melts down your computer.
     }
 
     i := 0.
-    while i <= 10 { 
+    while i < 10 { 
         i := i + 1.
         fib := fibonacci(i).
         write(fib).

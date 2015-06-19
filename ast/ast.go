@@ -1,20 +1,14 @@
 package ast
 
 import (
+	"github.com/tboronczyk/kiwi/symtable"
 	"github.com/tboronczyk/kiwi/token"
 )
 
 type (
 	Node interface {
 		print(string)
-	}
-
-	ExprNode interface {
-		Node
-	}
-
-	StmtNode interface {
-		Node
+		Eval(symtable.SymTable, symtable.SymTable) (interface{}, symtable.DataType, bool)
 	}
 
 	ValueExpr struct {
@@ -28,42 +22,42 @@ type (
 
 	UnaryExpr struct {
 		Op    token.Token
-		Right ExprNode
+		Right Node
 	}
 
 	BinaryExpr struct {
 		Op    token.Token
-		Left  ExprNode
-		Right ExprNode
+		Left  Node
+		Right Node
 	}
 
 	FuncCall struct {
 		Name string
-		Args []ExprNode
+		Args []Node
 	}
 
 	AssignStmt struct {
 		Name string
-		Expr ExprNode
+		Expr Node
 	}
 
 	FuncDef struct {
 		Name string
 		Args []string
-		Body []StmtNode
+		Body []Node
 	}
 
 	IfStmt struct {
-		Condition ExprNode
-		Body      []StmtNode
+		Condition Node
+		Body      []Node
 	}
 
 	ReturnStmt struct {
-		Expr ExprNode
+		Expr Node
 	}
 
 	WhileStmt struct {
-		Condition ExprNode
-		Body      []StmtNode
+		Condition Node
+		Body      []Node
 	}
 )

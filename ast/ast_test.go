@@ -111,7 +111,7 @@ func TestFuncDef(t *testing.T) {
 	stmt := FuncDef{
 		Name: "foo",
 		Args: []string{"bar", "baz"},
-		Body: []StmtNode{
+		Body: []Node{
 			AssignStmt{
 				Name: "bar",
 				Expr: VariableExpr{Name: "baz"},
@@ -148,7 +148,7 @@ func TestFuncCallNoArgs(t *testing.T) {
 func TestFuncCall(t *testing.T) {
 	expr := FuncCall{
 		Name: "foo",
-		Args: []ExprNode{
+		Args: []Node{
 			VariableExpr{Name: "foo"},
 			VariableExpr{Name: "bar"},
 		},
@@ -178,7 +178,7 @@ func TestIfStmtNoBody(t *testing.T) {
 func TestIfStmt(t *testing.T) {
 	stmt := IfStmt{
 		Condition: VariableExpr{Name: "foo"},
-		Body: []StmtNode{
+		Body: []Node{
 			AssignStmt{
 				Name: "bar",
 				Expr: VariableExpr{Name: "baz"},
@@ -229,7 +229,7 @@ func TestWhileStmtNoBody(t *testing.T) {
 func TestWhileStmt(t *testing.T) {
 	stmt := WhileStmt{
 		Condition: VariableExpr{Name: "foo"},
-		Body: []StmtNode{
+		Body: []Node{
 			AssignStmt{
 				Name: "bar",
 				Expr: VariableExpr{Name: "baz"},

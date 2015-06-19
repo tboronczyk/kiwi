@@ -170,11 +170,28 @@ func (s *scanner) scanString() (token.Token, string) {
 			if ch == eof {
 				return token.MALFORMED, buf.String()
 			}
-			buf.WriteRune(ch)
 			if ch == '\\' {
-				ch = s.read()
-				buf.WriteRune(ch)
+				switch s.read() {
+				case '\\':
+					ch = '\\'
+					break
+				case 'r':
+					ch = '\r'
+					break
+				case 'n':
+					ch = '\n'
+					break
+				case 't':
+					ch = '\t'
+					break
+				case '"':
+					ch = '"'
+					break
+				default:
+					s.unread()
+				}
 			}
+			buf.WriteRune(ch)
 		} else {
 			break
 		}
