@@ -1,14 +1,12 @@
 package ast
 
 import (
-	"github.com/tboronczyk/kiwi/symtable"
 	"github.com/tboronczyk/kiwi/token"
 )
 
 type (
 	Node interface {
 		print(string)
-		Eval(symtable.SymTable, symtable.SymTable) (interface{}, symtable.DataType, bool)
 	}
 
 	CastExpr struct {
