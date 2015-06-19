@@ -214,7 +214,9 @@ func evalCastExpr(node ast.CastExpr, varTable, funTable symtable.SymTable) (inte
 		case symtable.STRING:
 			return value, symtable.STRING, isReturn
 		case symtable.NUMBER:
-			return fmt.Sprintf("%f", value.(float64)), symtable.STRING, isReturn
+			val := fmt.Sprintf("%f", value.(float64))
+			val = strings.TrimRight(val, "0.")
+			return val, symtable.STRING, isReturn
 		case symtable.BOOL:
 			return strconv.FormatBool(value.(bool)), symtable.STRING, isReturn
 		}
