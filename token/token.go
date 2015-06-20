@@ -53,6 +53,7 @@ const (
 	FUNC
 	RETURN
 	stmtkwd_end
+	ELSE
 
 	lit_start
 	IDENTIFIER
@@ -93,6 +94,7 @@ var tokens = [...]string{
 	WHILE:      "while",
 	FUNC:       "func",
 	RETURN:     "return",
+	ELSE:       "else",
 	BOOL:       "BOOL",
 	NUMBER:     "NUMBER",
 	STRING:     "STRING",

@@ -42,6 +42,7 @@ func TestTokenToString(t *testing.T) {
 		{WHILE.String(), "while"},
 		{FUNC.String(), "func"},
 		{RETURN.String(), "return"},
+		{ELSE.String(), "else"},
 		{BOOL.String(), "BOOL"},
 		{NUMBER.String(), "NUMBER"},
 		{STRING.String(), "STRING"},

@@ -90,6 +90,8 @@ func evalIfStmt(n ast.IfStmt, varTable, funTable symtable.SymTable) (interface{}
 				return value, dtype, true
 			}
 		}
+	} else if n.Else != nil {
+		return evalIfStmt(n.Else.(ast.IfStmt), varTable, funTable)
 	}
 	return true, symtable.BOOL, false
 }
@@ -224,7 +226,8 @@ func evalCastExpr(node ast.CastExpr, varTable, funTable symtable.SymTable) (inte
 			return value, symtable.STRING, isReturn
 		case symtable.NUMBER:
 			val := fmt.Sprintf("%f", value.(float64))
-			val = strings.TrimRight(val, "0.")
+			val = strings.TrimRight(val, "0")
+			val = strings.TrimRight(val, ".")
 			return val, symtable.STRING, isReturn
 		case symtable.BOOL:
 			return strconv.FormatBool(value.(bool)), symtable.STRING, isReturn

@@ -223,6 +223,8 @@ func (s *scanner) scanIdent() (token.Token, string) {
 			return token.FUNC, str
 		case "IF":
 			return token.IF, str
+		case "ELSE":
+			return token.ELSE, str
 		case "RETURN":
 			return token.RETURN, str
 		case "WHILE":

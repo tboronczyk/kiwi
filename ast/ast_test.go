@@ -181,7 +181,8 @@ func TestIfStmtNoBody(t *testing.T) {
 	expected := "IfStmt\n" +
 		"├ Condition: VariableExpr\n" +
 		"│            ╰ Name: foo\n" +
-		"╰ Body: \n"
+		"├ Body: \n" +
+		"╰ Else: \n"
 
 	actual := capture(stmt)
 	assert.Equal(t, expected, actual)
@@ -200,18 +201,30 @@ func TestIfStmt(t *testing.T) {
 				Expr: VariableExpr{Name: "norf"},
 			},
 		},
+		Else: IfStmt{
+			Condition: ValueExpr{
+				Value: "true",
+				Type:  token.BOOL,
+			},
+		},
 	}
 	expected := "IfStmt\n" +
 		"├ Condition: VariableExpr\n" +
 		"│            ╰ Name: foo\n" +
-		"╰ Body: AssignStmt\n" +
-		"        ├ Name: bar\n" +
-		"        ╰ Expr: VariableExpr\n" +
-		"                ╰ Name: baz\n" +
-		"        AssignStmt\n" +
-		"        ├ Name: quux\n" +
-		"        ╰ Expr: VariableExpr\n" +
-		"                ╰ Name: norf\n"
+		"├ Body: AssignStmt\n" +
+		"│       ├ Name: bar\n" +
+		"│       ╰ Expr: VariableExpr\n" +
+		"│               ╰ Name: baz\n" +
+		"│       AssignStmt\n" +
+		"│       ├ Name: quux\n" +
+		"│       ╰ Expr: VariableExpr\n" +
+		"│               ╰ Name: norf\n" +
+		"╰ Else: IfStmt\n" +
+		"        ├ Condition: ValueExpr\n" +
+		"        │            ├ Value: true\n" +
+		"        │            ╰ Type: BOOL\n" +
+		"        ├ Body: \n" +
+		"        ╰ Else: \n"
 
 	actual := capture(stmt)
 	assert.Equal(t, expected, actual)
