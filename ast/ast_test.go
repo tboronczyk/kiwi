@@ -35,7 +35,7 @@ func capture(n Node) string {
 func TestValueExpr(t *testing.T) {
 	expr := ValueExpr{Value: "foo", Type: token.STRING}
 	expected := "ValueExpr\n" +
-		"├ Value: foo\n" +
+		"├ Value: \"foo\"\n" +
 		"╰ Type: STRING\n"
 
 	actual := capture(expr)
@@ -47,7 +47,7 @@ func TestCast(t *testing.T) {
 	expected := "CastExpr\n" +
 		"├ Cast: string\n" +
 		"╰ Expr: ValueExpr\n" +
-		"        ├ Value: foo\n" +
+		"        ├ Value: \"foo\"\n" +
 		"        ╰ Type: STRING\n"
 
 	actual := capture(expr)
@@ -112,8 +112,8 @@ func TestFuncDefNoArgsOrBody(t *testing.T) {
 	stmt := FuncDef{Name: "foo"}
 	expected := "FuncDef\n" +
 		"├ Name: foo\n" +
-		"├ Args: \n" +
-		"╰ Body: \n"
+		"├ Args: ␀\n" +
+		"╰ Body: ␀\n"
 
 	actual := capture(stmt)
 	assert.Equal(t, expected, actual)
@@ -151,7 +151,7 @@ func TestFuncCallNoArgs(t *testing.T) {
 	expr := FuncCall{Name: "foo"}
 	expected := "FuncCall\n" +
 		"├ Name: foo\n" +
-		"╰ Args: \n"
+		"╰ Args: ␀\n"
 
 	actual := capture(expr)
 	assert.Equal(t, expected, actual)
@@ -181,8 +181,8 @@ func TestIfStmtNoBody(t *testing.T) {
 	expected := "IfStmt\n" +
 		"├ Condition: VariableExpr\n" +
 		"│            ╰ Name: foo\n" +
-		"├ Body: \n" +
-		"╰ Else: \n"
+		"├ Body: ␀\n" +
+		"╰ Else: ␀\n"
 
 	actual := capture(stmt)
 	assert.Equal(t, expected, actual)
@@ -223,8 +223,8 @@ func TestIfStmt(t *testing.T) {
 		"        ├ Condition: ValueExpr\n" +
 		"        │            ├ Value: true\n" +
 		"        │            ╰ Type: BOOL\n" +
-		"        ├ Body: \n" +
-		"        ╰ Else: \n"
+		"        ├ Body: ␀\n" +
+		"        ╰ Else: ␀\n"
 
 	actual := capture(stmt)
 	assert.Equal(t, expected, actual)
@@ -245,7 +245,7 @@ func TestWhileStmtNoBody(t *testing.T) {
 	expected := "WhileStmt\n" +
 		"├ Condition: VariableExpr\n" +
 		"│            ╰ Name: foo\n" +
-		"╰ Body: \n"
+		"╰ Body: ␀\n"
 
 	actual := capture(stmt)
 	assert.Equal(t, expected, actual)

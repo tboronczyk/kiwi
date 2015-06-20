@@ -2,6 +2,8 @@ package ast
 
 import (
 	"fmt"
+	"github.com/tboronczyk/kiwi/token"
+	"strings"
 )
 
 func Print(n Node) {
@@ -10,7 +12,18 @@ func Print(n Node) {
 
 func (e ValueExpr) print(pad string) {
 	fmt.Println("ValueExpr")
-	fmt.Println(pad + "├ Value: " + e.Value)
+	val := e.Value
+	if e.Type == token.STRING {
+		r := strings.NewReplacer(
+			"\\\\", "\\",
+			"\r", "\\r",
+			"\n", "\\n",
+			"\t", "\\t",
+			"\"", "\\\"",
+		)
+		val = "\"" + r.Replace(val) + "\""
+	}
+	fmt.Println(pad + "├ Value: " + val)
 	fmt.Println(pad + "╰ Type: " + e.Type.String())
 }
 
@@ -47,7 +60,7 @@ func (f FuncCall) print(pad string) {
 	fmt.Println(pad + "├ Name: " + f.Name)
 	fmt.Print(pad + "╰ Args: ")
 	if f.Args == nil {
-		fmt.Println()
+		fmt.Println("␀")
 	} else {
 		f.Args[0].print(pad + "        ")
 		if len(f.Args) > 1 {
@@ -71,7 +84,7 @@ func (s FuncDef) print(pad string) {
 	fmt.Println(pad + "├ Name: " + s.Name)
 	fmt.Print(pad + "├ Args: ")
 	if s.Args == nil {
-		fmt.Println()
+		fmt.Println("␀")
 	} else {
 		fmt.Println(s.Args[0])
 		if len(s.Args) > 1 {
@@ -82,7 +95,7 @@ func (s FuncDef) print(pad string) {
 	}
 	fmt.Print(pad + "╰ Body: ")
 	if s.Body == nil {
-		fmt.Println()
+		fmt.Println("␀")
 	} else {
 		s.Body[0].print(pad + "        ")
 		if len(s.Body) > 1 {
@@ -100,7 +113,7 @@ func (s IfStmt) print(pad string) {
 	s.Condition.print(pad + "│            ")
 	fmt.Print(pad + "├ Body: ")
 	if s.Body == nil {
-		fmt.Println()
+		fmt.Println("␀")
 	} else {
 		s.Body[0].print(pad + "│       ")
 		if len(s.Body) > 1 {
@@ -113,7 +126,7 @@ func (s IfStmt) print(pad string) {
 	fmt.Print(pad + "╰ Else: ")
 
 	if s.Else == nil {
-		fmt.Println()
+		fmt.Println("␀")
 	} else {
 		s.Else.print(pad + "        ")
 	}
@@ -130,7 +143,7 @@ func (s WhileStmt) print(pad string) {
 	s.Condition.print(pad + "│            ")
 	fmt.Print(pad + "╰ Body: ")
 	if s.Body == nil {
-		fmt.Println()
+		fmt.Println("␀")
 	} else {
 		s.Body[0].print(pad + "        ")
 		if len(s.Body) > 1 {
