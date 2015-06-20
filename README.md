@@ -33,3 +33,23 @@ LICENSE file. Just don’t come after me if it melts down your computer.
         fib := fibonacci(i).
         write(fib!string + "\n").
     }
+
+### Fizz Buzz
+
+    i := 0.
+    while i < 100 {
+        i := i + 1.
+    
+        if i % 15 = 0 {
+            write("Fizz Buzz\n").
+        }
+        else i % 3 = 0 {
+            write("Fizz\n").
+        }
+        else i % 5 = 0 {
+            write("Buzz\n").
+        }
+        else {
+            write(i!string + "\n").
+        }
+    }

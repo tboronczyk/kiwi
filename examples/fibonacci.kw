@@ -1,0 +1,18 @@
+// Generate the Fibonacci Series
+
+func fibonacci n
+{ 
+    if n < 2 { 
+        return n.
+    } 
+    m := fibonacci(n - 1).
+    p := fibonacci(n - 2).
+    return m + p.
+}
+
+i := 0.
+while i < 10 { 
+    i := i + 1.
+    fib := fibonacci(i).
+    write(fib!string + "\n").
+}
