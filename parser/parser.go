@@ -219,7 +219,28 @@ func (p *parser) funcDef() ast.FuncDef {
 
 func (p *parser) ifStmt() ast.IfStmt {
 	p.consume(token.IF)
-	return ast.IfStmt{Condition: p.expr(), Body: p.braceStmtList()}
+	node := ast.IfStmt{Condition: p.expr(), Body: p.braceStmtList()}
+	if p.token == token.ELSE {
+		node.Else = p.elseStmt()
+	}
+	return node
+}
+
+func (p *parser) elseStmt() ast.IfStmt {
+	p.consume(token.ELSE)
+	node := ast.IfStmt{}
+	isFinal := false
+	if p.token == token.LBRACE {
+		isFinal = true
+		node.Condition = ast.ValueExpr{Value: "true", Type: token.BOOL}
+	} else {
+		node.Condition = p.expr()
+	}
+	node.Body = p.braceStmtList()
+	if !isFinal {
+		node.Else = p.elseStmt()
+	}
+	return node
 }
 
 func (p *parser) returnStmt() ast.ReturnStmt {

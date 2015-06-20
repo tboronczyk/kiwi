@@ -98,20 +98,26 @@ func (s IfStmt) print(pad string) {
 	fmt.Println("IfStmt")
 	fmt.Print(pad + "├ Condition: ")
 	s.Condition.print(pad + "│            ")
-	fmt.Print(pad + "╰ Body: ")
+	fmt.Print(pad + "├ Body: ")
 	if s.Body == nil {
 		fmt.Println()
 	} else {
-		s.Body[0].print(pad + "        ")
+		s.Body[0].print(pad + "│       ")
 		if len(s.Body) > 1 {
 			for _, stmt := range s.Body[1:] {
-				fmt.Print(pad + "        ")
-				stmt.print(pad + "        ")
+				fmt.Print(pad + "│       ")
+				stmt.print(pad + "│       ")
 			}
 		}
 	}
-}
+	fmt.Print(pad + "╰ Else: ")
 
+	if s.Else == nil {
+		fmt.Println()
+	} else {
+		s.Else.print(pad + "        ")
+	}
+}
 func (s ReturnStmt) print(pad string) {
 	fmt.Println("ReturnStmt")
 	fmt.Print(pad + "╰ Expr: ")

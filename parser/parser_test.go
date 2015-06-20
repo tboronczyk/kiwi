@@ -604,6 +604,31 @@ func TestParseIfStmtBraceError(t *testing.T) {
 	})
 }
 
+func TestParseIfStmtWithElse(t *testing.T) {
+	s := NewMockScanner()
+	// if false {} else false { } else { }
+	s.reset([]tokenPair{
+		{token.IF, "if"},
+		{token.BOOL, "false"},
+		{token.LBRACE, "{"},
+		{token.RBRACE, "}"},
+		{token.ELSE, "else"},
+		{token.BOOL, "false"},
+		{token.LBRACE, "{"},
+		{token.RBRACE, "}"},
+		{token.ELSE, "else"},
+		{token.LBRACE, "{"},
+		{token.RBRACE, "}"},
+		{token.EOF, ""},
+	})
+	p := New()
+	p.InitScanner(s)
+
+	node := p.stmt()
+	assert.Equal(t, "false", node.(ast.IfStmt).Else.(ast.IfStmt).Condition.(ast.ValueExpr).Value)
+	assert.Equal(t, "true", node.(ast.IfStmt).Else.(ast.IfStmt).Else.(ast.IfStmt).Condition.(ast.ValueExpr).Value)
+}
+
 func TestParseReturnStmt(t *testing.T) {
 	s := NewMockScanner()
 	// return 42.

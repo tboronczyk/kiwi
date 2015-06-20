@@ -53,6 +53,7 @@ type (
 	IfStmt struct {
 		Condition Node
 		Body      []Node
+		Else      Node
 	}
 
 	ReturnStmt struct {
