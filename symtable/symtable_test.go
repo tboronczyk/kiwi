@@ -15,13 +15,13 @@ func TestSet(t *testing.T) {
 	s.Set("foo", 42, NUMBER)
 
 	expected := entry{v: 42, t: NUMBER}
-	actual := s.table["foo"]
+	actual := s.stack.Peek().(table)["foo"]
 	assert.Equal(t, expected, actual)
 }
 
 func TestGet(t *testing.T) {
 	s := New()
-	s.table["foo"] = entry{v: 42, t: NUMBER}
+	s.stack.Peek().(table)["foo"] = entry{v: 42, t: NUMBER}
 
 	expected := 42
 	actual, _, _ := s.Get("foo")

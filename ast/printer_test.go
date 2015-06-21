@@ -31,12 +31,34 @@ func capture(f func()) string {
 	return <-out
 }
 
-func TestValueExpr(t *testing.T) {
+func TestValueExprNumber(t *testing.T) {
+	expected := "ValueExpr\n" +
+		"├ Value: 1\n" +
+		"╰ Type: NUMBER\n"
+	actual := capture(func() {
+		n := ValueExpr{Value: "1.0", Type: token.NUMBER}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestValueExprString(t *testing.T) {
 	expected := "ValueExpr\n" +
 		"├ Value: \"foo\"\n" +
 		"╰ Type: STRING\n"
 	actual := capture(func() {
 		n := ValueExpr{Value: "foo", Type: token.STRING}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestValueExprBool(t *testing.T) {
+	expected := "ValueExpr\n" +
+		"├ Value: true\n" +
+		"╰ Type: BOOL\n"
+	actual := capture(func() {
+		n := ValueExpr{Value: "True", Type: token.BOOL}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
