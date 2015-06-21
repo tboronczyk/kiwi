@@ -9,15 +9,14 @@ import (
 	"testing"
 )
 
-func capture(n Node) string {
+func capture(f func()) string {
 	// re-assign stdout
 	old := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	Print(n)
-
-	// capture output
+	f()
+	// read output
 	out := make(chan string)
 	go func() {
 		var buf bytes.Buffer
@@ -33,104 +32,100 @@ func capture(n Node) string {
 }
 
 func TestValueExpr(t *testing.T) {
-	expr := ValueExpr{Value: "foo", Type: token.STRING}
 	expected := "ValueExpr\n" +
 		"├ Value: \"foo\"\n" +
 		"╰ Type: STRING\n"
-
-	actual := capture(expr)
+	actual := capture(func() {
+		n := ValueExpr{Value: "foo", Type: token.STRING}
+		n.Accept(NewAstPrinter())
+	})
 	assert.Equal(t, expected, actual)
 }
 
 func TestCast(t *testing.T) {
-	expr := CastExpr{Cast: "string", Expr: ValueExpr{Value: "foo", Type: token.STRING}}
 	expected := "CastExpr\n" +
 		"├ Cast: string\n" +
 		"╰ Expr: ValueExpr\n" +
 		"        ├ Value: \"foo\"\n" +
 		"        ╰ Type: STRING\n"
-
-	actual := capture(expr)
+	actual := capture(func() {
+		n := CastExpr{Cast: "string", Expr: ValueExpr{Value: "foo", Type: token.STRING}}
+		n.Accept(NewAstPrinter())
+	})
 	assert.Equal(t, expected, actual)
 }
 
 func TestVariableExpr(t *testing.T) {
-	expr := VariableExpr{Name: "foo"}
 	expected := "VariableExpr\n" +
 		"╰ Name: foo\n"
-
-	actual := capture(expr)
+	actual := capture(func() {
+		n := VariableExpr{Name: "foo"}
+		n.Accept(NewAstPrinter())
+	})
 	assert.Equal(t, expected, actual)
 }
 
 func TestUnaryExpr(t *testing.T) {
-	expr := UnaryExpr{
-		Op:    token.SUBTRACT,
-		Right: VariableExpr{Name: "foo"},
-	}
 	expected := "UnaryExpr\n" +
 		"├ Op: -\n" +
 		"╰ Right: VariableExpr\n" +
 		"         ╰ Name: foo\n"
-
-	actual := capture(expr)
+	actual := capture(func() {
+		n := UnaryExpr{
+			Op:    token.SUBTRACT,
+			Right: VariableExpr{Name: "foo"},
+		}
+		n.Accept(NewAstPrinter())
+	})
 	assert.Equal(t, expected, actual)
 }
 
 func TestBinaryExpr(t *testing.T) {
-	expr := BinaryExpr{
-		Op:    token.ADD,
-		Left:  VariableExpr{Name: "foo"},
-		Right: VariableExpr{Name: "bar"},
-	}
 	expected := "BinaryExpr\n" +
 		"├ Op: +\n" +
 		"├ Left: VariableExpr\n" +
 		"│       ╰ Name: foo\n" +
 		"╰ Right: VariableExpr\n" +
 		"         ╰ Name: bar\n"
-
-	actual := capture(expr)
+	actual := capture(func() {
+		n := BinaryExpr{
+			Op:    token.ADD,
+			Left:  VariableExpr{Name: "foo"},
+			Right: VariableExpr{Name: "bar"},
+		}
+		n.Accept(NewAstPrinter())
+	})
 	assert.Equal(t, expected, actual)
 }
 
 func TestAssignStmt(t *testing.T) {
-	stmt := AssignStmt{
-		Name: "foo",
-		Expr: VariableExpr{Name: "bar"},
-	}
 	expected := "AssignStmt\n" +
 		"├ Name: foo\n" +
 		"╰ Expr: VariableExpr\n" +
 		"        ╰ Name: bar\n"
-
-	actual := capture(stmt)
+	actual := capture(func() {
+		n := AssignStmt{
+			Name: "foo",
+			Expr: VariableExpr{Name: "bar"},
+		}
+		n.Accept(NewAstPrinter())
+	})
 	assert.Equal(t, expected, actual)
 }
 
 func TestFuncDefNoArgsOrBody(t *testing.T) {
-	stmt := FuncDef{Name: "foo"}
 	expected := "FuncDef\n" +
 		"├ Name: foo\n" +
 		"├ Args: ␀\n" +
 		"╰ Body: ␀\n"
-
-	actual := capture(stmt)
+	actual := capture(func() {
+		n := FuncDef{Name: "foo"}
+		n.Accept(NewAstPrinter())
+	})
 	assert.Equal(t, expected, actual)
 }
 
 func TestFuncDef(t *testing.T) {
-	stmt := FuncDef{
-		Name: "foo",
-		Args: []string{"bar", "baz"},
-		Body: []Node{
-			AssignStmt{
-				Name: "bar",
-				Expr: VariableExpr{Name: "baz"},
-			},
-			ReturnStmt{Expr: VariableExpr{Name: "baz"}},
-		},
-	}
 	expected := "FuncDef\n" +
 		"├ Name: foo\n" +
 		"├ Args: bar\n" +
@@ -142,72 +137,68 @@ func TestFuncDef(t *testing.T) {
 		"        ReturnStmt\n" +
 		"        ╰ Expr: VariableExpr\n" +
 		"                ╰ Name: baz\n"
-
-	actual := capture(stmt)
+	actual := capture(func() {
+		n := FuncDef{
+			Name: "foo",
+			Args: []string{"bar", "baz"},
+			Body: []Node{
+				AssignStmt{
+					Name: "bar",
+					Expr: VariableExpr{Name: "baz"},
+				},
+				ReturnStmt{Expr: VariableExpr{Name: "baz"}},
+			},
+		}
+		n.Accept(NewAstPrinter())
+	})
 	assert.Equal(t, expected, actual)
 }
 
 func TestFuncCallNoArgs(t *testing.T) {
-	expr := FuncCall{Name: "foo"}
 	expected := "FuncCall\n" +
 		"├ Name: foo\n" +
 		"╰ Args: ␀\n"
-
-	actual := capture(expr)
+	actual := capture(func() {
+		n := FuncCall{Name: "foo"}
+		n.Accept(NewAstPrinter())
+	})
 	assert.Equal(t, expected, actual)
 }
 
 func TestFuncCall(t *testing.T) {
-	expr := FuncCall{
-		Name: "foo",
-		Args: []Node{
-			VariableExpr{Name: "foo"},
-			VariableExpr{Name: "bar"},
-		},
-	}
 	expected := "FuncCall\n" +
 		"├ Name: foo\n" +
 		"╰ Args: VariableExpr\n" +
 		"        ╰ Name: foo\n" +
 		"        VariableExpr\n" +
 		"        ╰ Name: bar\n"
-
-	actual := capture(expr)
+	actual := capture(func() {
+		n := FuncCall{
+			Name: "foo",
+			Args: []Node{
+				VariableExpr{Name: "foo"},
+				VariableExpr{Name: "bar"},
+			},
+		}
+		n.Accept(NewAstPrinter())
+	})
 	assert.Equal(t, expected, actual)
 }
 
 func TestIfStmtNoBody(t *testing.T) {
-	stmt := IfStmt{Condition: VariableExpr{Name: "foo"}}
 	expected := "IfStmt\n" +
 		"├ Condition: VariableExpr\n" +
 		"│            ╰ Name: foo\n" +
 		"├ Body: ␀\n" +
 		"╰ Else: ␀\n"
-
-	actual := capture(stmt)
+	actual := capture(func() {
+		n := IfStmt{Condition: VariableExpr{Name: "foo"}}
+		n.Accept(NewAstPrinter())
+	})
 	assert.Equal(t, expected, actual)
 }
 
 func TestIfStmt(t *testing.T) {
-	stmt := IfStmt{
-		Condition: VariableExpr{Name: "foo"},
-		Body: []Node{
-			AssignStmt{
-				Name: "bar",
-				Expr: VariableExpr{Name: "baz"},
-			},
-			AssignStmt{
-				Name: "quux",
-				Expr: VariableExpr{Name: "norf"},
-			},
-		},
-		Else: IfStmt{
-			Condition: ValueExpr{
-				Value: "true",
-				Type:  token.BOOL,
-			},
-		},
-	}
 	expected := "IfStmt\n" +
 		"├ Condition: VariableExpr\n" +
 		"│            ╰ Name: foo\n" +
@@ -225,46 +216,55 @@ func TestIfStmt(t *testing.T) {
 		"        │            ╰ Type: BOOL\n" +
 		"        ├ Body: ␀\n" +
 		"        ╰ Else: ␀\n"
-
-	actual := capture(stmt)
+	actual := capture(func() {
+		n := IfStmt{
+			Condition: VariableExpr{Name: "foo"},
+			Body: []Node{
+				AssignStmt{
+					Name: "bar",
+					Expr: VariableExpr{Name: "baz"},
+				},
+				AssignStmt{
+					Name: "quux",
+					Expr: VariableExpr{Name: "norf"},
+				},
+			},
+			Else: IfStmt{
+				Condition: ValueExpr{
+					Value: "true",
+					Type:  token.BOOL,
+				},
+			},
+		}
+		n.Accept(NewAstPrinter())
+	})
 	assert.Equal(t, expected, actual)
 }
 
 func TestReturnStmt(t *testing.T) {
-	stmt := ReturnStmt{Expr: VariableExpr{Name: "foo"}}
 	expected := "ReturnStmt\n" +
 		"╰ Expr: VariableExpr\n" +
 		"        ╰ Name: foo\n"
-
-	actual := capture(stmt)
+	actual := capture(func() {
+		n := ReturnStmt{Expr: VariableExpr{Name: "foo"}}
+		n.Accept(NewAstPrinter())
+	})
 	assert.Equal(t, expected, actual)
 }
 
 func TestWhileStmtNoBody(t *testing.T) {
-	stmt := WhileStmt{Condition: VariableExpr{Name: "foo"}}
 	expected := "WhileStmt\n" +
 		"├ Condition: VariableExpr\n" +
 		"│            ╰ Name: foo\n" +
 		"╰ Body: ␀\n"
-
-	actual := capture(stmt)
+	actual := capture(func() {
+		n := WhileStmt{Condition: VariableExpr{Name: "foo"}}
+		n.Accept(NewAstPrinter())
+	})
 	assert.Equal(t, expected, actual)
 }
 
 func TestWhileStmt(t *testing.T) {
-	stmt := WhileStmt{
-		Condition: VariableExpr{Name: "foo"},
-		Body: []Node{
-			AssignStmt{
-				Name: "bar",
-				Expr: VariableExpr{Name: "baz"},
-			},
-			AssignStmt{
-				Name: "quux",
-				Expr: VariableExpr{Name: "norf"},
-			},
-		},
-	}
 	expected := "WhileStmt\n" +
 		"├ Condition: VariableExpr\n" +
 		"│            ╰ Name: foo\n" +
@@ -276,7 +276,21 @@ func TestWhileStmt(t *testing.T) {
 		"        ├ Name: quux\n" +
 		"        ╰ Expr: VariableExpr\n" +
 		"                ╰ Name: norf\n"
-
-	actual := capture(stmt)
+	actual := capture(func() {
+		n := WhileStmt{
+			Condition: VariableExpr{Name: "foo"},
+			Body: []Node{
+				AssignStmt{
+					Name: "bar",
+					Expr: VariableExpr{Name: "baz"},
+				},
+				AssignStmt{
+					Name: "quux",
+					Expr: VariableExpr{Name: "norf"},
+				},
+			},
+		}
+		n.Accept(NewAstPrinter())
+	})
 	assert.Equal(t, expected, actual)
 }

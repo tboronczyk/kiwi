@@ -29,6 +29,7 @@ func main() {
 }
 
 func print(p parser.Parser) {
+	v := ast.NewAstPrinter()
 	for {
 		n, err := p.Parse()
 		if n == nil {
@@ -37,7 +38,7 @@ func print(p parser.Parser) {
 			}
 			return
 		}
-		ast.Print(n)
+		n.Accept(v)
 	}
 }
 
