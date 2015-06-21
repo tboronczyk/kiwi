@@ -4,64 +4,120 @@ import (
 	"github.com/tboronczyk/kiwi/token"
 )
 
-type (
-	Node interface {
-		print(string)
-	}
+type Node interface {
+	Accept(Visitor)
+}
 
-	CastExpr struct {
-		Cast string
-		Expr Node
-	}
+type Visitor interface {
+	VisitCastExpr(CastExpr)
+	VisitValueExpr(ValueExpr)
+	VisitVariableExpr(VariableExpr)
+	VisitUnaryExpr(UnaryExpr)
+	VisitBinaryExpr(BinaryExpr)
+	VisitFuncCall(FuncCall)
+	VisitAssignStmt(AssignStmt)
+	VisitFuncDef(FuncDef)
+	VisitIfStmt(IfStmt)
+	VisitReturnStmt(ReturnStmt)
+	VisitWhileStmt(WhileStmt)
+}
 
-	ValueExpr struct {
-		Value string
-		Type  token.Token
-	}
+type CastExpr struct {
+	Cast string
+	Expr Node
+}
 
-	VariableExpr struct {
-		Name string
-	}
+func (n CastExpr) Accept(v Visitor) {
+	v.VisitCastExpr(n)
+}
 
-	UnaryExpr struct {
-		Op    token.Token
-		Right Node
-	}
+type ValueExpr struct {
+	Value string
+	Type  token.Token
+}
 
-	BinaryExpr struct {
-		Op    token.Token
-		Left  Node
-		Right Node
-	}
+func (n ValueExpr) Accept(v Visitor) {
+	v.VisitValueExpr(n)
+}
 
-	FuncCall struct {
-		Name string
-		Args []Node
-	}
+type VariableExpr struct {
+	Name string
+}
 
-	AssignStmt struct {
-		Name string
-		Expr Node
-	}
+func (n VariableExpr) Accept(v Visitor) {
+	v.VisitVariableExpr(n)
+}
 
-	FuncDef struct {
-		Name string
-		Args []string
-		Body []Node
-	}
+type UnaryExpr struct {
+	Op    token.Token
+	Right Node
+}
 
-	IfStmt struct {
-		Condition Node
-		Body      []Node
-		Else      Node
-	}
+func (n UnaryExpr) Accept(v Visitor) {
+	v.VisitUnaryExpr(n)
+}
 
-	ReturnStmt struct {
-		Expr Node
-	}
+type BinaryExpr struct {
+	Op    token.Token
+	Left  Node
+	Right Node
+}
 
-	WhileStmt struct {
-		Condition Node
-		Body      []Node
-	}
-)
+func (n BinaryExpr) Accept(v Visitor) {
+	v.VisitBinaryExpr(n)
+}
+
+type FuncCall struct {
+	Name string
+	Args []Node
+}
+
+func (n FuncCall) Accept(v Visitor) {
+	v.VisitFuncCall(n)
+}
+
+type AssignStmt struct {
+	Name string
+	Expr Node
+}
+
+func (n AssignStmt) Accept(v Visitor) {
+	v.VisitAssignStmt(n)
+}
+
+type FuncDef struct {
+	Name string
+	Args []string
+	Body []Node
+}
+
+func (n FuncDef) Accept(v Visitor) {
+	v.VisitFuncDef(n)
+}
+
+type IfStmt struct {
+	Condition Node
+	Body      []Node
+	Else      Node
+}
+
+func (n IfStmt) Accept(v Visitor) {
+	v.VisitIfStmt(n)
+}
+
+type ReturnStmt struct {
+	Expr Node
+}
+
+func (n ReturnStmt) Accept(v Visitor) {
+	v.VisitReturnStmt(n)
+}
+
+type WhileStmt struct {
+	Condition Node
+	Body      []Node
+}
+
+func (n WhileStmt) Accept(v Visitor) {
+	v.VisitWhileStmt(n)
+}
