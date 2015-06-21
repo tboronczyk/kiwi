@@ -2,6 +2,7 @@ package symtable
 
 import (
 	"strconv"
+	"github.com/tboronczyk/kiwi/util"
 )
 
 type DataType uint8
@@ -25,13 +26,15 @@ var dtypes = [...]string{
 }
 
 type (
-	symTable struct {
-		table map[string]entry
-	}
-
 	entry struct {
 		v interface{}
 		t DataType
+	}
+
+	table map[string]entry
+
+	symTable struct {
+		stack *util.Stack
 	}
 
 	SymTable interface {
@@ -41,16 +44,18 @@ type (
 )
 
 func New() *symTable {
-	return &symTable{table: make(map[string]entry)}
+	s := &symTable{stack: util.NewStack()}
+	s.stack.Push(make(table))
+	return s
 }
 
 func (s symTable) Set(key string, val interface{}, t DataType) {
-	s.table[key] = entry{v: val, t: t}
+	s.stack.Peek().(table)[key] = entry{v: val, t: t}
 	return
 }
 
 func (s symTable) Get(key string) (interface{}, DataType, bool) {
-	e, ok := s.table[key]
+	e, ok := s.stack.Peek().(table)[key]
 	if !ok {
 		return nil, UNKNOWN, ok
 	}

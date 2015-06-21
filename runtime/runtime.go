@@ -5,260 +5,339 @@ import (
 	"github.com/tboronczyk/kiwi/ast"
 	"github.com/tboronczyk/kiwi/symtable"
 	"github.com/tboronczyk/kiwi/token"
+	"github.com/tboronczyk/kiwi/util"
 	"math"
 	"strconv"
 	"strings"
 )
 
-func Eval(node ast.Node, varTable, funTable symtable.SymTable) (interface{}, symtable.DataType, bool) {
-	switch node.(type) {
-	case ast.AssignStmt:
-		return evalAssignStmt(node.(ast.AssignStmt), varTable, funTable)
-	case ast.FuncDef:
-		return evalFuncDef(node.(ast.FuncDef), varTable, funTable)
-	case ast.FuncCall:
-		return evalFuncCall(node.(ast.FuncCall), varTable, funTable)
-	case ast.IfStmt:
-		return evalIfStmt(node.(ast.IfStmt), varTable, funTable)
-	case ast.ReturnStmt:
-		return evalReturnStmt(node.(ast.ReturnStmt), varTable, funTable)
-	case ast.WhileStmt:
-		return evalWhileStmt(node.(ast.WhileStmt), varTable, funTable)
-	case ast.VariableExpr:
-		return evalVariableExpr(node.(ast.VariableExpr), varTable, funTable)
-	case ast.ValueExpr:
-		return evalValueExpr(node.(ast.ValueExpr), varTable, funTable)
-	case ast.UnaryExpr:
-		return evalUnaryExpr(node.(ast.UnaryExpr), varTable, funTable)
-	case ast.BinaryExpr:
-		return evalBinaryExpr(node.(ast.BinaryExpr), varTable, funTable)
-	case ast.CastExpr:
-		return evalCastExpr(node.(ast.CastExpr), varTable, funTable)
-	}
-	panic("Whoops!")
+type stackEntry struct {
+	Type  symtable.DataType
+	Value interface{}
 }
 
-func evalAssignStmt(node ast.AssignStmt, varTable, funTable symtable.SymTable) (interface{}, symtable.DataType, bool) {
-	value, dtype, _ := Eval(node.Expr, varTable, funTable)
-	varTable.Set(node.Name, value, dtype)
-	return value, dtype, false
+type Runtime struct {
+	Return bool
+	funcs  *util.Stack
+	vars   *util.Stack
+	stack  *util.Stack
 }
 
-func evalFuncDef(node ast.FuncDef, varTable, funTable symtable.SymTable) (interface{}, symtable.DataType, bool) {
-	funTable.Set(node.Name, node, symtable.USRFUNC)
-	return true, symtable.BOOL, false
+func New() *Runtime {
+	r := &Runtime{
+		Return: false,
+		funcs:  util.NewStack(),
+		vars:   util.NewStack(),
+		stack:  util.NewStack(),
+	}
+	r.vars.Push(symtable.New())
+	r.funcs.Push(symtable.New())
+	// register builtin functions
+	for _, n := range funcSigs {
+		r.funcSet(n.Name, n, symtable.BUILTIN)
+	}
+	return r
 }
 
-func evalFuncCall(node ast.FuncCall, varTable, funTable symtable.SymTable) (interface{}, symtable.DataType, bool) {
-	f, t, ok := funTable.Get(node.Name)
-	if !ok {
-		panic("Function not defined")
-	}
-	if len(f.(ast.FuncDef).Args) != len(node.Args) {
-		panic("Function arity mis-match")
-	}
-	s := symtable.New()
-	for i, name := range f.(ast.FuncDef).Args {
-		value, dtype, _ := Eval(node.Args[i], varTable, funTable)
-		s.Set(name, value, dtype)
-	}
-	switch t {
-	case symtable.USRFUNC:
-		for _, stmt := range f.(ast.FuncDef).Body {
-			value, dtype, isReturn := Eval(stmt, s, funTable)
-			if isReturn {
-				return value, dtype, isReturn
-			}
-		}
-	case symtable.BUILTIN:
-		return builtins[node.Name](s, funTable)
-	}
-
-	return true, symtable.BOOL, false
+func (r *Runtime) funcSet(n string, v interface{}, t symtable.DataType) {
+	r.funcs.Peek().(symtable.SymTable).Set(n, v, t)
 }
 
-func evalIfStmt(n ast.IfStmt, varTable, funTable symtable.SymTable) (interface{}, symtable.DataType, bool) {
-	value, dtype, _ := Eval(n.Condition, varTable, funTable)
-	if dtype != symtable.BOOL {
-		panic("Invalid data type")
-	}
-	if value.(bool) {
-		var isReturn bool
-		for _, stmt := range n.Body {
-			value, dtype, isReturn = Eval(stmt, varTable, funTable)
-			if isReturn {
-				return value, dtype, true
-			}
-		}
-	} else if n.Else != nil {
-		return evalIfStmt(n.Else.(ast.IfStmt), varTable, funTable)
-	}
-	return true, symtable.BOOL, false
+func (r *Runtime) funcGet(n string) (interface{}, symtable.DataType, bool) {
+	return r.funcs.Peek().(symtable.SymTable).Get(n)
 }
 
-func evalReturnStmt(node ast.ReturnStmt, varTable, funTable symtable.SymTable) (interface{}, symtable.DataType, bool) {
-	value, dtype, _ := Eval(node.Expr, varTable, funTable)
-	return value, dtype, true
+func (r *Runtime) varSet(n string, v interface{}, t symtable.DataType) {
+	r.vars.Peek().(symtable.SymTable).Set(n, v, t)
 }
 
-func evalWhileStmt(node ast.WhileStmt, varTable, funTable symtable.SymTable) (interface{}, symtable.DataType, bool) {
-	for {
-		value, dtype, _ := Eval(node.Condition, varTable, funTable)
-		if dtype != symtable.BOOL {
-			panic("Invalid data type")
-		}
-		if !value.(bool) {
-			return true, symtable.BOOL, false
-		}
-		var isReturn bool
-		for _, stmt := range node.Body {
-			value, dtype, isReturn = Eval(stmt, varTable, funTable)
-			if isReturn {
-				return value, dtype, true
-			}
-		}
-	}
+func (r *Runtime) varGet(n string) (interface{}, symtable.DataType, bool) {
+	return r.vars.Peek().(symtable.SymTable).Get(n)
 }
 
-func evalValueExpr(node ast.ValueExpr, varTable, funTable symtable.SymTable) (interface{}, symtable.DataType, bool) {
-	switch node.Type {
+func (r *Runtime) enterScope(s symtable.SymTable) {
+	r.vars.Push(s)
+}
+
+func (r *Runtime) leaveScope() {
+	r.vars.Pop()
+}
+
+func (r *Runtime) pushStack(v interface{}, t symtable.DataType) {
+	r.stack.Push(stackEntry{Value: v, Type: t})
+}
+
+func (r *Runtime) popStack() stackEntry {
+	return r.stack.Pop().(stackEntry)
+}
+
+func (r *Runtime) VisitValueExpr(n ast.ValueExpr) {
+	switch n.Type {
 	case token.NUMBER:
-		value, _ := strconv.ParseFloat(node.Value, 64)
-		return value, symtable.NUMBER, false
+		val, _ := strconv.ParseFloat(n.Value, 64)
+		r.pushStack(val, symtable.NUMBER)
+		break
 	case token.BOOL:
-		return strings.ToUpper(node.Value) == "TRUE", symtable.BOOL, false
+		r.pushStack(strings.ToUpper(n.Value) == "TRUE", symtable.BOOL)
+		break
+	case token.STRING:
+		r.pushStack(n.Value, symtable.STRING)
+		break
 	}
-	return node.Value, symtable.STRING, false
 }
 
-func evalVariableExpr(node ast.VariableExpr, varTable, funTable symtable.SymTable) (interface{}, symtable.DataType, bool) {
-	value, dtype, ok := varTable.Get(node.Name)
-	if !ok {
-		panic("Variable not set")
-	}
-	return value, dtype, false
-}
-
-func evalUnaryExpr(node ast.UnaryExpr, varTable, funTable symtable.SymTable) (interface{}, symtable.DataType, bool) {
-	rVal, rType, _ := Eval(node.Right, varTable, funTable)
-
-	switch rType {
-	case symtable.NUMBER:
-		switch node.Op {
-		case token.ADD:
-			return math.Abs(rVal.(float64)), symtable.NUMBER, false
-		case token.SUBTRACT:
-			return -rVal.(float64), symtable.NUMBER, false
-		}
-	case symtable.BOOL:
-		switch node.Op {
-		case token.NOT:
-			return rVal.(bool) == false, symtable.BOOL, false
-		}
-	}
-	panic("Invalid data type")
-}
-
-func evalBinaryExpr(node ast.BinaryExpr, varTable, funTable symtable.SymTable) (interface{}, symtable.DataType, bool) {
-	lVal, lType, _ := Eval(node.Left, varTable, funTable)
-	if lType == symtable.BOOL {
-		if lVal.(bool) && node.Op == token.OR {
-			return true, symtable.BOOL, false
-		}
-		if !lVal.(bool) && node.Op == token.AND {
-			return false, symtable.BOOL, false
-		}
-	}
-
-	rVal, rType, _ := Eval(node.Right, varTable, funTable)
-	if lType != rType {
-		panic("Data types do not match")
-	}
-
-	switch lType {
-	case symtable.NUMBER:
-		switch node.Op {
-		case token.ADD:
-			return lVal.(float64) + rVal.(float64), symtable.NUMBER, false
-		case token.SUBTRACT:
-			return lVal.(float64) - rVal.(float64), symtable.NUMBER, false
-		case token.MULTIPLY:
-			return lVal.(float64) * rVal.(float64), symtable.NUMBER, false
-		case token.DIVIDE:
-			return lVal.(float64) / rVal.(float64), symtable.NUMBER, false
-		case token.MODULO:
-			return math.Mod(lVal.(float64), rVal.(float64)), symtable.NUMBER, false
-		case token.EQUAL:
-			return lVal.(float64) == rVal.(float64), symtable.BOOL, false
-		case token.LESS:
-			return lVal.(float64) < rVal.(float64), symtable.BOOL, false
-		case token.LESS_EQ:
-			return lVal.(float64) <= rVal.(float64), symtable.BOOL, false
-		case token.GREATER:
-			return lVal.(float64) > rVal.(float64), symtable.BOOL, false
-		case token.GREATER_EQ:
-			return lVal.(float64) >= rVal.(float64), symtable.BOOL, false
-		}
-	case symtable.STRING:
-		switch node.Op {
-		case token.ADD:
-			return lVal.(string) + rVal.(string), symtable.STRING, false
-		case token.EQUAL:
-			return lVal.(string) == rVal.(string), symtable.BOOL, false
-		}
-	case symtable.BOOL:
-		switch node.Op {
-		case token.AND:
-			return lVal.(bool) && rVal.(bool), symtable.BOOL, false
-		case token.OR:
-			return lVal.(bool) || rVal.(bool), symtable.BOOL, false
-		}
-	}
-	panic("Invalid data type")
-}
-
-func evalCastExpr(node ast.CastExpr, varTable, funTable symtable.SymTable) (interface{}, symtable.DataType, bool) {
-	value, dtype, isReturn := Eval(node.Expr, varTable, funTable)
-	switch strings.ToUpper(node.Cast) {
+func (r *Runtime) VisitCastExpr(n ast.CastExpr) {
+	n.Expr.Accept(r)
+	expr := r.popStack()
+	switch strings.ToUpper(n.Cast) {
 	case "STRING":
-		switch dtype {
+		switch expr.Type {
 		case symtable.STRING:
-			return value, symtable.STRING, isReturn
+			r.pushStack(expr.Value, symtable.STRING)
+			break
 		case symtable.NUMBER:
-			val := fmt.Sprintf("%f", value.(float64))
+			val := fmt.Sprintf("%f", expr.Value.(float64))
 			val = strings.TrimRight(val, "0")
 			val = strings.TrimRight(val, ".")
-			return val, symtable.STRING, isReturn
+			r.pushStack(val, symtable.STRING)
+			break
 		case symtable.BOOL:
-			return strconv.FormatBool(value.(bool)), symtable.STRING, isReturn
+			r.pushStack(strconv.FormatBool(expr.Value.(bool)), symtable.STRING)
+			break
 		}
+		break
 	case "NUMBER":
-		switch dtype {
+		switch expr.Type {
 		case symtable.STRING:
-			val, err := strconv.ParseFloat(value.(string), 64)
+			val, err := strconv.ParseFloat(expr.Value.(string), 64)
 			if err != nil {
 				val = 0.0
 			}
-			return val, symtable.NUMBER, isReturn
+			r.pushStack(val, symtable.NUMBER)
+			break
 		case symtable.NUMBER:
-			return value.(float64), symtable.NUMBER, isReturn
+			r.pushStack(expr.Value, symtable.NUMBER)
+			break
 		case symtable.BOOL:
-			if value.(bool) {
-				return 1.0, symtable.NUMBER, isReturn
+			val := 0.0
+			if expr.Value.(bool) {
+				val = 1.0
 			}
-			return 0.0, symtable.NUMBER, isReturn
+			r.pushStack(val, symtable.NUMBER)
+			break
 		}
+		break
 	case "BOOL":
-		switch dtype {
+		switch expr.Type {
 		case symtable.STRING:
-			val := strings.ToUpper(value.(string)) != "FALSE" &&
-				strings.TrimSpace(value.(string)) != ""
-			return val, symtable.BOOL, isReturn
+			val := strings.ToUpper(expr.Value.(string)) != "FALSE" &&
+				strings.TrimSpace(expr.Value.(string)) != ""
+			r.pushStack(val, symtable.BOOL)
+			break
 		case symtable.NUMBER:
-			return value.(float64) != 0.0, symtable.BOOL, isReturn
+			r.pushStack(expr.Value != 0.0, symtable.BOOL)
+			break
 		case symtable.BOOL:
-			return value.(bool), symtable.BOOL, isReturn
+			r.pushStack(expr.Value, symtable.BOOL)
+			break
+		}
+		break
+	default:
+		panic("Invalid cast")
+	}
+}
+
+func (r *Runtime) VisitVariableExpr(n ast.VariableExpr) {
+	val, dtype, ok := r.varGet(n.Name)
+	if !ok {
+		panic("Variable is not set")
+	}
+	r.pushStack(val, dtype)
+}
+
+func (r *Runtime) VisitUnaryExpr(n ast.UnaryExpr) {
+	n.Right.Accept(r)
+	right := r.popStack()
+
+	switch right.Type {
+	case symtable.NUMBER:
+		switch n.Op {
+		case token.ADD:
+			r.pushStack(math.Abs(right.Value.(float64)), symtable.NUMBER)
+			break
+		case token.SUBTRACT:
+			r.pushStack(-right.Value.(float64), symtable.NUMBER)
+			break
+		}
+	case symtable.BOOL:
+		switch n.Op {
+		case token.NOT:
+			r.pushStack(right.Value.(bool) == false, symtable.BOOL)
+			break
 		}
 	}
-	panic("Invalid cast")
+}
+
+func (r *Runtime) VisitBinaryExpr(n ast.BinaryExpr) {
+	n.Left.Accept(r)
+	left := r.popStack()
+	if left.Type == symtable.BOOL {
+		if left.Value.(bool) && n.Op == token.OR {
+			r.pushStack(true, symtable.BOOL)
+			return
+		}
+		if !left.Value.(bool) && n.Op == token.AND {
+			r.pushStack(false, symtable.BOOL)
+			return
+		}
+	}
+
+	n.Right.Accept(r)
+	right := r.popStack()
+	if left.Type != right.Type {
+		panic("Data types do not match")
+	}
+
+	switch left.Type {
+	case symtable.NUMBER:
+		switch n.Op {
+		case token.ADD:
+			r.pushStack(left.Value.(float64)+right.Value.(float64), symtable.NUMBER)
+			break
+		case token.SUBTRACT:
+			r.pushStack(left.Value.(float64)-right.Value.(float64), symtable.NUMBER)
+			break
+		case token.MULTIPLY:
+			r.pushStack(left.Value.(float64)*right.Value.(float64), symtable.NUMBER)
+			break
+		case token.DIVIDE:
+			r.pushStack(left.Value.(float64)/right.Value.(float64), symtable.NUMBER)
+			break
+		case token.MODULO:
+			r.pushStack(math.Mod(left.Value.(float64), right.Value.(float64)), symtable.NUMBER)
+			break
+		case token.EQUAL:
+			r.pushStack(left.Value.(float64) == right.Value.(float64), symtable.BOOL)
+			break
+		case token.LESS:
+			r.pushStack(left.Value.(float64) < right.Value.(float64), symtable.BOOL)
+			break
+		case token.LESS_EQ:
+			r.pushStack(left.Value.(float64) <= right.Value.(float64), symtable.BOOL)
+			break
+		case token.GREATER:
+			r.pushStack(left.Value.(float64) > right.Value.(float64), symtable.BOOL)
+			break
+		case token.GREATER_EQ:
+			r.pushStack(left.Value.(float64) >= right.Value.(float64), symtable.BOOL)
+			break
+		}
+	case symtable.STRING:
+		switch n.Op {
+		case token.ADD:
+			r.pushStack(left.Value.(string)+right.Value.(string), symtable.STRING)
+			break
+		case token.EQUAL:
+			r.pushStack(left.Value.(string) == right.Value.(string), symtable.BOOL)
+			break
+		}
+	case symtable.BOOL:
+		switch n.Op {
+		case token.AND:
+			r.pushStack(left.Value.(bool) && right.Value.(bool), symtable.BOOL)
+			break
+		case token.OR:
+			r.pushStack(left.Value.(bool) || right.Value.(bool), symtable.BOOL)
+			break
+		}
+	}
+}
+
+func (r *Runtime) VisitFuncCall(n ast.FuncCall) {
+	defer func() {
+		r.Return = false
+	}()
+
+	fun, dtype, ok := r.funcGet(n.Name)
+	if !ok {
+		panic("Function not defined")
+	}
+	if len(fun.(ast.FuncDef).Args) != len(n.Args) {
+		panic("Function arity mis-match")
+	}
+
+	s := symtable.New()
+	for i, name := range fun.(ast.FuncDef).Args {
+		n.Args[i].Accept(r)
+		arg := r.popStack()
+		s.Set(name, arg.Value, arg.Type)
+	}
+	r.enterScope(s)
+
+	switch dtype {
+	case symtable.USRFUNC:
+		for _, stmt := range fun.(ast.FuncDef).Body {
+			stmt.Accept(r)
+			if r.Return {
+				break
+			}
+		}
+		break
+	case symtable.BUILTIN:
+		builtinFuncs[n.Name](r)
+		break
+	}
+	r.leaveScope()
+}
+
+func (r *Runtime) VisitAssignStmt(n ast.AssignStmt) {
+	n.Expr.Accept(r)
+	expr := r.popStack()
+	r.varSet(n.Name, expr.Value, expr.Type)
+}
+
+func (r *Runtime) VisitFuncDef(n ast.FuncDef) {
+	r.funcSet(n.Name, n, symtable.USRFUNC)
+}
+
+func (r *Runtime) VisitIfStmt(n ast.IfStmt) {
+	n.Condition.Accept(r)
+	cond := r.popStack()
+	if cond.Type != symtable.BOOL {
+		panic("Non-bool result used for condition")
+	}
+	if cond.Value.(bool) {
+		for _, stmt := range n.Body {
+			stmt.Accept(r)
+			if r.Return {
+				return
+			}
+		}
+	} else if n.Else != nil {
+		n.Else.Accept(r)
+	}
+}
+
+func (r *Runtime) VisitReturnStmt(n ast.ReturnStmt) {
+	n.Expr.Accept(r)
+	r.Return = true
+}
+
+func (r *Runtime) VisitWhileStmt(n ast.WhileStmt) {
+	for {
+		n.Condition.Accept(r)
+		cond := r.popStack()
+		if cond.Type != symtable.BOOL {
+			panic("Non-bool result used for condition")
+		}
+		if !cond.Value.(bool) {
+			return
+		}
+		for _, stmt := range n.Body {
+			stmt.Accept(r)
+			if r.Return {
+				return
+			}
+		}
+	}
 }
