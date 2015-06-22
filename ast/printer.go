@@ -9,16 +9,16 @@ import (
 )
 
 type AstPrinter struct {
-	stack *util.Stack
+	stack util.Stack
 }
 
-func NewAstPrinter() *AstPrinter {
-	p := &AstPrinter{stack: util.NewStack()}
+func NewAstPrinter() AstPrinter {
+	p := AstPrinter{stack: util.Stack{}}
 	p.push("")
 	return p
 }
 
-func (p AstPrinter) push(s string) {
+func (p *AstPrinter) push(s string) {
 	p.stack.Push(s)
 }
 
@@ -26,7 +26,7 @@ func (p AstPrinter) peek() string {
 	return p.stack.Peek().(string)
 }
 
-func (p AstPrinter) pop() string {
+func (p *AstPrinter) pop() string {
 	return p.stack.Pop().(string)
 }
 

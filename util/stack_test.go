@@ -14,15 +14,13 @@ func TestStackPush(t *testing.T) {
 }
 
 func TestStackPeek(t *testing.T) {
-	s := NewStack()
-	s.s = []interface{}{0, 1, 2}
+	s := Stack{0, 1, 2}
 	assert.Equal(t, 2, s.Peek())
 	assert.Equal(t, 3, s.Size())
 }
 
 func TestStackPop(t *testing.T) {
-	s := NewStack()
-	s.s = []interface{}{2, 1, 0}
+	s := Stack{2, 1, 0}
 	for i := 0; i < 3; i++ {
 		assert.Equal(t, i, s.Pop())
 	}

@@ -5,45 +5,26 @@ import (
 	"testing"
 )
 
-type testData struct {
-	actual   string
-	expected string
-}
-
-func TestSet(t *testing.T) {
+func TestSymbolTableSet(t *testing.T) {
 	s := New()
 	s.Set("foo", 42, NUMBER)
 
-	expected := entry{v: 42, t: NUMBER}
-	actual := s.stack.Peek().(table)["foo"]
-	assert.Equal(t, expected, actual)
+	actual := s["foo"]
+	assert.Equal(t, 42, actual.value)
+	assert.Equal(t, NUMBER, actual.dtype)
 }
 
-func TestGet(t *testing.T) {
+func TestSymbolTableGet(t *testing.T) {
 	s := New()
-	s.stack.Peek().(table)["foo"] = entry{v: 42, t: NUMBER}
+	s.Set("foo", 42, NUMBER)
 
-	expected := 42
-	actual, _, _ := s.Get("foo")
-	assert.Equal(t, expected, actual)
+	value, dtype, _ := s.Get("foo")
+	assert.Equal(t, 42, value)
+	assert.Equal(t, NUMBER, dtype)
 }
 
-func TestGetNoExist(t *testing.T) {
+func TestSymbolTableGetNoExist(t *testing.T) {
 	s := New()
-	_, _, found := s.Get("foo")
-	assert.False(t, found)
-}
-
-func TestDataTypeToString(t *testing.T) {
-	tokens := []testData{
-		{UNKNOWN.String(), "UNKNOWN"},
-		{BOOL.String(), "BOOL"},
-		{NUMBER.String(), "NUMBER"},
-		{STRING.String(), "STRING"},
-		{DataType(254).String(), "DataType(254)"},
-	}
-
-	for _, tkn := range tokens {
-		assert.Equal(t, tkn.actual, tkn.expected)
-	}
+	_, _, ok := s.Get("foo")
+	assert.False(t, ok)
 }
