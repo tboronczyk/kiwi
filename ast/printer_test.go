@@ -31,144 +31,144 @@ func capture(f func()) string {
 	return <-out
 }
 
-func TestValueExprNumber(t *testing.T) {
-	expected := "ValueExpr\n" +
+func TestPrintValueNodeNumber(t *testing.T) {
+	expected := "ValueNode\n" +
 		"├ Value: 1\n" +
 		"╰ Type: NUMBER\n"
 	actual := capture(func() {
-		n := ValueExpr{Value: "1.0", Type: token.NUMBER}
+		n := ValueNode{Value: "1.0", Type: token.NUMBER}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestValueExprString(t *testing.T) {
-	expected := "ValueExpr\n" +
+func TestPrintValueNodeString(t *testing.T) {
+	expected := "ValueNode\n" +
 		"├ Value: \"foo\"\n" +
 		"╰ Type: STRING\n"
 	actual := capture(func() {
-		n := ValueExpr{Value: "foo", Type: token.STRING}
+		n := ValueNode{Value: "foo", Type: token.STRING}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestValueExprBool(t *testing.T) {
-	expected := "ValueExpr\n" +
+func TestPrintValueNodeBool(t *testing.T) {
+	expected := "ValueNode\n" +
 		"├ Value: true\n" +
 		"╰ Type: BOOL\n"
 	actual := capture(func() {
-		n := ValueExpr{Value: "True", Type: token.BOOL}
+		n := ValueNode{Value: "True", Type: token.BOOL}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestCast(t *testing.T) {
-	expected := "CastExpr\n" +
+func TestPrintCast(t *testing.T) {
+	expected := "CastNode\n" +
 		"├ Cast: string\n" +
-		"╰ Expr: ValueExpr\n" +
+		"╰ Expr: ValueNode\n" +
 		"        ├ Value: \"foo\"\n" +
 		"        ╰ Type: STRING\n"
 	actual := capture(func() {
-		n := CastExpr{Cast: "string", Expr: ValueExpr{Value: "foo", Type: token.STRING}}
+		n := CastNode{Cast: "string", Expr: ValueNode{Value: "foo", Type: token.STRING}}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestVariableExpr(t *testing.T) {
-	expected := "VariableExpr\n" +
+func TestPrintVariableNode(t *testing.T) {
+	expected := "VariableNode\n" +
 		"╰ Name: foo\n"
 	actual := capture(func() {
-		n := VariableExpr{Name: "foo"}
+		n := VariableNode{Name: "foo"}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestUnaryExpr(t *testing.T) {
-	expected := "UnaryExpr\n" +
+func TestPrintUnaryOpNode(t *testing.T) {
+	expected := "UnaryOpNode\n" +
 		"├ Op: -\n" +
-		"╰ Right: VariableExpr\n" +
+		"╰ Right: VariableNode\n" +
 		"         ╰ Name: foo\n"
 	actual := capture(func() {
-		n := UnaryExpr{
+		n := UnaryOpNode{
 			Op:    token.SUBTRACT,
-			Right: VariableExpr{Name: "foo"},
+			Right: VariableNode{Name: "foo"},
 		}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestBinaryExpr(t *testing.T) {
-	expected := "BinaryExpr\n" +
+func TestPrintBinaryOpNode(t *testing.T) {
+	expected := "BinaryOpNode\n" +
 		"├ Op: +\n" +
-		"├ Left: VariableExpr\n" +
+		"├ Left: VariableNode\n" +
 		"│       ╰ Name: foo\n" +
-		"╰ Right: VariableExpr\n" +
+		"╰ Right: VariableNode\n" +
 		"         ╰ Name: bar\n"
 	actual := capture(func() {
-		n := BinaryExpr{
+		n := BinaryOpNode{
 			Op:    token.ADD,
-			Left:  VariableExpr{Name: "foo"},
-			Right: VariableExpr{Name: "bar"},
+			Left:  VariableNode{Name: "foo"},
+			Right: VariableNode{Name: "bar"},
 		}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestAssignStmt(t *testing.T) {
-	expected := "AssignStmt\n" +
+func TestPrintAssignNode(t *testing.T) {
+	expected := "AssignNode\n" +
 		"├ Name: foo\n" +
-		"╰ Expr: VariableExpr\n" +
+		"╰ Expr: VariableNode\n" +
 		"        ╰ Name: bar\n"
 	actual := capture(func() {
-		n := AssignStmt{
+		n := AssignNode{
 			Name: "foo",
-			Expr: VariableExpr{Name: "bar"},
+			Expr: VariableNode{Name: "bar"},
 		}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestFuncDefNoArgsOrBody(t *testing.T) {
-	expected := "FuncDef\n" +
+func TestPrintFuncDefNodeNoArgsOrBody(t *testing.T) {
+	expected := "FuncDefNode\n" +
 		"├ Name: foo\n" +
 		"├ Args: ␀\n" +
 		"╰ Body: ␀\n"
 	actual := capture(func() {
-		n := FuncDef{Name: "foo"}
+		n := FuncDefNode{Name: "foo"}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestFuncDef(t *testing.T) {
-	expected := "FuncDef\n" +
+func TestPrintFuncDefNode(t *testing.T) {
+	expected := "FuncDefNode\n" +
 		"├ Name: foo\n" +
 		"├ Args: bar\n" +
 		"│       baz\n" +
-		"╰ Body: AssignStmt\n" +
+		"╰ Body: AssignNode\n" +
 		"        ├ Name: bar\n" +
-		"        ╰ Expr: VariableExpr\n" +
+		"        ╰ Expr: VariableNode\n" +
 		"                ╰ Name: baz\n" +
-		"        ReturnStmt\n" +
-		"        ╰ Expr: VariableExpr\n" +
+		"        ReturnNode\n" +
+		"        ╰ Expr: VariableNode\n" +
 		"                ╰ Name: baz\n"
 	actual := capture(func() {
-		n := FuncDef{
+		n := FuncDefNode{
 			Name: "foo",
 			Args: []string{"bar", "baz"},
 			Body: []Node{
-				AssignStmt{
+				AssignNode{
 					Name: "bar",
-					Expr: VariableExpr{Name: "baz"},
+					Expr: VariableNode{Name: "baz"},
 				},
-				ReturnStmt{Expr: VariableExpr{Name: "baz"}},
+				ReturnNode{Expr: VariableNode{Name: "baz"}},
 			},
 		}
 		n.Accept(NewAstPrinter())
@@ -176,30 +176,30 @@ func TestFuncDef(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestFuncCallNoArgs(t *testing.T) {
-	expected := "FuncCall\n" +
+func TestPrintFuncCallNodeNoArgs(t *testing.T) {
+	expected := "FuncCallNode\n" +
 		"├ Name: foo\n" +
 		"╰ Args: ␀\n"
 	actual := capture(func() {
-		n := FuncCall{Name: "foo"}
+		n := FuncCallNode{Name: "foo"}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestFuncCall(t *testing.T) {
-	expected := "FuncCall\n" +
+func TestPrintFuncCallNode(t *testing.T) {
+	expected := "FuncCallNode\n" +
 		"├ Name: foo\n" +
-		"╰ Args: VariableExpr\n" +
+		"╰ Args: VariableNode\n" +
 		"        ╰ Name: foo\n" +
-		"        VariableExpr\n" +
+		"        VariableNode\n" +
 		"        ╰ Name: bar\n"
 	actual := capture(func() {
-		n := FuncCall{
+		n := FuncCallNode{
 			Name: "foo",
 			Args: []Node{
-				VariableExpr{Name: "foo"},
-				VariableExpr{Name: "bar"},
+				VariableNode{Name: "foo"},
+				VariableNode{Name: "bar"},
 			},
 		}
 		n.Accept(NewAstPrinter())
@@ -207,52 +207,52 @@ func TestFuncCall(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestIfStmtNoBody(t *testing.T) {
-	expected := "IfStmt\n" +
-		"├ Condition: VariableExpr\n" +
+func TestPrintIfNodeNoBody(t *testing.T) {
+	expected := "IfNode\n" +
+		"├ Condition: VariableNode\n" +
 		"│            ╰ Name: foo\n" +
 		"├ Body: ␀\n" +
 		"╰ Else: ␀\n"
 	actual := capture(func() {
-		n := IfStmt{Condition: VariableExpr{Name: "foo"}}
+		n := IfNode{Condition: VariableNode{Name: "foo"}}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestIfStmt(t *testing.T) {
-	expected := "IfStmt\n" +
-		"├ Condition: VariableExpr\n" +
+func TestPrintIfNode(t *testing.T) {
+	expected := "IfNode\n" +
+		"├ Condition: VariableNode\n" +
 		"│            ╰ Name: foo\n" +
-		"├ Body: AssignStmt\n" +
+		"├ Body: AssignNode\n" +
 		"│       ├ Name: bar\n" +
-		"│       ╰ Expr: VariableExpr\n" +
+		"│       ╰ Expr: VariableNode\n" +
 		"│               ╰ Name: baz\n" +
-		"│       AssignStmt\n" +
+		"│       AssignNode\n" +
 		"│       ├ Name: quux\n" +
-		"│       ╰ Expr: VariableExpr\n" +
+		"│       ╰ Expr: VariableNode\n" +
 		"│               ╰ Name: norf\n" +
-		"╰ Else: IfStmt\n" +
-		"        ├ Condition: ValueExpr\n" +
+		"╰ Else: IfNode\n" +
+		"        ├ Condition: ValueNode\n" +
 		"        │            ├ Value: true\n" +
 		"        │            ╰ Type: BOOL\n" +
 		"        ├ Body: ␀\n" +
 		"        ╰ Else: ␀\n"
 	actual := capture(func() {
-		n := IfStmt{
-			Condition: VariableExpr{Name: "foo"},
+		n := IfNode{
+			Condition: VariableNode{Name: "foo"},
 			Body: []Node{
-				AssignStmt{
+				AssignNode{
 					Name: "bar",
-					Expr: VariableExpr{Name: "baz"},
+					Expr: VariableNode{Name: "baz"},
 				},
-				AssignStmt{
+				AssignNode{
 					Name: "quux",
-					Expr: VariableExpr{Name: "norf"},
+					Expr: VariableNode{Name: "norf"},
 				},
 			},
-			Else: IfStmt{
-				Condition: ValueExpr{
+			Else: IfNode{
+				Condition: ValueNode{
 					Value: "true",
 					Type:  token.BOOL,
 				},
@@ -263,52 +263,52 @@ func TestIfStmt(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestReturnStmt(t *testing.T) {
-	expected := "ReturnStmt\n" +
-		"╰ Expr: VariableExpr\n" +
+func TestPrintReturnNode(t *testing.T) {
+	expected := "ReturnNode\n" +
+		"╰ Expr: VariableNode\n" +
 		"        ╰ Name: foo\n"
 	actual := capture(func() {
-		n := ReturnStmt{Expr: VariableExpr{Name: "foo"}}
+		n := ReturnNode{Expr: VariableNode{Name: "foo"}}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestWhileStmtNoBody(t *testing.T) {
-	expected := "WhileStmt\n" +
-		"├ Condition: VariableExpr\n" +
+func TestPrintWhileNodeNoBody(t *testing.T) {
+	expected := "WhileNode\n" +
+		"├ Condition: VariableNode\n" +
 		"│            ╰ Name: foo\n" +
 		"╰ Body: ␀\n"
 	actual := capture(func() {
-		n := WhileStmt{Condition: VariableExpr{Name: "foo"}}
+		n := WhileNode{Condition: VariableNode{Name: "foo"}}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestWhileStmt(t *testing.T) {
-	expected := "WhileStmt\n" +
-		"├ Condition: VariableExpr\n" +
+func TestPrintWhileNode(t *testing.T) {
+	expected := "WhileNode\n" +
+		"├ Condition: VariableNode\n" +
 		"│            ╰ Name: foo\n" +
-		"╰ Body: AssignStmt\n" +
+		"╰ Body: AssignNode\n" +
 		"        ├ Name: bar\n" +
-		"        ╰ Expr: VariableExpr\n" +
+		"        ╰ Expr: VariableNode\n" +
 		"                ╰ Name: baz\n" +
-		"        AssignStmt\n" +
+		"        AssignNode\n" +
 		"        ├ Name: quux\n" +
-		"        ╰ Expr: VariableExpr\n" +
+		"        ╰ Expr: VariableNode\n" +
 		"                ╰ Name: norf\n"
 	actual := capture(func() {
-		n := WhileStmt{
-			Condition: VariableExpr{Name: "foo"},
+		n := WhileNode{
+			Condition: VariableNode{Name: "foo"},
 			Body: []Node{
-				AssignStmt{
+				AssignNode{
 					Name: "bar",
-					Expr: VariableExpr{Name: "baz"},
+					Expr: VariableNode{Name: "baz"},
 				},
-				AssignStmt{
+				AssignNode{
 					Name: "quux",
-					Expr: VariableExpr{Name: "norf"},
+					Expr: VariableNode{Name: "norf"},
 				},
 			},
 		}

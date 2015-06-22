@@ -1,790 +1,326 @@
 package parser
 
 import (
+	"bytes"
 	"github.com/stretchr/testify/assert"
 	"github.com/tboronczyk/kiwi/ast"
+	"github.com/tboronczyk/kiwi/scanner"
 	"github.com/tboronczyk/kiwi/token"
 	"testing"
 )
 
-type tokenPair struct {
-	token token.Token
-	value string
-}
-
-type mockScanner struct {
-	i  uint8
-	tp []tokenPair
-}
-
-func NewMockScanner() *mockScanner {
-	return &mockScanner{i: 0}
-}
-
-func (s *mockScanner) reset(pairs []tokenPair) {
-	s.i = 0
-	s.tp = pairs
-}
-
-func (s *mockScanner) Scan() (token.Token, string) {
-	t := s.tp[s.i].token
-	v := s.tp[s.i].value
-	s.i++
-	return t, v
+func newParser(s string) *Parser {
+	return New(scanner.New(bytes.NewReader([]byte(s))))
 }
 
 func TestSkipComment(t *testing.T) {
-	s := NewMockScanner()
-	s.reset([]tokenPair{
-		{token.COMMENT, "//"},
-		{token.STRING, ""},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	assert.Equal(t, token.STRING, p.token)
+	p := newParser("//\n \tfoo")
+	str := p.identifier()
+	assert.Equal(t, "foo", str)
 }
 
 func TestParseNil(t *testing.T) {
-	s := NewMockScanner()
-	s.reset([]tokenPair{
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("")
 	result, _ := p.Parse()
 	assert.Nil(t, result)
 }
 
 func TestParseRecovery(t *testing.T) {
-	s := NewMockScanner()
-	s.reset([]tokenPair{
-		{token.NUMBER, "42"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("42")
 	_, err := p.Parse()
-	assert.Equal(t, "Expected statement but saw NUMBER", err.Error())
+	assert.NotNil(t, err)
 }
 
 func TestParseIdentifier(t *testing.T) {
-	s := NewMockScanner()
-	// foo
-	s.reset([]tokenPair{
-		{token.IDENTIFIER, "foo"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("foo")
 	str := p.identifier()
 	assert.Equal(t, "foo", str)
 }
 
 func TestParseIdentifierError(t *testing.T) {
-	s := NewMockScanner()
-	// foo
-	s.reset([]tokenPair{
-		{token.NUMBER, "42"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("42")
 	assert.Panics(t, func() {
 		p.identifier()
 	})
 }
 
 func TestParseTerm(t *testing.T) {
-	s := NewMockScanner()
-	// 42 * 73
-	s.reset([]tokenPair{
-		{token.NUMBER, "42"},
-		{token.MULTIPLY, "*"},
-		{token.NUMBER, "73"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.term()
-	assert.Equal(t, token.MULTIPLY, node.(ast.BinaryExpr).Op)
-	assert.Equal(t, token.NUMBER, node.(ast.BinaryExpr).Left.(ast.ValueExpr).Type)
-	assert.Equal(t, token.NUMBER, node.(ast.BinaryExpr).Right.(ast.ValueExpr).Type)
+	p := newParser("42 * 73")
+	node := p.term().(ast.BinaryOpNode)
+	assert.Equal(t, token.MULTIPLY, node.Op)
+	assert.Equal(t, "42", node.Left.(ast.ValueNode).Value)
+	assert.Equal(t, token.NUMBER, node.Left.(ast.ValueNode).Type)
+	assert.Equal(t, "73", node.Right.(ast.ValueNode).Value)
+	assert.Equal(t, token.NUMBER, node.Right.(ast.ValueNode).Type)
 }
 
 func TestParseTermError(t *testing.T) {
-	s := NewMockScanner()
-	// 42 *
-	s.reset([]tokenPair{
-		{token.NUMBER, "42"},
-		{token.MULTIPLY, "*"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("42 *")
 	assert.Panics(t, func() {
 		p.term()
 	})
 }
 
 func TestParseSimpleExpr(t *testing.T) {
-	s := NewMockScanner()
-	// 42 + 73
-	s.reset([]tokenPair{
-		{token.NUMBER, "42"},
-		{token.ADD, "+"},
-		{token.NUMBER, "73"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.simpleExpr()
-	assert.Equal(t, token.ADD, node.(ast.BinaryExpr).Op)
-	assert.Equal(t, token.NUMBER, node.(ast.BinaryExpr).Left.(ast.ValueExpr).Type)
-	assert.Equal(t, token.NUMBER, node.(ast.BinaryExpr).Right.(ast.ValueExpr).Type)
+	p := newParser("42 + 73")
+	node := p.simpleExpr().(ast.BinaryOpNode)
+	assert.Equal(t, token.ADD, node.Op)
+	assert.Equal(t, "42", node.Left.(ast.ValueNode).Value)
+	assert.Equal(t, token.NUMBER, node.Left.(ast.ValueNode).Type)
+	assert.Equal(t, "73", node.Right.(ast.ValueNode).Value)
+	assert.Equal(t, token.NUMBER, node.Right.(ast.ValueNode).Type)
 }
 
 func TestParseSimpleExprError(t *testing.T) {
-	s := NewMockScanner()
-	// 42 +
-	s.reset([]tokenPair{
-		{token.NUMBER, "42"},
-		{token.ADD, "+"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("42 +")
 	assert.Panics(t, func() {
 		p.simpleExpr()
 	})
 }
 
 func TestParseRelation(t *testing.T) {
-	s := NewMockScanner()
-	s.reset([]tokenPair{
-		// 42 < 73
-		{token.NUMBER, "42"},
-		{token.LESS, "<"},
-		{token.NUMBER, "73"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.relation()
-	assert.Equal(t, token.LESS, node.(ast.BinaryExpr).Op)
-	assert.Equal(t, token.NUMBER, node.(ast.BinaryExpr).Left.(ast.ValueExpr).Type)
-	assert.Equal(t, token.NUMBER, node.(ast.BinaryExpr).Right.(ast.ValueExpr).Type)
+	p := newParser("42 < 73")
+	node := p.relation().(ast.BinaryOpNode)
+	assert.Equal(t, token.LESS, node.Op)
+	assert.Equal(t, "42", node.Left.(ast.ValueNode).Value)
+	assert.Equal(t, token.NUMBER, node.Left.(ast.ValueNode).Type)
+	assert.Equal(t, "73", node.Right.(ast.ValueNode).Value)
+	assert.Equal(t, token.NUMBER, node.Right.(ast.ValueNode).Type)
 }
 
 func TestParseRelationError(t *testing.T) {
-	s := NewMockScanner()
-	// 42 <
-	s.reset([]tokenPair{
-		{token.NUMBER, "42"},
-		{token.LESS, "<"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("42 <")
 	assert.Panics(t, func() {
 		p.relation()
 	})
 }
 
 func TestParseExpr(t *testing.T) {
-	s := NewMockScanner()
-	// true && true
-	s.reset([]tokenPair{
-		{token.BOOL, "true"},
-		{token.AND, "&&"},
-		{token.BOOL, "true"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.expr()
-	assert.Equal(t, token.AND, node.(ast.BinaryExpr).Op)
-	assert.Equal(t, token.BOOL, node.(ast.BinaryExpr).Left.(ast.ValueExpr).Type)
-	assert.Equal(t, token.BOOL, node.(ast.BinaryExpr).Right.(ast.ValueExpr).Type)
+	p := newParser("true && false")
+	node := p.expr().(ast.BinaryOpNode)
+	assert.Equal(t, token.AND, node.Op)
+	assert.Equal(t, "TRUE", node.Left.(ast.ValueNode).Value)
+	assert.Equal(t, token.BOOL, node.Left.(ast.ValueNode).Type)
+	assert.Equal(t, "FALSE", node.Right.(ast.ValueNode).Value)
+	assert.Equal(t, token.BOOL, node.Right.(ast.ValueNode).Type)
 }
 
 func TestParseExprError(t *testing.T) {
-	s := NewMockScanner()
-	// true &&
-	s.reset([]tokenPair{
-		{token.BOOL, "true"},
-		{token.AND, "&&"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("true &&")
 	assert.Panics(t, func() {
 		p.expr()
 	})
 }
 
 func TestParseFactorParens(t *testing.T) {
-	s := NewMockScanner()
-	// ( 42 )
-	s.reset([]tokenPair{
-		{token.LPAREN, "("},
-		{token.NUMBER, "42"},
-		{token.RPAREN, ")"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.factor()
-	assert.Equal(t, token.NUMBER, node.(ast.ValueExpr).Type)
+	p := newParser("(42)")
+	node := p.factor().(ast.ValueNode)
+	assert.Equal(t, "42", node.Value)
+	assert.Equal(t, token.NUMBER, node.Type)
 }
 
 func TestParseFactorParensExprError(t *testing.T) {
-	s := NewMockScanner()
-	// ( EOF
-	s.reset([]tokenPair{
-		{token.LPAREN, "("},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("(")
 	assert.Panics(t, func() {
 		p.factor()
 	})
 }
 
 func TestParseFactorParensCloseError(t *testing.T) {
-	s := NewMockScanner()
-	// ( 42 EOF
-	s.reset([]tokenPair{
-		{token.LPAREN, "("},
-		{token.NUMBER, "42"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("(42")
 	assert.Panics(t, func() {
 		p.factor()
 	})
 }
 
 func TestParseFactorSigned(t *testing.T) {
-	s := NewMockScanner()
-	// -42
-	s.reset([]tokenPair{
-		{token.SUBTRACT, "-"},
-		{token.NUMBER, "42"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.factor()
-	assert.Equal(t, token.SUBTRACT, node.(ast.UnaryExpr).Op)
-	assert.Equal(t, token.NUMBER, node.(ast.UnaryExpr).Right.(ast.ValueExpr).Type)
+	p := newParser("-42")
+	node := p.factor().(ast.UnaryOpNode)
+	assert.Equal(t, token.SUBTRACT, node.Op)
+	assert.Equal(t, "42", node.Right.(ast.ValueNode).Value)
+	assert.Equal(t, token.NUMBER, node.Right.(ast.ValueNode).Type)
 }
 
 func TestParseTerminalVariable(t *testing.T) {
-	s := NewMockScanner()
-	// foo
-	s.reset([]tokenPair{
-		{token.IDENTIFIER, "foo"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.terminal()
-	assert.Equal(t, "foo", node.(ast.VariableExpr).Name)
+	p := newParser("foo")
+	node := p.terminal().(ast.VariableNode)
+	assert.Equal(t, "foo", node.Name)
 }
 
 func TestParseCast(t *testing.T) {
-	s := NewMockScanner()
-	// foo:string
-	s.reset([]tokenPair{
-		{token.IDENTIFIER, "foo"},
-		{token.CAST, "!"},
-		{token.IDENTIFIER, "string"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.cast()
-	assert.Equal(t, "string", node.(ast.CastExpr).Cast)
-	assert.Equal(t, "foo", node.(ast.CastExpr).Expr.(ast.VariableExpr).Name)
+	p := newParser("foo!string")
+	node := p.cast().(ast.CastNode)
+	assert.Equal(t, "string", node.Cast)
+	assert.Equal(t, "foo", node.Expr.(ast.VariableNode).Name)
 }
 
 func TestParseTerminalCall(t *testing.T) {
-	s := NewMockScanner()
-	// foo()
-	s.reset([]tokenPair{
-		{token.IDENTIFIER, "foo"},
-		{token.LPAREN, "("},
-		{token.RPAREN, ")"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.terminal()
-	assert.Equal(t, "foo", node.(ast.FuncCall).Name)
+	p := newParser("foo()")
+	node := p.terminal().(ast.FuncCallNode)
+	assert.Equal(t, "foo", node.Name)
+	assert.Equal(t, 0, len(node.Args))
 }
 
 func TestParseTerminalCallWithArgs(t *testing.T) {
-	s := NewMockScanner()
-	// foo(bar, 42, "baz")
-	s.reset([]tokenPair{
-		{token.IDENTIFIER, "foo"},
-		{token.LPAREN, "("},
-		{token.IDENTIFIER, "bar"},
-		{token.COMMA, ","},
-		{token.NUMBER, "42"},
-		{token.COMMA, ","},
-		{token.STRING, "baz"},
-		{token.RPAREN, ")"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.terminal()
-	assert.Equal(t, "foo", node.(ast.FuncCall).Name)
-	assert.Equal(t, "bar", node.(ast.FuncCall).Args[0].(ast.VariableExpr).Name)
-	assert.Equal(t, token.NUMBER, node.(ast.FuncCall).Args[1].(ast.ValueExpr).Type)
-	assert.Equal(t, token.STRING, node.(ast.FuncCall).Args[2].(ast.ValueExpr).Type)
+	p := newParser("foo(bar, 42, \"baz\")")
+	node := p.terminal().(ast.FuncCallNode)
+	assert.Equal(t, "foo", node.Name)
+	assert.Equal(t, "bar", node.Args[0].(ast.VariableNode).Name)
+	assert.Equal(t, token.NUMBER, node.Args[1].(ast.ValueNode).Type)
+	assert.Equal(t, token.STRING, node.Args[2].(ast.ValueNode).Type)
 }
 
 func TestParseTerminalCallWithArgsExprError(t *testing.T) {
-	s := NewMockScanner()
-	// foo(bar, 42 < ,
-	s.reset([]tokenPair{
-		{token.IDENTIFIER, "foo"},
-		{token.LPAREN, "("},
-		{token.IDENTIFIER, "bar"},
-		{token.COMMA, ","},
-		{token.NUMBER, "42"},
-		{token.LESS, "<"},
-		{token.COMMA, ","},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("foo(bar, 42 < ,")
 	assert.Panics(t, func() {
 		p.terminal()
 	})
 }
 
 func TestParseTerminalFuncCallArgsListError(t *testing.T) {
-	s := NewMockScanner()
-	// foo(bar 42
-	s.reset([]tokenPair{
-		{token.IDENTIFIER, "foo"},
-		{token.LPAREN, "("},
-		{token.IDENTIFIER, "bar"},
-		{token.IDENTIFIER, "42"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("foo(bar 42")
 	assert.Panics(t, func() {
 		p.terminal()
 	})
 }
 
 func TestParseBraceStmtListEmpty(t *testing.T) {
-	s := NewMockScanner()
-	// { }
-	s.reset([]tokenPair{
-		{token.LBRACE, "{"},
-		{token.RBRACE, "}"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("{}")
 	node := p.braceStmtList()
 	assert.Equal(t, 0, len(node))
 }
 
 func TestParseBraceStmtList(t *testing.T) {
-	s := NewMockScanner()
-	// { foo := 42. bar := 73. }
-	s.reset([]tokenPair{
-		{token.LBRACE, "{"},
-		{token.IDENTIFIER, "foo"},
-		{token.ASSIGN, ":="},
-		{token.NUMBER, "42"},
-		{token.DOT, "."},
-		{token.IDENTIFIER, "bar"},
-		{token.ASSIGN, ":="},
-		{token.NUMBER, "73"},
-		{token.DOT, "."},
-		{token.RBRACE, "}"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("{foo := 42. bar := 73.}")
 	node := p.braceStmtList()
-	assert.Equal(t, "foo", node[0].(ast.AssignStmt).Name)
-	assert.Equal(t, "bar", node[1].(ast.AssignStmt).Name)
+	assert.Equal(t, "foo", node[0].(ast.AssignNode).Name)
+	assert.Equal(t, "42", node[0].(ast.AssignNode).Expr.(ast.ValueNode).Value)
+	assert.Equal(t, "bar", node[1].(ast.AssignNode).Name)
+	assert.Equal(t, "73", node[1].(ast.AssignNode).Expr.(ast.ValueNode).Value)
 }
 
 func TestParseBraceStmtListStmtError(t *testing.T) {
-	s := NewMockScanner()
-	// { foo := 42. bar 73
-	s.reset([]tokenPair{
-		{token.LBRACE, "{"},
-		{token.IDENTIFIER, "foo"},
-		{token.ASSIGN, ":="},
-		{token.NUMBER, "42"},
-		{token.DOT, "."},
-		{token.IDENTIFIER, "bar"},
-		{token.NUMBER, "73"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("{foo := 42. bar 73")
 	assert.Panics(t, func() {
 		p.braceStmtList()
 	})
 }
 
 func TestParseBraceStmtListBraceError(t *testing.T) {
-	s := NewMockScanner()
-	// { foo := 42.
-	s.reset([]tokenPair{
-		{token.LBRACE, "{"},
-		{token.IDENTIFIER, "foo"},
-		{token.ASSIGN, ":="},
-		{token.NUMBER, "42"},
-		{token.DOT, "."},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("{foo := 42.")
 	assert.Panics(t, func() {
 		p.braceStmtList()
 	})
 }
 
 func TestParseFuncDef(t *testing.T) {
-	s := NewMockScanner()
-	// func foo {}
-	s.reset([]tokenPair{
-		{token.FUNC, "func"},
-		{token.IDENTIFIER, "foo"},
-		{token.LBRACE, "{"},
-		{token.RBRACE, "}"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.stmt()
-	assert.Equal(t, "foo", node.(ast.FuncDef).Name)
+	p := newParser("func foo {}")
+	node := p.stmt().(ast.FuncDefNode)
+	assert.Equal(t, "foo", node.Name)
+	assert.Equal(t, 0, len(node.Args))
+	assert.Equal(t, 0, len(node.Body))
 }
 
 func TestParseFuncDefOneParam(t *testing.T) {
-	s := NewMockScanner()
-	// func foo bar {}
-	s.reset([]tokenPair{
-		{token.FUNC, "func"},
-		{token.IDENTIFIER, "foo"},
-		{token.IDENTIFIER, "bar"},
-		{token.LBRACE, "{"},
-		{token.RBRACE, "}"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.stmt()
-	assert.Equal(t, "foo", node.(ast.FuncDef).Name)
-	assert.Equal(t, "bar", node.(ast.FuncDef).Args[0])
+	p := newParser("func foo bar {}")
+	node := p.stmt().(ast.FuncDefNode)
+	assert.Equal(t, "foo", node.Name)
+	assert.Equal(t, "bar", node.Args[0])
 }
 
 func TestParseFuncDefManyParams(t *testing.T) {
-	s := NewMockScanner()
-	// func foo bar baz {}
-	s.reset([]tokenPair{
-		{token.FUNC, "func"},
-		{token.IDENTIFIER, "foo"},
-		{token.IDENTIFIER, "bar"},
-		{token.COMMA, ","},
-		{token.IDENTIFIER, "baz"},
-		{token.LBRACE, "{"},
-		{token.RBRACE, "}"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.stmt()
-	assert.Equal(t, "foo", node.(ast.FuncDef).Name)
-	assert.Equal(t, "bar", node.(ast.FuncDef).Args[0])
-	assert.Equal(t, "baz", node.(ast.FuncDef).Args[1])
+	p := newParser("func foo bar, baz {}")
+	node := p.stmt().(ast.FuncDefNode)
+	assert.Equal(t, "foo", node.Name)
+	assert.Equal(t, "bar", node.Args[0])
+	assert.Equal(t, "baz", node.Args[1])
 }
 
 func TestParseIfStmt(t *testing.T) {
-	s := NewMockScanner()
-	// if true { foo := 42. }
-	s.reset([]tokenPair{
-		{token.IF, "if"},
-		{token.BOOL, "true"},
-		{token.LBRACE, "{"},
-		{token.IDENTIFIER, "foo"},
-		{token.ASSIGN, ":="},
-		{token.NUMBER, "42"},
-		{token.DOT, "."},
-		{token.RBRACE, "}"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.stmt()
-	assert.Equal(t, token.BOOL, node.(ast.IfStmt).Condition.(ast.ValueExpr).Type)
-	assert.Equal(t, "foo", node.(ast.IfStmt).Body[0].(ast.AssignStmt).Name)
+	p := newParser("if true {foo := 42.}")
+	node := p.stmt().(ast.IfNode)
+	assert.Equal(t, "TRUE", node.Condition.(ast.ValueNode).Value)
+	assert.Equal(t, "foo", node.Body[0].(ast.AssignNode).Name)
 }
 
 func TestParseIfStmtExprError(t *testing.T) {
-	s := NewMockScanner()
-	// if foo = {
-	s.reset([]tokenPair{
-		{token.IF, "if"},
-		{token.IDENTIFIER, "foo"},
-		{token.EQUAL, "="},
-		{token.LBRACE, "{"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("if foo = {")
 	assert.Panics(t, func() {
 		p.stmt()
 	})
 }
 
 func TestParseIfStmtBraceError(t *testing.T) {
-	s := NewMockScanner()
-	// if true foo :=
-	s.reset([]tokenPair{
-		{token.IF, "if"},
-		{token.BOOL, "true"},
-		{token.IDENTIFIER, "foo"},
-		{token.ASSIGN, ":="},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("if true foo :=")
 	assert.Panics(t, func() {
 		p.stmt()
 	})
 }
 
 func TestParseIfStmtWithElse(t *testing.T) {
-	s := NewMockScanner()
-	// if false {} else false { } else { }
-	s.reset([]tokenPair{
-		{token.IF, "if"},
-		{token.BOOL, "false"},
-		{token.LBRACE, "{"},
-		{token.RBRACE, "}"},
-		{token.ELSE, "else"},
-		{token.BOOL, "false"},
-		{token.LBRACE, "{"},
-		{token.RBRACE, "}"},
-		{token.ELSE, "else"},
-		{token.LBRACE, "{"},
-		{token.RBRACE, "}"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.stmt()
-	assert.Equal(t, "false", node.(ast.IfStmt).Else.(ast.IfStmt).Condition.(ast.ValueExpr).Value)
-	assert.Equal(t, "true", node.(ast.IfStmt).Else.(ast.IfStmt).Else.(ast.IfStmt).Condition.(ast.ValueExpr).Value)
+	p := newParser("if false {} else false {} else {}")
+	node := p.stmt().(ast.IfNode)
+	assert.Equal(t, "FALSE", node.Condition.(ast.ValueNode).Value)
+	assert.Equal(t, "FALSE", node.Else.(ast.IfNode).Condition.(ast.ValueNode).Value)
+	assert.Equal(t, "TRUE", node.Else.(ast.IfNode).Else.(ast.IfNode).Condition.(ast.ValueNode).Value)
 }
 
 func TestParseReturnStmt(t *testing.T) {
-	s := NewMockScanner()
-	// return 42.
-	s.reset([]tokenPair{
-		{token.RETURN, "return"},
-		{token.NUMBER, "42"},
-		{token.DOT, "."},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.stmt()
-	assert.Equal(t, token.NUMBER, node.(ast.ReturnStmt).Expr.(ast.ValueExpr).Type)
+	p := newParser("return 42.")
+	node := p.stmt().(ast.ReturnNode)
+	assert.Equal(t, "42", node.Expr.(ast.ValueNode).Value)
 }
 
 func TestParseReturnStmtNoExpr(t *testing.T) {
-	s := NewMockScanner()
-	// return.
-	s.reset([]tokenPair{
-		{token.RETURN, "return"},
-		{token.DOT, "."},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("return.")
 	node := p.stmt()
-	assert.Nil(t, node.(ast.ReturnStmt).Expr)
+	assert.Nil(t, node.(ast.ReturnNode).Expr)
 }
 
 func TestParseWhileStmt(t *testing.T) {
-	s := NewMockScanner()
-	// while foo = true { bar := 42. }
-	s.reset([]tokenPair{
-		{token.WHILE, "while"},
-		{token.IDENTIFIER, "foo"},
-		{token.EQUAL, "="},
-		{token.BOOL, "true"},
-		{token.LBRACE, "{"},
-		{token.IDENTIFIER, "bar"},
-		{token.ASSIGN, ":="},
-		{token.NUMBER, "42"},
-		{token.DOT, "."},
-		{token.RBRACE, "}"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.stmt()
-	assert.Equal(t, token.EQUAL, node.(ast.WhileStmt).Condition.(ast.BinaryExpr).Op)
-	assert.Equal(t, "bar", node.(ast.WhileStmt).Body[0].(ast.AssignStmt).Name)
+	p := newParser("while foo = true {bar := 42.}")
+	node := p.stmt().(ast.WhileNode)
+	assert.Equal(t, token.EQUAL, node.Condition.(ast.BinaryOpNode).Op)
+	assert.Equal(t, "bar", node.Body[0].(ast.AssignNode).Name)
 }
 
 func TestParseWhileStmtExprError(t *testing.T) {
-	s := NewMockScanner()
-	// while foo = {
-	s.reset([]tokenPair{
-		{token.WHILE, "while"},
-		{token.IDENTIFIER, "foo"},
-		{token.EQUAL, "="},
-		{token.LBRACE, "{"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("while foo = {")
 	assert.Panics(t, func() {
 		p.stmt()
 	})
 }
 
 func TestParseStmtError(t *testing.T) {
-	s := NewMockScanner()
-	// .
-	s.reset([]tokenPair{
-		{token.DOT, "."},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser(".")
 	assert.Panics(t, func() {
 		p.stmt()
 	})
 }
 
 func TestParseAssignStmt(t *testing.T) {
-	s := NewMockScanner()
-	// foo := 42 + 73.
-	s.reset([]tokenPair{
-		{token.IDENTIFIER, "foo"},
-		{token.ASSIGN, ":="},
-		{token.NUMBER, "42"},
-		{token.ADD, "+"},
-		{token.NUMBER, "73"},
-		{token.DOT, "."},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
-	node := p.stmt()
-	assert.Equal(t, "foo", node.(ast.AssignStmt).Name)
-	assert.Equal(t, token.ADD, node.(ast.AssignStmt).Expr.(ast.BinaryExpr).Op)
+	p := newParser("foo := 42 + 73.")
+	node := p.stmt().(ast.AssignNode)
+	assert.Equal(t, "foo", node.Name)
+	assert.Equal(t, token.ADD, node.Expr.(ast.BinaryOpNode).Op)
 }
 
 func TestParseAssignSmtExprError(t *testing.T) {
-	s := NewMockScanner()
-	// foo := 42 +
-	s.reset([]tokenPair{
-		{token.IDENTIFIER, "foo"},
-		{token.ASSIGN, ":="},
-		{token.DOT, "."},
-		{token.NUMBER, "42"},
-		{token.ADD, "+"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+	p := newParser("foo := 42 +")
 	assert.Panics(t, func() {
 		p.stmt()
 	})
 }
 
-func TestFuncCall(t *testing.T) {
-	s := NewMockScanner()
-	// foo().
-	s.reset([]tokenPair{
-		{token.IDENTIFIER, "foo"},
-		{token.LPAREN, "("},
-		{token.RPAREN, ")"},
-		{token.DOT, "."},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-	node := p.stmt()
-	assert.Equal(t, "foo", node.(ast.FuncCall).Name)
-	assert.Equal(t, 0, len(node.(ast.FuncCall).Args))
+func TestParseFuncCall(t *testing.T) {
+	p := newParser("foo().")
+	node := p.stmt().(ast.FuncCallNode)
+	assert.Equal(t, "foo", node.Name)
+	assert.Equal(t, 0, len(node.Args))
 }
 
-func TestStmtTerminationError(t *testing.T) {
-	s := NewMockScanner()
-	// foo := 42
-	s.reset([]tokenPair{
-		{token.IDENTIFIER, "foo"},
-		{token.ASSIGN, ":="},
-		{token.NUMBER, "42"},
-		{token.EOF, ""},
-	})
-	p := New()
-	p.InitScanner(s)
-
+func TestParseStmtTerminationError(t *testing.T) {
+	p := newParser("foo := 42")
 	assert.Panics(t, func() {
 		p.stmt()
 	})

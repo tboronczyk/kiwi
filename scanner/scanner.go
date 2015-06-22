@@ -1,34 +1,45 @@
+// Package scanner provides the scanner implementation that lexes Kiwi source
+// code.
 package scanner
 
 import (
 	"bufio"
 	"bytes"
-	"github.com/tboronczyk/kiwi/token"
 	"io"
 	"strings"
 	"unicode"
-)
 
-type Scanner interface {
-	Scan() (token.Token, string)
-}
+	"github.com/tboronczyk/kiwi/token"
+)
 
 const (
+	// The buffer is a cyclic queue of bufSize capcity.
 	bufSize = 3
-	eof     = rune(0)
+	// convenient representation of EOF
+	eof = rune(0)
 )
 
-type scanner struct {
+// Scanner lexes a stream of characters (runes) into tokens and lexemes.
+type Scanner struct {
 	r          *bufio.Reader
-	chars      [bufSize]rune
-	rPos, wPos uint8
+	rPos, wPos uint8         // read and write positions in chars buffer.
+	chars      [bufSize]rune // buffer to support more than one unread.
 }
 
-func New(r io.Reader) *scanner {
-	return &scanner{r: bufio.NewReader(r)}
+// New returns a new scanner that reads from r.
+func New(r io.Reader) *Scanner {
+	return &Scanner{
+		r: bufio.NewReader(r),
+	}
 }
 
-func (s *scanner) read() rune {
+// read manages the scanner's buffer and returns runes from it. If there isn't
+// a rune in the buffer beyond the current read position (a.k.a. the next rune
+// to return), a rune is consumed from the reader into the buffer at the
+// current write position and the write position is advanced. No such write is
+// performed if runes are buffered beyond the current read position. The read
+// position is then advanced and the rune it points to is returned.
+func (s *Scanner) read() rune {
 	if s.rPos == s.wPos {
 		if s.wPos++; s.wPos == bufSize {
 			s.wPos = 0
@@ -47,14 +58,19 @@ func (s *scanner) read() rune {
 	return ch
 }
 
-func (s *scanner) unread() {
+// unread adjusts the read position backwards in the buffer so the previous
+// rune is current. The formerly-current rune will be returned on the next call
+// to read.
+func (s *Scanner) unread() {
 	if s.rPos == 0 {
 		s.rPos = bufSize
 	}
 	s.rPos--
 }
 
-func (s *scanner) Scan() (token.Token, string) {
+// Scan consumes a lexeme from the reader's stream and returns its Token and
+// string values.
+func (s *Scanner) Scan() (token.Token, string) {
 	s.skipWhitespace()
 	ch := s.read()
 
@@ -68,6 +84,7 @@ func (s *scanner) Scan() (token.Token, string) {
 	case '*':
 		return token.MULTIPLY, "*"
 	case '/':
+		// line comment, multi-line comment, or division
 		ch = s.read()
 		if ch == '/' {
 			return s.scanLineComment()
@@ -89,6 +106,7 @@ func (s *scanner) Scan() (token.Token, string) {
 	case '=':
 		return token.EQUAL, "="
 	case '<':
+		// less than or less/equal
 		ch = s.read()
 		if ch == '=' {
 			return token.LESS_EQ, "<="
@@ -96,6 +114,7 @@ func (s *scanner) Scan() (token.Token, string) {
 		s.unread()
 		return token.LESS, "<"
 	case '>':
+		// greater than or greater/equal
 		ch = s.read()
 		if ch == '=' {
 			return token.GREATER_EQ, ">="
@@ -117,6 +136,7 @@ func (s *scanner) Scan() (token.Token, string) {
 		s.unread()
 		return token.MALFORMED, "|"
 	case '~':
+		// not or non-equality
 		ch = s.read()
 		if ch == '=' {
 			return token.NOT_EQUAL, "~="
@@ -140,6 +160,7 @@ func (s *scanner) Scan() (token.Token, string) {
 	case '"':
 		return s.scanString()
 	case '`':
+		// identifiers may be escaped
 		s.unread()
 		return s.scanIdent()
 	}
@@ -156,7 +177,9 @@ func (s *scanner) Scan() (token.Token, string) {
 	return token.UNKNOWN, string(ch)
 }
 
-func (s *scanner) skipWhitespace() {
+// skipWhitespace consumes whitespace by reading up to the first
+// non-whitespace rune it encounters.
+func (s *Scanner) skipWhitespace() {
 	for {
 		if ch := s.read(); !unicode.IsSpace(ch) {
 			s.unread()
@@ -165,10 +188,13 @@ func (s *scanner) skipWhitespace() {
 	}
 }
 
-func (s *scanner) scanString() (token.Token, string) {
+// scanString consumes a string lexeme and returns its Token and value. Escape
+// sequences in the string are evaluated and replaced.
+func (s *Scanner) scanString() (token.Token, string) {
 	var buf bytes.Buffer
 	for {
 		if ch := s.read(); ch != '"' {
+			// must have a closing quote
 			if ch == eof {
 				return token.MALFORMED, buf.String()
 			}
@@ -201,7 +227,10 @@ func (s *scanner) scanString() (token.Token, string) {
 	return token.STRING, buf.String()
 }
 
-func (s *scanner) scanIdent() (token.Token, string) {
+// scanIdent consumes an identifier lexeme and returns its Token and value. An
+// identifier will be recognized as a keyword if it matches the list of Kiwi
+// keywords and is not escaped. 
+func (s *Scanner) scanIdent() (token.Token, string) {
 	var buf bytes.Buffer
 	buf.WriteRune(s.read())
 
@@ -219,26 +248,29 @@ func (s *scanner) scanIdent() (token.Token, string) {
 		str = str[1:]
 	} else {
 		switch strings.ToUpper(str) {
+		case "ELSE":
+			return token.ELSE, str
+		case "FALSE":
+			return token.BOOL, strings.ToUpper(str)
 		case "FUNC":
 			return token.FUNC, str
 		case "IF":
 			return token.IF, str
-		case "ELSE":
-			return token.ELSE, str
 		case "RETURN":
 			return token.RETURN, str
-		case "WHILE":
-			return token.WHILE, str
 		case "TRUE":
 			return token.BOOL, strings.ToUpper(str)
-		case "FALSE":
-			return token.BOOL, strings.ToUpper(str)
+		case "WHILE":
+			return token.WHILE, str
 		}
 	}
 	return token.IDENTIFIER, str
 }
 
-func (s *scanner) scanNumber() (token.Token, string) {
+// scanNumber consumes a numeric lexeme and returns its Token and value. The
+// numeric value may be an integer or real number. When it's real, the decimal
+// part must have at least one digit.
+func (s *Scanner) scanNumber() (token.Token, string) {
 	var ch rune
 	var buf bytes.Buffer
 
@@ -274,7 +306,9 @@ func (s *scanner) scanNumber() (token.Token, string) {
 	return token.NUMBER, buf.String()
 }
 
-func (s *scanner) scanLineComment() (token.Token, string) {
+// scanLineComment consumes a full-line comment and returns its Token and
+// value. The line comment ends when either a newline character or EOF is read.
+func (s *Scanner) scanLineComment() (token.Token, string) {
 	var buf bytes.Buffer
 	buf.WriteString("//")
 	for {
@@ -287,13 +321,16 @@ func (s *scanner) scanLineComment() (token.Token, string) {
 	return token.COMMENT, buf.String()
 }
 
-func (s *scanner) scanMultiComment() (token.Token, string) {
+// scanMultiComment consumes a muti-line comment and returns its Token and
+// value. The nesting of multi-line comments is allowed.
+func (s *Scanner) scanMultiComment() (token.Token, string) {
 	var buf bytes.Buffer
 	buf.WriteString("/*")
 
 	ch1 := s.read()
 	ch2 := s.read()
 	for {
+		// must have a proper closing
 		if ch1 == eof {
 			return token.MALFORMED, buf.String()
 		}
@@ -301,6 +338,7 @@ func (s *scanner) scanMultiComment() (token.Token, string) {
 			buf.WriteString("*/")
 			break
 		}
+		// found a nested comment
 		if ch1 == '/' && ch2 == '*' {
 			_, str := s.scanMultiComment()
 			buf.WriteString(str)

@@ -5,8 +5,8 @@ import (
 	"github.com/tboronczyk/kiwi/ast"
 )
 
-var funcSigs = []ast.FuncDef{
-	ast.FuncDef{
+var funcSigs = []ast.FuncDefNode{
+	ast.FuncDefNode{
 		Name: "write",
 		Args: []string{"value"},
 	},

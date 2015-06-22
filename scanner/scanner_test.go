@@ -1,10 +1,11 @@
 package scanner
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/tboronczyk/kiwi/token"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/tboronczyk/kiwi/token"
 )
 
 func TestScanSimpleTokens(t *testing.T) {

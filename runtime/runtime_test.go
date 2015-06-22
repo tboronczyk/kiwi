@@ -8,10 +8,10 @@ import (
 	"testing"
 )
 
-func TestEvalAssignStmt(t *testing.T) {
-	node := ast.AssignStmt{
+func TestEvalAssignNode(t *testing.T) {
+	node := ast.AssignNode{
 		Name: "foo",
-		Expr: ast.ValueExpr{
+		Expr: ast.ValueNode{
 			Value: "bar",
 			Type:  token.STRING,
 		},
@@ -25,8 +25,8 @@ func TestEvalAssignStmt(t *testing.T) {
 	assert.Equal(t, symtable.STRING, dtype)
 }
 
-func TestEvalFuncDef(t *testing.T) {
-	node := ast.FuncDef{
+func TestEvalFuncDefNode(t *testing.T) {
+	node := ast.FuncDefNode{
 		Name: "foo",
 	}
 
@@ -38,16 +38,16 @@ func TestEvalFuncDef(t *testing.T) {
 	assert.Equal(t, symtable.USRFUNC, dtype)
 }
 
-func TestEvalFuncCallUserDefined(t *testing.T) {
+func TestEvalFuncCallNodeUserDefined(t *testing.T) {
 	r := New()
 	r.funcSet(
 		"foo",
-		ast.FuncDef{
+		ast.FuncDefNode{
 			Args: []string{},
 			Body: []ast.Node{
-				ast.AssignStmt{
+				ast.AssignNode{
 					Name: "bar",
-					Expr: ast.ValueExpr{
+					Expr: ast.ValueNode{
 						Value: "baz",
 						Type:  token.STRING,
 					},
@@ -56,7 +56,7 @@ func TestEvalFuncCallUserDefined(t *testing.T) {
 		},
 		symtable.USRFUNC)
 
-	node := ast.FuncCall{
+	node := ast.FuncCallNode{
 		Name: "foo",
 		Args: []ast.Node{},
 	}
@@ -68,18 +68,18 @@ func TestEvalFuncCallUserDefined(t *testing.T) {
 	})
 }
 
-func TestEvalFuncCallBuiltin(t *testing.T) {
+func TestEvalFuncCallNodeBuiltin(t *testing.T) {
 	r := New()
 	r.funcSet(
 		"foo",
-		ast.FuncDef{Name: "foo", Args: []string{}},
+		ast.FuncDefNode{Name: "foo", Args: []string{}},
 		symtable.BUILTIN,
 	)
 	builtinFuncs["foo"] = func(r *Runtime) {
 		r.pushStack(true, symtable.BOOL)
 	}
 
-	node := ast.FuncCall{
+	node := ast.FuncCallNode{
 		Name: "foo",
 		Args: []ast.Node{},
 	}
@@ -91,25 +91,25 @@ func TestEvalFuncCallBuiltin(t *testing.T) {
 	assert.Equal(t, symtable.BOOL, actual.Type)
 }
 
-func TestEvalFuncCallUserDefinedWithArgs(t *testing.T) {
+func TestEvalFuncCallNodeUserDefinedWithArgs(t *testing.T) {
 	r := New()
 	r.funcSet(
 		"foo",
-		ast.FuncDef{
+		ast.FuncDefNode{
 			Args: []string{"bar"},
 			Body: []ast.Node{
-				ast.AssignStmt{
+				ast.AssignNode{
 					Name: "baz",
-					Expr: ast.VariableExpr{Name: "bar"},
+					Expr: ast.VariableNode{Name: "bar"},
 				},
 			},
 		},
 		symtable.USRFUNC)
 
-	node := ast.FuncCall{
+	node := ast.FuncCallNode{
 		Name: "foo",
 		Args: []ast.Node{
-			ast.ValueExpr{
+			ast.ValueNode{
 				Value: "bar",
 				Type:  token.STRING,
 			},
@@ -123,24 +123,24 @@ func TestEvalFuncCallUserDefinedWithArgs(t *testing.T) {
 	})
 }
 
-func TestEvalFuncCallUserDefinedWithReturn(t *testing.T) {
+func TestEvalFuncCallNodeUserDefinedWithReturn(t *testing.T) {
 	r := New()
 	r.funcSet(
 		"foo",
-		ast.FuncDef{
+		ast.FuncDefNode{
 			Args: []string{"bar"},
 			Body: []ast.Node{
-				ast.ReturnStmt{
-					Expr: ast.VariableExpr{Name: "bar"},
+				ast.ReturnNode{
+					Expr: ast.VariableNode{Name: "bar"},
 				},
 			},
 		},
 		symtable.USRFUNC)
 
-	node := ast.FuncCall{
+	node := ast.FuncCallNode{
 		Name: "foo",
 		Args: []ast.Node{
-			ast.ValueExpr{
+			ast.ValueNode{
 				Value: "bar",
 				Type:  token.STRING,
 			},
@@ -154,8 +154,8 @@ func TestEvalFuncCallUserDefinedWithReturn(t *testing.T) {
 	assert.Equal(t, symtable.STRING, actual.Type)
 }
 
-func TestEvalFuncCallNotExist(t *testing.T) {
-	node := ast.FuncCall{Name: "foo"}
+func TestEvalFuncCallNodeFuncNoExist(t *testing.T) {
+	node := ast.FuncCallNode{Name: "foo"}
 
 	r := New()
 
@@ -164,14 +164,14 @@ func TestEvalFuncCallNotExist(t *testing.T) {
 	})
 }
 
-func TestEvalFuncCallArityMismatch(t *testing.T) {
+func TestEvalFuncCallNodeArityMismatch(t *testing.T) {
 	r := New()
-	r.funcSet("foo", ast.FuncDef{}, symtable.USRFUNC)
+	r.funcSet("foo", ast.FuncDefNode{}, symtable.USRFUNC)
 
-	node := ast.FuncCall{
+	node := ast.FuncCallNode{
 		Name: "foo",
 		Args: []ast.Node{
-			ast.ValueExpr{
+			ast.ValueNode{
 				Value: "bar",
 				Type:  token.STRING,
 			},
@@ -183,16 +183,16 @@ func TestEvalFuncCallArityMismatch(t *testing.T) {
 	})
 }
 
-func TestEvalIfStmtTrue(t *testing.T) {
-	node := ast.IfStmt{
-		Condition: ast.ValueExpr{
+func TestEvalIfNodeTrue(t *testing.T) {
+	node := ast.IfNode{
+		Condition: ast.ValueNode{
 			Value: "true",
 			Type:  token.BOOL,
 		},
 		Body: []ast.Node{
-			ast.AssignStmt{
+			ast.AssignNode{
 				Name: "foo",
-				Expr: ast.ValueExpr{
+				Expr: ast.ValueNode{
 					Value: "bar",
 					Type:  token.STRING,
 				},
@@ -208,21 +208,21 @@ func TestEvalIfStmtTrue(t *testing.T) {
 	assert.Equal(t, symtable.STRING, dtype)
 }
 
-func TestEvalIfStmtFalse(t *testing.T) {
-	node := ast.IfStmt{
-		Condition: ast.ValueExpr{
+func TestEvalIfNodeFalse(t *testing.T) {
+	node := ast.IfNode{
+		Condition: ast.ValueNode{
 			Value: "false",
 			Type:  token.BOOL,
 		},
-		Else: ast.IfStmt{
-			Condition: ast.ValueExpr{
+		Else: ast.IfNode{
+			Condition: ast.ValueNode{
 				Value: "true",
 				Type:  token.BOOL,
 			},
 			Body: []ast.Node{
-				ast.AssignStmt{
+				ast.AssignNode{
 					Name: "foo",
-					Expr: ast.ValueExpr{
+					Expr: ast.ValueNode{
 						Value: "bar",
 						Type:  token.STRING,
 					},
@@ -239,9 +239,9 @@ func TestEvalIfStmtFalse(t *testing.T) {
 	assert.Equal(t, symtable.STRING, dtype)
 }
 
-func TestEvalIfStmtNotBoolCondition(t *testing.T) {
-	node := ast.IfStmt{
-		Condition: ast.ValueExpr{
+func TestEvalIfNodeNotBoolCondition(t *testing.T) {
+	node := ast.IfNode{
+		Condition: ast.ValueNode{
 			Value: "foo",
 			Type:  token.STRING,
 		},
@@ -252,15 +252,15 @@ func TestEvalIfStmtNotBoolCondition(t *testing.T) {
 	})
 }
 
-func TestEvalIfStmtWithReturn(t *testing.T) {
-	node := ast.IfStmt{
-		Condition: ast.ValueExpr{
+func TestEvalIfNodeWithReturn(t *testing.T) {
+	node := ast.IfNode{
+		Condition: ast.ValueNode{
 			Value: "true",
 			Type:  token.BOOL,
 		},
 		Body: []ast.Node{
-			ast.ReturnStmt{
-				Expr: ast.ValueExpr{
+			ast.ReturnNode{
+				Expr: ast.ValueNode{
 					Value: "foo",
 					Type:  token.STRING,
 				},
@@ -276,9 +276,9 @@ func TestEvalIfStmtWithReturn(t *testing.T) {
 	assert.Equal(t, symtable.STRING, actual.Type)
 }
 
-func TestEvalReturnStmt(t *testing.T) {
-	node := ast.ReturnStmt{
-		Expr: ast.ValueExpr{
+func TestEvalReturnNode(t *testing.T) {
+	node := ast.ReturnNode{
+		Expr: ast.ValueNode{
 			Value: "foo",
 			Type:  token.STRING,
 		},
@@ -293,23 +293,23 @@ func TestEvalReturnStmt(t *testing.T) {
 	assert.True(t, r.Return)
 }
 
-func TestEvalWhileStmt(t *testing.T) {
-	node := ast.WhileStmt{
-		Condition: ast.BinaryExpr{
+func TestEvalWhileNode(t *testing.T) {
+	node := ast.WhileNode{
+		Condition: ast.BinaryOpNode{
 			Op:   token.LESS,
-			Left: ast.VariableExpr{Name: "foo"},
-			Right: ast.ValueExpr{
+			Left: ast.VariableNode{Name: "foo"},
+			Right: ast.ValueNode{
 				Value: "3",
 				Type:  token.NUMBER,
 			},
 		},
 		Body: []ast.Node{
-			ast.AssignStmt{
+			ast.AssignNode{
 				Name: "foo",
-				Expr: ast.BinaryExpr{
+				Expr: ast.BinaryOpNode{
 					Op:   token.ADD,
-					Left: ast.VariableExpr{Name: "foo"},
-					Right: ast.ValueExpr{
+					Left: ast.VariableNode{Name: "foo"},
+					Right: ast.ValueNode{
 						Value: "1",
 						Type:  token.NUMBER,
 					},
@@ -327,15 +327,15 @@ func TestEvalWhileStmt(t *testing.T) {
 	assert.Equal(t, symtable.NUMBER, dtype)
 }
 
-func TestEvalWhileStmtWithReturn(t *testing.T) {
-	node := ast.WhileStmt{
-		Condition: ast.ValueExpr{
+func TestEvalWhileNodeWithReturn(t *testing.T) {
+	node := ast.WhileNode{
+		Condition: ast.ValueNode{
 			Value: "true",
 			Type:  token.BOOL,
 		},
 		Body: []ast.Node{
-			ast.ReturnStmt{
-				Expr: ast.ValueExpr{
+			ast.ReturnNode{
+				Expr: ast.ValueNode{
 					Value: "foo",
 					Type:  token.STRING,
 				},
@@ -351,9 +351,9 @@ func TestEvalWhileStmtWithReturn(t *testing.T) {
 	assert.Equal(t, symtable.STRING, actual.Type)
 }
 
-func TestEvalWhileStmtNotBoolCondition(t *testing.T) {
-	node := ast.WhileStmt{
-		Condition: ast.ValueExpr{
+func TestEvalWhileNodeNotBoolCondition(t *testing.T) {
+	node := ast.WhileNode{
+		Condition: ast.ValueNode{
 			Value: "foo",
 			Type:  token.STRING,
 		},
@@ -364,8 +364,8 @@ func TestEvalWhileStmtNotBoolCondition(t *testing.T) {
 	})
 }
 
-func TestEvalVariableExpr(t *testing.T) {
-	node := ast.VariableExpr{Name: "foo"}
+func TestEvalVariableNode(t *testing.T) {
+	node := ast.VariableNode{Name: "foo"}
 
 	r := New()
 	r.varSet("foo", "bar", symtable.STRING)
@@ -376,16 +376,16 @@ func TestEvalVariableExpr(t *testing.T) {
 	assert.Equal(t, symtable.STRING, actual.Type)
 }
 
-func TestEvalVariableExprNotSet(t *testing.T) {
-	node := ast.VariableExpr{Name: "foo"}
+func TestEvalVariableNodeExprNotSet(t *testing.T) {
+	node := ast.VariableNode{Name: "foo"}
 
 	assert.Panics(t, func() {
 		node.Accept(New())
 	})
 }
 
-func TestEvalValueExpr(t *testing.T) {
-	node := ast.ValueExpr{Value: "foo", Type: token.STRING}
+func TestEvalValueNode(t *testing.T) {
+	node := ast.ValueNode{Value: "foo", Type: token.STRING}
 
 	r := New()
 	node.Accept(r)
@@ -395,10 +395,10 @@ func TestEvalValueExpr(t *testing.T) {
 	assert.Equal(t, symtable.STRING, actual.Type)
 }
 
-func TestEvalUnaryExprAdd(t *testing.T) {
-	node := ast.UnaryExpr{
+func TestEvalUnaryOpNodeAdd(t *testing.T) {
+	node := ast.UnaryOpNode{
 		Op: token.ADD,
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "-42",
 			Type:  token.NUMBER,
 		},
@@ -412,10 +412,10 @@ func TestEvalUnaryExprAdd(t *testing.T) {
 	assert.Equal(t, symtable.NUMBER, actual.Type)
 }
 
-func TestEvalUnaryExprSubtract(t *testing.T) {
-	node := ast.UnaryExpr{
+func TestEvalUnaryOpNodeSubtract(t *testing.T) {
+	node := ast.UnaryOpNode{
 		Op: token.SUBTRACT,
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "42",
 			Type:  token.NUMBER,
 		},
@@ -429,10 +429,10 @@ func TestEvalUnaryExprSubtract(t *testing.T) {
 	assert.Equal(t, symtable.NUMBER, actual.Type)
 }
 
-func TestEvalUnaryExprNot(t *testing.T) {
-	node := ast.UnaryExpr{
+func TestEvalUnaryOpNodeNot(t *testing.T) {
+	node := ast.UnaryOpNode{
 		Op: token.NOT,
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "true",
 			Type:  token.BOOL,
 		},
@@ -446,14 +446,14 @@ func TestEvalUnaryExprNot(t *testing.T) {
 	assert.Equal(t, symtable.BOOL, actual.Type)
 }
 
-func TestEvalBinaryExprNumberAdd(t *testing.T) {
-	node := ast.BinaryExpr{
+func TestEvalBinaryOpNodeNumberAdd(t *testing.T) {
+	node := ast.BinaryOpNode{
 		Op: token.ADD,
-		Left: ast.ValueExpr{
+		Left: ast.ValueNode{
 			Value: "11",
 			Type:  token.NUMBER,
 		},
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "7",
 			Type:  token.NUMBER,
 		},
@@ -467,14 +467,14 @@ func TestEvalBinaryExprNumberAdd(t *testing.T) {
 	assert.Equal(t, symtable.NUMBER, actual.Type)
 }
 
-func TestEvalBinaryExprNumberSubtract(t *testing.T) {
-	node := ast.BinaryExpr{
+func TestEvalBinaryOpNodeNumberSubtract(t *testing.T) {
+	node := ast.BinaryOpNode{
 		Op: token.SUBTRACT,
-		Left: ast.ValueExpr{
+		Left: ast.ValueNode{
 			Value: "11",
 			Type:  token.NUMBER,
 		},
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "7",
 			Type:  token.NUMBER,
 		},
@@ -488,14 +488,14 @@ func TestEvalBinaryExprNumberSubtract(t *testing.T) {
 	assert.Equal(t, symtable.NUMBER, actual.Type)
 }
 
-func TestEvalBinaryExprNumberMultiply(t *testing.T) {
-	node := ast.BinaryExpr{
+func TestEvalBinaryOpNodeNumberMultiply(t *testing.T) {
+	node := ast.BinaryOpNode{
 		Op: token.MULTIPLY,
-		Left: ast.ValueExpr{
+		Left: ast.ValueNode{
 			Value: "11",
 			Type:  token.NUMBER,
 		},
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "7",
 			Type:  token.NUMBER,
 		},
@@ -509,14 +509,14 @@ func TestEvalBinaryExprNumberMultiply(t *testing.T) {
 	assert.Equal(t, symtable.NUMBER, actual.Type)
 }
 
-func TestEvalBinaryExprNumberDivide(t *testing.T) {
-	node := ast.BinaryExpr{
+func TestEvalBinaryOpNodeNumberDivide(t *testing.T) {
+	node := ast.BinaryOpNode{
 		Op: token.DIVIDE,
-		Left: ast.ValueExpr{
+		Left: ast.ValueNode{
 			Value: "11",
 			Type:  token.NUMBER,
 		},
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "7",
 			Type:  token.NUMBER,
 		},
@@ -530,14 +530,14 @@ func TestEvalBinaryExprNumberDivide(t *testing.T) {
 	assert.Equal(t, symtable.NUMBER, actual.Type)
 }
 
-func TestEvalUnaryExprModulo(t *testing.T) {
-	node := ast.BinaryExpr{
+func TestEvalUnaryOpNodeModulo(t *testing.T) {
+	node := ast.BinaryOpNode{
 		Op: token.MODULO,
-		Left: ast.ValueExpr{
+		Left: ast.ValueNode{
 			Value: "11",
 			Type:  token.NUMBER,
 		},
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "7",
 			Type:  token.NUMBER,
 		},
@@ -551,14 +551,14 @@ func TestEvalUnaryExprModulo(t *testing.T) {
 	assert.Equal(t, symtable.NUMBER, actual.Type)
 }
 
-func TestEvalBinaryExprNumberEqual(t *testing.T) {
-	node := ast.BinaryExpr{
+func TestEvalBinaryOpNodeNumberEqual(t *testing.T) {
+	node := ast.BinaryOpNode{
 		Op: token.EQUAL,
-		Left: ast.ValueExpr{
+		Left: ast.ValueNode{
 			Value: "11",
 			Type:  token.NUMBER,
 		},
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "7",
 			Type:  token.NUMBER,
 		},
@@ -572,14 +572,14 @@ func TestEvalBinaryExprNumberEqual(t *testing.T) {
 	assert.Equal(t, symtable.BOOL, actual.Type)
 }
 
-func TestEvalBinaryExprNumberLess(t *testing.T) {
-	node := ast.BinaryExpr{
+func TestEvalBinaryOpNodeNumberLess(t *testing.T) {
+	node := ast.BinaryOpNode{
 		Op: token.LESS,
-		Left: ast.ValueExpr{
+		Left: ast.ValueNode{
 			Value: "11",
 			Type:  token.NUMBER,
 		},
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "7",
 			Type:  token.NUMBER,
 		},
@@ -593,14 +593,14 @@ func TestEvalBinaryExprNumberLess(t *testing.T) {
 	assert.Equal(t, symtable.BOOL, actual.Type)
 }
 
-func TestEvalBinaryExprNumberLessEq(t *testing.T) {
-	node := ast.BinaryExpr{
+func TestEvalBinaryOpNodeNumberLessEq(t *testing.T) {
+	node := ast.BinaryOpNode{
 		Op: token.LESS_EQ,
-		Left: ast.ValueExpr{
+		Left: ast.ValueNode{
 			Value: "11",
 			Type:  token.NUMBER,
 		},
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "7",
 			Type:  token.NUMBER,
 		},
@@ -614,14 +614,14 @@ func TestEvalBinaryExprNumberLessEq(t *testing.T) {
 	assert.Equal(t, symtable.BOOL, actual.Type)
 }
 
-func TestEvalBinaryExprNumberGreater(t *testing.T) {
-	node := ast.BinaryExpr{
+func TestEvalBinaryOpNodeNumberGreater(t *testing.T) {
+	node := ast.BinaryOpNode{
 		Op: token.GREATER,
-		Left: ast.ValueExpr{
+		Left: ast.ValueNode{
 			Value: "11",
 			Type:  token.NUMBER,
 		},
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "7",
 			Type:  token.NUMBER,
 		},
@@ -635,14 +635,14 @@ func TestEvalBinaryExprNumberGreater(t *testing.T) {
 	assert.Equal(t, symtable.BOOL, actual.Type)
 }
 
-func TestEvalBinaryExprNumberGreaterEq(t *testing.T) {
-	node := ast.BinaryExpr{
+func TestEvalBinaryOpNodeNumberGreaterEq(t *testing.T) {
+	node := ast.BinaryOpNode{
 		Op: token.GREATER_EQ,
-		Left: ast.ValueExpr{
+		Left: ast.ValueNode{
 			Value: "11",
 			Type:  token.NUMBER,
 		},
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "7",
 			Type:  token.NUMBER,
 		},
@@ -656,14 +656,14 @@ func TestEvalBinaryExprNumberGreaterEq(t *testing.T) {
 	assert.Equal(t, symtable.BOOL, actual.Type)
 }
 
-func TestEvalBinaryExprStringAdd(t *testing.T) {
-	node := ast.BinaryExpr{
+func TestEvalBinaryOpNodeStringAdd(t *testing.T) {
+	node := ast.BinaryOpNode{
 		Op: token.ADD,
-		Left: ast.ValueExpr{
+		Left: ast.ValueNode{
 			Value: "foo",
 			Type:  token.STRING,
 		},
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "bar",
 			Type:  token.STRING,
 		},
@@ -677,14 +677,14 @@ func TestEvalBinaryExprStringAdd(t *testing.T) {
 	assert.Equal(t, symtable.STRING, actual.Type)
 }
 
-func TestEvalBinaryExprStringEqual(t *testing.T) {
-	node := ast.BinaryExpr{
+func TestEvalBinaryOpNodeStringEqual(t *testing.T) {
+	node := ast.BinaryOpNode{
 		Op: token.EQUAL,
-		Left: ast.ValueExpr{
+		Left: ast.ValueNode{
 			Value: "foo",
 			Type:  token.STRING,
 		},
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "bar",
 			Type:  token.STRING,
 		},
@@ -698,14 +698,14 @@ func TestEvalBinaryExprStringEqual(t *testing.T) {
 	assert.Equal(t, symtable.BOOL, actual.Type)
 }
 
-func TestEvalBinaryExprBoolAnd(t *testing.T) {
-	node := ast.BinaryExpr{
+func TestEvalBinaryOpNodeBoolAnd(t *testing.T) {
+	node := ast.BinaryOpNode{
 		Op: token.AND,
-		Left: ast.ValueExpr{
+		Left: ast.ValueNode{
 			Value: "true",
 			Type:  token.BOOL,
 		},
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "true",
 			Type:  token.BOOL,
 		},
@@ -719,14 +719,14 @@ func TestEvalBinaryExprBoolAnd(t *testing.T) {
 	assert.Equal(t, symtable.BOOL, actual.Type)
 }
 
-func TestEvalBinaryExprBoolAndShortCircuit(t *testing.T) {
-	node := ast.BinaryExpr{
+func TestEvalBinaryOpNodeBoolAndShortCircuit(t *testing.T) {
+	node := ast.BinaryOpNode{
 		Op: token.AND,
-		Left: ast.ValueExpr{
+		Left: ast.ValueNode{
 			Value: "false",
 			Type:  token.BOOL,
 		},
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "0",
 			Type:  token.NUMBER,
 		},
@@ -740,14 +740,14 @@ func TestEvalBinaryExprBoolAndShortCircuit(t *testing.T) {
 	assert.Equal(t, symtable.BOOL, actual.Type)
 }
 
-func TestEvalBinaryExprBoolOr(t *testing.T) {
-	node := ast.BinaryExpr{
+func TestEvalBinaryOpNodeBoolOr(t *testing.T) {
+	node := ast.BinaryOpNode{
 		Op: token.OR,
-		Left: ast.ValueExpr{
+		Left: ast.ValueNode{
 			Value: "false",
 			Type:  token.BOOL,
 		},
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "true",
 			Type:  token.BOOL,
 		},
@@ -761,14 +761,14 @@ func TestEvalBinaryExprBoolOr(t *testing.T) {
 	assert.Equal(t, symtable.BOOL, actual.Type)
 }
 
-func TestEvalBinaryExprBoolOrShortCircuit(t *testing.T) {
-	node := ast.BinaryExpr{
+func TestEvalBinaryOpNodeBoolOrShortCircuit(t *testing.T) {
+	node := ast.BinaryOpNode{
 		Op: token.OR,
-		Left: ast.ValueExpr{
+		Left: ast.ValueNode{
 			Value: "true",
 			Type:  token.BOOL,
 		},
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "0",
 			Type:  token.NUMBER,
 		},
@@ -782,14 +782,14 @@ func TestEvalBinaryExprBoolOrShortCircuit(t *testing.T) {
 	assert.Equal(t, symtable.BOOL, actual.Type)
 }
 
-func TestEvalBinaryExprTypeMismatch(t *testing.T) {
-	node := ast.BinaryExpr{
+func TestEvalBinaryOpNodeTypeMismatch(t *testing.T) {
+	node := ast.BinaryOpNode{
 		Op: token.AND,
-		Left: ast.ValueExpr{
+		Left: ast.ValueNode{
 			Value: "true",
 			Type:  token.BOOL,
 		},
-		Right: ast.ValueExpr{
+		Right: ast.ValueNode{
 			Value: "1",
 			Type:  token.NUMBER,
 		},
@@ -800,10 +800,10 @@ func TestEvalBinaryExprTypeMismatch(t *testing.T) {
 	})
 }
 
-func TestEvalCastExprStringToString(t *testing.T) {
-	node := ast.CastExpr{
+func TestEvalCastNodeStringToString(t *testing.T) {
+	node := ast.CastNode{
 		Cast: "string",
-		Expr: ast.ValueExpr{
+		Expr: ast.ValueNode{
 			Value: "123",
 			Type:  token.STRING,
 		},
@@ -817,10 +817,10 @@ func TestEvalCastExprStringToString(t *testing.T) {
 	assert.Equal(t, symtable.STRING, actual.Type)
 }
 
-func TestEvalCastExprStringToNumber(t *testing.T) {
-	node := ast.CastExpr{
+func TestEvalCastNodeStringToNumber(t *testing.T) {
+	node := ast.CastNode{
 		Cast: "number",
-		Expr: ast.ValueExpr{
+		Expr: ast.ValueNode{
 			Value: "123",
 			Type:  token.STRING,
 		},
@@ -834,10 +834,10 @@ func TestEvalCastExprStringToNumber(t *testing.T) {
 	assert.Equal(t, symtable.NUMBER, actual.Type)
 }
 
-func TestEvalCastExprStringToNumberBadString(t *testing.T) {
-	node := ast.CastExpr{
+func TestEvalCastNodeStringToNumberBadString(t *testing.T) {
+	node := ast.CastNode{
 		Cast: "number",
-		Expr: ast.ValueExpr{
+		Expr: ast.ValueNode{
 			Value: "",
 			Type:  token.STRING,
 		},
@@ -851,10 +851,10 @@ func TestEvalCastExprStringToNumberBadString(t *testing.T) {
 	assert.Equal(t, symtable.NUMBER, actual.Type)
 }
 
-func TestEvalCastExprStringToBool(t *testing.T) {
-	node := ast.CastExpr{
+func TestEvalCastNodeStringToBool(t *testing.T) {
+	node := ast.CastNode{
 		Cast: "bool",
-		Expr: ast.ValueExpr{
+		Expr: ast.ValueNode{
 			Value: "123",
 			Type:  token.STRING,
 		},
@@ -868,10 +868,10 @@ func TestEvalCastExprStringToBool(t *testing.T) {
 	assert.Equal(t, symtable.BOOL, actual.Type)
 }
 
-func TestEvalCastExprNumberToString(t *testing.T) {
-	node := ast.CastExpr{
+func TestEvalCastNodeNumberToString(t *testing.T) {
+	node := ast.CastNode{
 		Cast: "string",
-		Expr: ast.ValueExpr{
+		Expr: ast.ValueNode{
 			Value: "123",
 			Type:  token.NUMBER,
 		},
@@ -885,10 +885,10 @@ func TestEvalCastExprNumberToString(t *testing.T) {
 	assert.Equal(t, symtable.STRING, actual.Type)
 }
 
-func TestEvalCastExprNumberToNumber(t *testing.T) {
-	node := ast.CastExpr{
+func TestEvalCastNodeNumberToNumber(t *testing.T) {
+	node := ast.CastNode{
 		Cast: "number",
-		Expr: ast.ValueExpr{
+		Expr: ast.ValueNode{
 			Value: "123",
 			Type:  token.NUMBER,
 		},
@@ -902,10 +902,10 @@ func TestEvalCastExprNumberToNumber(t *testing.T) {
 	assert.Equal(t, symtable.NUMBER, actual.Type)
 }
 
-func TestEvalCastExprNumberToBool(t *testing.T) {
-	node := ast.CastExpr{
+func TestEvalCastNodeNumberToBool(t *testing.T) {
+	node := ast.CastNode{
 		Cast: "bool",
-		Expr: ast.ValueExpr{
+		Expr: ast.ValueNode{
 			Value: "123",
 			Type:  token.NUMBER,
 		},
@@ -919,10 +919,10 @@ func TestEvalCastExprNumberToBool(t *testing.T) {
 	assert.Equal(t, symtable.BOOL, actual.Type)
 }
 
-func TestEvalCastExprBoolToString(t *testing.T) {
-	node := ast.CastExpr{
+func TestEvalCastNodeBoolToString(t *testing.T) {
+	node := ast.CastNode{
 		Cast: "string",
-		Expr: ast.ValueExpr{
+		Expr: ast.ValueNode{
 			Value: "true",
 			Type:  token.BOOL,
 		},
@@ -936,10 +936,10 @@ func TestEvalCastExprBoolToString(t *testing.T) {
 	assert.Equal(t, symtable.STRING, actual.Type)
 }
 
-func TestEvalCastExprBoolToNumberTrue(t *testing.T) {
-	node := ast.CastExpr{
+func TestEvalCastNodeBoolToNumberTrue(t *testing.T) {
+	node := ast.CastNode{
 		Cast: "number",
-		Expr: ast.ValueExpr{
+		Expr: ast.ValueNode{
 			Value: "true",
 			Type:  token.BOOL,
 		},
@@ -953,10 +953,10 @@ func TestEvalCastExprBoolToNumberTrue(t *testing.T) {
 	assert.Equal(t, symtable.NUMBER, actual.Type)
 }
 
-func TestEvalCastExprBoolToNumberFalse(t *testing.T) {
-	node := ast.CastExpr{
+func TestEvalCastNodeBoolToNumberFalse(t *testing.T) {
+	node := ast.CastNode{
 		Cast: "number",
-		Expr: ast.ValueExpr{
+		Expr: ast.ValueNode{
 			Value: "false",
 			Type:  token.BOOL,
 		},
@@ -970,10 +970,10 @@ func TestEvalCastExprBoolToNumberFalse(t *testing.T) {
 	assert.Equal(t, symtable.NUMBER, actual.Type)
 }
 
-func TestEvalCastExprBoolToBool(t *testing.T) {
-	node := ast.CastExpr{
+func TestEvalCastNodeBoolToBool(t *testing.T) {
+	node := ast.CastNode{
 		Cast: "bool",
-		Expr: ast.ValueExpr{
+		Expr: ast.ValueNode{
 			Value: "true",
 			Type:  token.BOOL,
 		},
@@ -987,10 +987,10 @@ func TestEvalCastExprBoolToBool(t *testing.T) {
 	assert.Equal(t, symtable.BOOL, actual.Type)
 }
 
-func TestEvalCastExprBadCast(t *testing.T) {
-	node := ast.CastExpr{
+func TestEvalCastNodeBadCast(t *testing.T) {
+	node := ast.CastNode{
 		Cast: "foo",
-		Expr: ast.ValueExpr{
+		Expr: ast.ValueNode{
 			Value: "true",
 			Type:  token.BOOL,
 		},
