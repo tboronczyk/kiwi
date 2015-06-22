@@ -73,7 +73,7 @@ func (r *Runtime) popStack() stackEntry {
 	return r.stack.Pop().(stackEntry)
 }
 
-func (r *Runtime) VisitValueExpr(n ast.ValueExpr) {
+func (r *Runtime) VisitValueNode(n ast.ValueNode) {
 	switch n.Type {
 	case token.NUMBER:
 		val, _ := strconv.ParseFloat(n.Value, 64)
@@ -88,7 +88,7 @@ func (r *Runtime) VisitValueExpr(n ast.ValueExpr) {
 	}
 }
 
-func (r *Runtime) VisitCastExpr(n ast.CastExpr) {
+func (r *Runtime) VisitCastNode(n ast.CastNode) {
 	n.Expr.Accept(r)
 	expr := r.popStack()
 	switch strings.ToUpper(n.Cast) {
@@ -149,7 +149,7 @@ func (r *Runtime) VisitCastExpr(n ast.CastExpr) {
 	}
 }
 
-func (r *Runtime) VisitVariableExpr(n ast.VariableExpr) {
+func (r *Runtime) VisitVariableNode(n ast.VariableNode) {
 	val, dtype, ok := r.varGet(n.Name)
 	if !ok {
 		panic("Variable is not set")
@@ -157,7 +157,7 @@ func (r *Runtime) VisitVariableExpr(n ast.VariableExpr) {
 	r.pushStack(val, dtype)
 }
 
-func (r *Runtime) VisitUnaryExpr(n ast.UnaryExpr) {
+func (r *Runtime) VisitUnaryOpNode(n ast.UnaryOpNode) {
 	n.Right.Accept(r)
 	right := r.popStack()
 
@@ -180,7 +180,7 @@ func (r *Runtime) VisitUnaryExpr(n ast.UnaryExpr) {
 	}
 }
 
-func (r *Runtime) VisitBinaryExpr(n ast.BinaryExpr) {
+func (r *Runtime) VisitBinaryOpNode(n ast.BinaryOpNode) {
 	n.Left.Accept(r)
 	left := r.popStack()
 	if left.Type == symtable.BOOL {
@@ -255,7 +255,7 @@ func (r *Runtime) VisitBinaryExpr(n ast.BinaryExpr) {
 	}
 }
 
-func (r *Runtime) VisitFuncCall(n ast.FuncCall) {
+func (r *Runtime) VisitFuncCallNode(n ast.FuncCallNode) {
 	defer func() {
 		r.Return = false
 	}()
@@ -264,12 +264,12 @@ func (r *Runtime) VisitFuncCall(n ast.FuncCall) {
 	if !ok {
 		panic("Function not defined")
 	}
-	if len(fun.(ast.FuncDef).Args) != len(n.Args) {
+	if len(fun.(ast.FuncDefNode).Args) != len(n.Args) {
 		panic("Function arity mis-match")
 	}
 
 	s := symtable.New()
-	for i, name := range fun.(ast.FuncDef).Args {
+	for i, name := range fun.(ast.FuncDefNode).Args {
 		n.Args[i].Accept(r)
 		arg := r.popStack()
 		s.Set(name, arg.Value, arg.Type)
@@ -278,7 +278,7 @@ func (r *Runtime) VisitFuncCall(n ast.FuncCall) {
 
 	switch dtype {
 	case symtable.USRFUNC:
-		for _, stmt := range fun.(ast.FuncDef).Body {
+		for _, stmt := range fun.(ast.FuncDefNode).Body {
 			stmt.Accept(r)
 			if r.Return {
 				break
@@ -292,17 +292,17 @@ func (r *Runtime) VisitFuncCall(n ast.FuncCall) {
 	r.leaveScope()
 }
 
-func (r *Runtime) VisitAssignStmt(n ast.AssignStmt) {
+func (r *Runtime) VisitAssignNode(n ast.AssignNode) {
 	n.Expr.Accept(r)
 	expr := r.popStack()
 	r.varSet(n.Name, expr.Value, expr.Type)
 }
 
-func (r *Runtime) VisitFuncDef(n ast.FuncDef) {
+func (r *Runtime) VisitFuncDefNode(n ast.FuncDefNode) {
 	r.funcSet(n.Name, n, symtable.USRFUNC)
 }
 
-func (r *Runtime) VisitIfStmt(n ast.IfStmt) {
+func (r *Runtime) VisitIfNode(n ast.IfNode) {
 	n.Condition.Accept(r)
 	cond := r.popStack()
 	if cond.Type != symtable.BOOL {
@@ -320,12 +320,12 @@ func (r *Runtime) VisitIfStmt(n ast.IfStmt) {
 	}
 }
 
-func (r *Runtime) VisitReturnStmt(n ast.ReturnStmt) {
+func (r *Runtime) VisitReturnNode(n ast.ReturnNode) {
 	n.Expr.Accept(r)
 	r.Return = true
 }
 
-func (r *Runtime) VisitWhileStmt(n ast.WhileStmt) {
+func (r *Runtime) VisitWhileNode(n ast.WhileNode) {
 	for {
 		n.Condition.Accept(r)
 		cond := r.popStack()

@@ -8,32 +8,42 @@ import (
 	"strings"
 )
 
+// AstPrinter implements the NodeVisitor interface to traverse nodes in an
+// abstract syntax tree and pretty-print the tree.
 type AstPrinter struct {
+	// stack is used to manage string padding for proper indenting.
 	stack util.Stack
 }
 
+// NewAstPrinter returns a new AstPrinter.
 func NewAstPrinter() AstPrinter {
 	p := AstPrinter{stack: util.Stack{}}
 	p.push("")
 	return p
 }
 
+// push pushes indent padding string s onto the stack.
 func (p *AstPrinter) push(s string) {
 	p.stack.Push(s)
 }
 
+// peek returns the current padding string on the stack.
 func (p AstPrinter) peek() string {
 	return p.stack.Peek().(string)
 }
 
+// pop removes and returns the current padding string from the stack.
 func (p *AstPrinter) pop() string {
 	return p.stack.Pop().(string)
 }
 
-func (p AstPrinter) VisitValueExpr(n ValueExpr) {
+// VisitValueNode prints the value expression node n.
+func (p AstPrinter) VisitValueNode(n ValueNode) {
 	value := ""
 	switch n.Type {
 	case token.STRING:
+		// strings are presented in quotes with its special characters
+		// escaped
 		r := strings.NewReplacer(
 			"\\\\", "\\",
 			"\r", "\\r",
@@ -44,6 +54,8 @@ func (p AstPrinter) VisitValueExpr(n ValueExpr) {
 		value = "\"" + r.Replace(n.Value) + "\""
 		break
 	case token.NUMBER:
+		// numbers are presented as integers if they are whole, as
+		// floats if they have a decimal.
 		var f, _ = strconv.ParseFloat(n.Value, 64)
 		value = fmt.Sprintf("%f", f)
 		value = strings.TrimRight(value, "0")
@@ -52,13 +64,14 @@ func (p AstPrinter) VisitValueExpr(n ValueExpr) {
 	case token.BOOL:
 		value = strconv.FormatBool(strings.ToUpper(n.Value) == "TRUE")
 	}
-	fmt.Println("ValueExpr")
+	fmt.Println("ValueNode")
 	fmt.Println(p.peek() + "├ Value: " + value)
 	fmt.Println(p.peek() + "╰ Type: " + n.Type.String())
 }
 
-func (p AstPrinter) VisitCastExpr(n CastExpr) {
-	fmt.Println("CastExpr")
+// VisitCastNode prints the cast expression node n.
+func (p AstPrinter) VisitCastNode(n CastNode) {
+	fmt.Println("CastNode")
 	fmt.Println(p.peek() + "├ Cast: " + n.Cast)
 	fmt.Print(p.peek() + "╰ Expr: ")
 	p.push(p.peek() + "        ")
@@ -66,13 +79,15 @@ func (p AstPrinter) VisitCastExpr(n CastExpr) {
 	p.pop()
 }
 
-func (p AstPrinter) VisitVariableExpr(n VariableExpr) {
-	fmt.Println("VariableExpr")
+// VisitVariableNode prints the variable expression node n.
+func (p AstPrinter) VisitVariableNode(n VariableNode) {
+	fmt.Println("VariableNode")
 	fmt.Println(p.peek() + "╰ Name: " + n.Name)
 }
 
-func (p AstPrinter) VisitUnaryExpr(n UnaryExpr) {
-	fmt.Println("UnaryExpr")
+// VisitUnaryOpNode prints the unary operator expression node n.
+func (p AstPrinter) VisitUnaryOpNode(n UnaryOpNode) {
+	fmt.Println("UnaryOpNode")
 	fmt.Println(p.peek() + "├ Op: " + n.Op.String())
 	fmt.Print(p.peek() + "╰ Right: ")
 	p.push(p.peek() + "         ")
@@ -80,8 +95,9 @@ func (p AstPrinter) VisitUnaryExpr(n UnaryExpr) {
 	p.pop()
 }
 
-func (p AstPrinter) VisitBinaryExpr(n BinaryExpr) {
-	fmt.Println("BinaryExpr")
+// VisitBinaryOpNode prints the binary operator expression node n.
+func (p AstPrinter) VisitBinaryOpNode(n BinaryOpNode) {
+	fmt.Println("BinaryOpNode")
 	fmt.Println(p.peek() + "├ Op: " + n.Op.String())
 	fmt.Print(p.peek() + "├ Left: ")
 	p.push(p.peek() + "│       ")
@@ -93,8 +109,9 @@ func (p AstPrinter) VisitBinaryExpr(n BinaryExpr) {
 	p.pop()
 }
 
-func (p AstPrinter) VisitFuncCall(n FuncCall) {
-	fmt.Println("FuncCall")
+// VisitFuncCallNode prints the function call node n.
+func (p AstPrinter) VisitFuncCallNode(n FuncCallNode) {
+	fmt.Println("FuncCallNode")
 	fmt.Println(p.peek() + "├ Name: " + n.Name)
 	fmt.Print(p.peek() + "╰ Args: ")
 	if n.Args == nil {
@@ -110,8 +127,9 @@ func (p AstPrinter) VisitFuncCall(n FuncCall) {
 	p.pop()
 }
 
-func (p AstPrinter) VisitAssignStmt(n AssignStmt) {
-	fmt.Println("AssignStmt")
+// VisitAssignNode prints the assignment node n.
+func (p AstPrinter) VisitAssignNode(n AssignNode) {
+	fmt.Println("AssignNode")
 	fmt.Println(p.peek() + "├ Name: " + n.Name)
 	fmt.Print(p.peek() + "╰ Expr: ")
 	p.push(p.peek() + "        ")
@@ -119,8 +137,9 @@ func (p AstPrinter) VisitAssignStmt(n AssignStmt) {
 	p.pop()
 }
 
-func (p AstPrinter) VisitFuncDef(n FuncDef) {
-	fmt.Println("FuncDef")
+// VisitFuncDefNode prints the function definition node n.
+func (p AstPrinter) VisitFuncDefNode(n FuncDefNode) {
+	fmt.Println("FuncDefNode")
 	fmt.Println(p.peek() + "├ Name: " + n.Name)
 	fmt.Print(p.peek() + "├ Args: ")
 	if n.Args == nil {
@@ -147,8 +166,9 @@ func (p AstPrinter) VisitFuncDef(n FuncDef) {
 	p.pop()
 }
 
-func (p AstPrinter) VisitIfStmt(n IfStmt) {
-	fmt.Println("IfStmt")
+// VisitIfNode prints the if construct node n.
+func (p AstPrinter) VisitIfNode(n IfNode) {
+	fmt.Println("IfNode")
 	fmt.Print(p.peek() + "├ Condition: ")
 	p.push(p.peek() + "│            ")
 	n.Condition.Accept(p)
@@ -177,16 +197,18 @@ func (p AstPrinter) VisitIfStmt(n IfStmt) {
 	p.pop()
 }
 
-func (p AstPrinter) VisitReturnStmt(n ReturnStmt) {
-	fmt.Println("ReturnStmt")
+// VisitReturnNode prints the return statement node n.
+func (p AstPrinter) VisitReturnNode(n ReturnNode) {
+	fmt.Println("ReturnNode")
 	fmt.Print(p.peek() + "╰ Expr: ")
 	p.push(p.peek() + "        ")
 	n.Expr.Accept(p)
 	p.pop()
 }
 
-func (p AstPrinter) VisitWhileStmt(n WhileStmt) {
-	fmt.Println("WhileStmt")
+// VisitWhileNode prints the while construct node n.
+func (p AstPrinter) VisitWhileNode(n WhileNode) {
+	fmt.Println("WhileNode")
 	fmt.Print(p.peek() + "├ Condition: ")
 	p.push(p.peek() + "│            ")
 	n.Condition.Accept(p)

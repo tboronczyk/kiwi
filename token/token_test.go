@@ -1,17 +1,13 @@
 package token
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-type testData struct {
-	actual   string
-	expected string
-}
-
 func TestTokenToString(t *testing.T) {
-	tokens := []testData{
+	tokens := []struct{ actual, expected string }{
 		{UNKNOWN.String(), "UNKNOWN"},
 		{MALFORMED.String(), "MALFORMED"},
 		{EOF.String(), "EOF"},
@@ -20,7 +16,6 @@ func TestTokenToString(t *testing.T) {
 		{MULTIPLY.String(), "*"},
 		{DIVIDE.String(), "/"},
 		{MODULO.String(), "%"},
-		{ASSIGN.String(), ":="},
 		{EQUAL.String(), "="},
 		{NOT_EQUAL.String(), "~="},
 		{LESS.String(), "<"},
@@ -30,23 +25,24 @@ func TestTokenToString(t *testing.T) {
 		{AND.String(), "&&"},
 		{OR.String(), "||"},
 		{NOT.String(), "~"},
-		{LPAREN.String(), "("},
-		{RPAREN.String(), ")"},
-		{LBRACE.String(), "{"},
-		{RBRACE.String(), "}"},
-		{DOT.String(), "."},
-		{COMMA.String(), ","},
-		{CAST.String(), "!"},
-		{COMMENT.String(), "COMMENT"},
 		{IF.String(), "if"},
-		{WHILE.String(), "while"},
 		{FUNC.String(), "func"},
 		{RETURN.String(), "return"},
-		{ELSE.String(), "else"},
+		{WHILE.String(), "while"},
 		{BOOL.String(), "BOOL"},
+		{IDENTIFIER.String(), "IDENTIFIER"},
 		{NUMBER.String(), "NUMBER"},
 		{STRING.String(), "STRING"},
-		{IDENTIFIER.String(), "IDENTIFIER"},
+		{ASSIGN.String(), ":="},
+		{LBRACE.String(), "{"},
+		{RBRACE.String(), "}"},
+		{CAST.String(), "!"},
+		{COMMA.String(), ","},
+		{COMMENT.String(), "COMMENT"},
+		{DOT.String(), "."},
+		{ELSE.String(), "else"},
+		{LPAREN.String(), "("},
+		{RPAREN.String(), ")"},
 		{Token(254).String(), "Token(254)"},
 	}
 
@@ -66,7 +62,7 @@ func TestIsAddOp(t *testing.T) {
 	}
 }
 
-func TestIsMulOp(t *testing.T) {
+func TestTokenIsMulOp(t *testing.T) {
 	for i := 0; i < len(tokens); i++ {
 		tkn := Token(i)
 		if tkn == MULTIPLY || tkn == DIVIDE || tkn == MODULO {
@@ -77,7 +73,7 @@ func TestIsMulOp(t *testing.T) {
 	}
 }
 
-func TestIsCmpOp(t *testing.T) {
+func TestTokenIsCmpOp(t *testing.T) {
 	for i := 0; i < len(tokens); i++ {
 		tkn := Token(i)
 		if tkn == EQUAL || tkn == NOT_EQUAL || tkn == LESS ||
@@ -89,7 +85,7 @@ func TestIsCmpOp(t *testing.T) {
 	}
 }
 
-func TestIsLogOp(t *testing.T) {
+func TestTokenIsLogOp(t *testing.T) {
 	for i := 0; i < len(tokens); i++ {
 		tkn := Token(i)
 		if tkn == AND || tkn == OR || tkn == NOT {
@@ -100,7 +96,7 @@ func TestIsLogOp(t *testing.T) {
 	}
 }
 
-func TestIsExprOp(t *testing.T) {
+func TestTokenIsExprOp(t *testing.T) {
 	for i := 0; i < len(tokens); i++ {
 		tkn := Token(i)
 		if tkn == ADD || tkn == SUBTRACT || tkn == NOT {
@@ -111,7 +107,18 @@ func TestIsExprOp(t *testing.T) {
 	}
 }
 
-func TestIsLiteral(t *testing.T) {
+func TestTokenIsStmtKeyword(t *testing.T) {
+	for i := 0; i < len(tokens); i++ {
+		tkn := Token(i)
+		if tkn == IF || tkn == WHILE || tkn == FUNC || tkn == RETURN {
+			assert.True(t, tkn.IsStmtKeyword(), tkn.String())
+		} else {
+			assert.False(t, tkn.IsStmtKeyword(), tkn.String())
+		}
+	}
+}
+
+func TestTokenIsLiteral(t *testing.T) {
 	for i := 0; i < len(tokens); i++ {
 		tkn := Token(i)
 		if tkn == IDENTIFIER || tkn == BOOL || tkn == NUMBER ||
@@ -119,17 +126,6 @@ func TestIsLiteral(t *testing.T) {
 			assert.True(t, tkn.IsLiteral(), tkn.String())
 		} else {
 			assert.False(t, tkn.IsLiteral(), tkn.String())
-		}
-	}
-}
-
-func TestIsStmtKeyword(t *testing.T) {
-	for i := 0; i < len(tokens); i++ {
-		tkn := Token(i)
-		if tkn == IF || tkn == WHILE || tkn == FUNC || tkn == RETURN {
-			assert.True(t, tkn.IsStmtKeyword(), tkn.String())
-		} else {
-			assert.False(t, tkn.IsStmtKeyword(), tkn.String())
 		}
 	}
 }
