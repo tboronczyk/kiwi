@@ -8,7 +8,6 @@ import (
 	"github.com/tboronczyk/kiwi/parser"
 	"github.com/tboronczyk/kiwi/runtime"
 	"github.com/tboronczyk/kiwi/scanner"
-//	"github.com/tboronczyk/kiwi/symtable"
 	"os"
 )
 

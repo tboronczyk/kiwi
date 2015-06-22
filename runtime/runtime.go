@@ -18,9 +18,9 @@ type stackEntry struct {
 
 type Runtime struct {
 	Return bool
-	funcs  *util.Stack
-	vars   *util.Stack
-	stack  *util.Stack
+	funcs  util.Stack
+	vars   util.Stack
+	stack  util.Stack
 }
 
 func New() *Runtime {
@@ -40,7 +40,8 @@ func New() *Runtime {
 }
 
 func (r *Runtime) funcSet(n string, v interface{}, t symtable.DataType) {
-	r.funcs.Peek().(symtable.SymTable).Set(n, v, t)
+	s := r.funcs.Peek().(symtable.SymTable)
+	s.Set(n, v, t)
 }
 
 func (r *Runtime) funcGet(n string) (interface{}, symtable.DataType, bool) {
@@ -48,7 +49,8 @@ func (r *Runtime) funcGet(n string) (interface{}, symtable.DataType, bool) {
 }
 
 func (r *Runtime) varSet(n string, v interface{}, t symtable.DataType) {
-	r.vars.Peek().(symtable.SymTable).Set(n, v, t)
+	s := r.vars.Peek().(symtable.SymTable)
+	s.Set(n, v, t)
 }
 
 func (r *Runtime) varGet(n string) (interface{}, symtable.DataType, bool) {
