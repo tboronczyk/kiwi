@@ -83,7 +83,8 @@ func (p AstPrinter) VisitCastNode(n *CastNode) {
 // VisitVariableNode prints the variable expression node n.
 func (p AstPrinter) VisitVariableNode(n *VariableNode) {
 	fmt.Println("VariableNode")
-	fmt.Println(p.peek() + "╰ Name: " + n.Name)
+	fmt.Println(p.peek() + "├ Name: " + n.Name)
+	fmt.Printf(p.peek()+"╰ SymTable: %p\n", n.SymTable)
 }
 
 // VisitUnaryOpNode prints the unary operator expression node n.
@@ -116,7 +117,7 @@ func (p AstPrinter) VisitFuncCallNode(n *FuncCallNode) {
 	fmt.Println(p.peek() + "├ Name: " + n.Name)
 	fmt.Print(p.peek() + "╰ Args: ")
 	if n.Args == nil {
-		fmt.Println("␀")
+		fmt.Println("0x00")
 		return
 	}
 	p.push(p.peek() + "        ")
@@ -132,10 +133,11 @@ func (p AstPrinter) VisitFuncCallNode(n *FuncCallNode) {
 func (p AstPrinter) VisitAssignNode(n *AssignNode) {
 	fmt.Println("AssignNode")
 	fmt.Println(p.peek() + "├ Name: " + n.Name)
-	fmt.Print(p.peek() + "╰ Expr: ")
-	p.push(p.peek() + "        ")
+	fmt.Print(p.peek() + "├ Expr: ")
+	p.push(p.peek() + "│       ")
 	n.Expr.Accept(p)
 	p.pop()
+	fmt.Printf(p.peek()+"╰ SymTable: %p\n", n.SymTable)
 }
 
 // VisitFuncDefNode prints the function definition node n.
@@ -144,7 +146,7 @@ func (p AstPrinter) VisitFuncDefNode(n *FuncDefNode) {
 	fmt.Println(p.peek() + "├ Name: " + n.Name)
 	fmt.Print(p.peek() + "├ Args: ")
 	if n.Args == nil {
-		fmt.Println("␀")
+		fmt.Println("0x00")
 	} else {
 		fmt.Println(n.Args[0])
 		if len(n.Args) > 1 {
@@ -155,7 +157,7 @@ func (p AstPrinter) VisitFuncDefNode(n *FuncDefNode) {
 	}
 	fmt.Print(p.peek() + "╰ Body: ")
 	if n.Body == nil {
-		fmt.Println("␀")
+		fmt.Println("0x00")
 		return
 	}
 	p.push(p.peek() + "        ")
@@ -176,7 +178,7 @@ func (p AstPrinter) VisitIfNode(n *IfNode) {
 	p.pop()
 	fmt.Print(p.peek() + "├ Body: ")
 	if n.Body == nil {
-		fmt.Println("␀")
+		fmt.Println("0x00")
 	} else {
 		p.push(p.peek() + "│       ")
 		n.Body[0].Accept(p)
@@ -190,7 +192,7 @@ func (p AstPrinter) VisitIfNode(n *IfNode) {
 	}
 	fmt.Print(p.peek() + "╰ Else: ")
 	if n.Else == nil {
-		fmt.Println("␀")
+		fmt.Println("0x00")
 		return
 	}
 	p.push(p.peek() + "        ")
@@ -216,7 +218,7 @@ func (p AstPrinter) VisitWhileNode(n *WhileNode) {
 	p.pop()
 	fmt.Print(p.peek() + "╰ Body: ")
 	if n.Body == nil {
-		fmt.Println("␀")
+		fmt.Println("0x00")
 		return
 	}
 	p.push(p.peek() + "        ")
