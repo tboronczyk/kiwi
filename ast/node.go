@@ -47,7 +47,7 @@ func (n *VariableNode) Accept(v NodeVisitor) {
 // UnaryOpNode represents a unary operator expression as an AST node.
 type UnaryOpNode struct {
 	Op    token.Token
-	Right Node
+	Expr Node
 }
 
 // Accept visits the unary operator expression node using v.

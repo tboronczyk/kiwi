@@ -48,7 +48,7 @@ func TestVisitValueNodeUnknown(t *testing.T) {
 func TestVisitUnaryNodeBoolNot(t *testing.T) {
 	node := &ast.UnaryOpNode{
 		Op:    token.NOT,
-		Right: &ast.ValueNode{Type: token.BOOL},
+		Expr: &ast.ValueNode{Type: token.BOOL},
 	}
 	a := New()
 	node.Accept(a)
@@ -60,7 +60,7 @@ func TestVisitUnaryNodeBoolNot(t *testing.T) {
 func TestVisitUnaryNodeNumberPos(t *testing.T) {
 	node := &ast.UnaryOpNode{
 		Op:    token.ADD,
-		Right: &ast.ValueNode{Type: token.NUMBER},
+		Expr: &ast.ValueNode{Type: token.NUMBER},
 	}
 	a := New()
 	node.Accept(a)
@@ -72,7 +72,7 @@ func TestVisitUnaryNodeNumberPos(t *testing.T) {
 func TestVisitUnaryNodeNeg(t *testing.T) {
 	node := &ast.UnaryOpNode{
 		Op:    token.SUBTRACT,
-		Right: &ast.ValueNode{Type: token.NUMBER},
+		Expr: &ast.ValueNode{Type: token.NUMBER},
 	}
 	a := New()
 	node.Accept(a)
@@ -84,7 +84,7 @@ func TestVisitUnaryNodeNeg(t *testing.T) {
 func TestVisitUnaryNodeInvalid(t *testing.T) {
 	node := &ast.UnaryOpNode{
 		Op:    token.ADD,
-		Right: &ast.ValueNode{Type: token.BOOL},
+		Expr: &ast.ValueNode{Type: token.BOOL},
 	}
 	a := New()
 

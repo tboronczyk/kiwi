@@ -137,8 +137,8 @@ func TestParseFactorSigned(t *testing.T) {
 	p := newParser("-42")
 	node := p.factor().(*ast.UnaryOpNode)
 	assert.Equal(t, token.SUBTRACT, node.Op)
-	assert.Equal(t, "42", node.Right.(*ast.ValueNode).Value)
-	assert.Equal(t, token.NUMBER, node.Right.(*ast.ValueNode).Type)
+	assert.Equal(t, "42", node.Expr.(*ast.ValueNode).Value)
+	assert.Equal(t, token.NUMBER, node.Expr.(*ast.ValueNode).Type)
 }
 
 func TestParseTerminalVariable(t *testing.T) {

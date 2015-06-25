@@ -29,11 +29,19 @@ func New() *SymTable {
 }
 
 func (s *SymTable) Set(name string, st SymbolType, symbol interface{}) {
-	s.scope.Table[name] = symbol
+	s.scope.Set(name, st, symbol)
+}
+
+func (s *Scope) Set(name string, st SymbolType, symbol interface{}) {
+	s.Table[name] = symbol
 }
 
 func (s *SymTable) Get(name string, st SymbolType) (interface{}, bool) {
-	cur := s.scope
+	return s.scope.Get(name, st)
+}
+
+func (s *Scope) Get(name string, st SymbolType) (interface{}, bool) {
+	cur := s
 	for {
 		if sym, ok := cur.Table[name]; ok {
 			return sym, true

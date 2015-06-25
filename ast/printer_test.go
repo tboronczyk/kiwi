@@ -94,12 +94,12 @@ func TestPrintVariableNode(t *testing.T) {
 func TestPrintUnaryOpNode(t *testing.T) {
 	expected := "UnaryOpNode\n" +
 		"├ Op: -\n" +
-		"╰ Right: VariableNode\n" +
-		"         ╰ Name: foo\n"
+		"╰ Expr: VariableNode\n" +
+		"        ╰ Name: foo\n"
 	actual := capture(func() {
 		n := &UnaryOpNode{
 			Op:    token.SUBTRACT,
-			Right: &VariableNode{Name: "foo"},
+			Expr: &VariableNode{Name: "foo"},
 		}
 		n.Accept(NewAstPrinter())
 	})
