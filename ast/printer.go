@@ -90,9 +90,9 @@ func (p AstPrinter) VisitVariableNode(n *VariableNode) {
 func (p AstPrinter) VisitUnaryOpNode(n *UnaryOpNode) {
 	fmt.Println("UnaryOpNode")
 	fmt.Println(p.peek() + "├ Op: " + n.Op.String())
-	fmt.Print(p.peek() + "╰ Right: ")
-	p.push(p.peek() + "         ")
-	n.Right.Accept(p)
+	fmt.Print(p.peek() + "╰ Expr: ")
+	p.push(p.peek() + "        ")
+	n.Expr.Accept(p)
 	p.pop()
 }
 

@@ -108,7 +108,7 @@ func (a *Analyzer) VisitReturnNode(n *ast.ReturnNode) {
 }
 
 func (a *Analyzer) VisitUnaryOpNode(n *ast.UnaryOpNode) {
-	n.Right.Accept(a)
+	n.Expr.Accept(a)
 	t := a.stack.Pop()
 	if (t == NUMBER && n.Op != token.ADD && n.Op != token.SUBTRACT) ||
 		(t == BOOL && n.Op != token.NOT) {

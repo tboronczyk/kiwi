@@ -143,7 +143,7 @@ func (p *Parser) factor() ast.Node {
 	if p.token.IsExprOp() {
 		node := &ast.UnaryOpNode{Op: p.token}
 		p.advance()
-		node.Right = p.factor()
+		node.Expr = p.factor()
 		return node
 	}
 	return p.cast()
