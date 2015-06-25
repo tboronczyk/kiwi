@@ -1,8 +1,6 @@
 package symtable
 
 type (
-	SymbolType uint8
-
 	Table map[string]interface{}
 
 	SymTable struct {
@@ -11,21 +9,15 @@ type (
 	}
 )
 
-const (
-	UNKNOWN SymbolType = iota
-	VARIABLE
-	FUNCTION
-)
-
 func New() *SymTable {
 	return &SymTable{Table: make(Table, 0)}
 }
 
-func (s *SymTable) Set(name string, st SymbolType, symbol interface{}) {
+func (s *SymTable) Set(name string, symbol interface{}) {
 	s.Table[name] = symbol
 }
 
-func (s *SymTable) Get(name string, st SymbolType) (interface{}, bool) {
+func (s *SymTable) Get(name string) (interface{}, bool) {
 	cur := s
 	for {
 		if sym, ok := cur.Table[name]; ok {

@@ -7,9 +7,9 @@ import (
 
 func TestSymbolTableSetGet(t *testing.T) {
 	s := New()
-	s.Set("foo", VARIABLE, 42)
+	s.Set("foo", 42)
 
-	value, ok := s.Get("foo", VARIABLE)
+	value, ok := s.Get("foo")
 	assert.Equal(t, 42, value)
 	assert.True(t, ok)
 }
@@ -17,17 +17,17 @@ func TestSymbolTableSetGet(t *testing.T) {
 func TestSymbolTableGetNoExist(t *testing.T) {
 	s := New()
 
-	value, ok := s.Get("foo", VARIABLE)
+	value, ok := s.Get("foo")
 	assert.Nil(t, value)
 	assert.False(t, ok)
 }
 
 func TestSymbolTableNewScopeGet(t *testing.T) {
 	s := New()
-	s.Set("foo", VARIABLE, 42)
+	s.Set("foo", 42)
 	s = ScopeEnter(s)
 
-	value, ok := s.Get("foo", VARIABLE)
+	value, ok := s.Get("foo")
 	assert.Equal(t, 42, value)
 	assert.True(t, ok)
 }
@@ -36,23 +36,23 @@ func TestSymbolTableNewScopeGetNoExit(t *testing.T) {
 	s := New()
 	s = ScopeEnter(s)
 
-	value, ok := s.Get("foo", VARIABLE)
+	value, ok := s.Get("foo")
 	assert.Nil(t, value)
 	assert.False(t, ok)
 }
 
 func TestSymbolTableNewScopeSet(t *testing.T) {
 	s := New()
-	s.Set("foo", VARIABLE, 42)
+	s.Set("foo", 42)
 	s = ScopeEnter(s)
-	s.Set("foo", VARIABLE, 73)
+	s.Set("foo", 73)
 
-	value, ok := s.Get("foo", VARIABLE)
+	value, ok := s.Get("foo")
 	assert.Equal(t, 73, value)
 	assert.True(t, ok)
 
 	s = ScopeLeave(s)
-	value, ok = s.Get("foo", VARIABLE)
+	value, ok = s.Get("foo")
 	assert.Equal(t, 42, value)
 	assert.True(t, ok)
 }
