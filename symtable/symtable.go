@@ -5,13 +5,9 @@ type (
 
 	Table map[string]interface{}
 
-	Scope struct {
-		Table
-		parent *Scope
-	}
-
 	SymTable struct {
-		scope *Scope
+		Table
+		parent *SymTable
 	}
 )
 
@@ -22,25 +18,14 @@ const (
 )
 
 func New() *SymTable {
-	s := &SymTable{
-		scope: &Scope{Table: make(Table, 0)},
-	}
-	return s
+	return &SymTable{Table: make(Table, 0)}
 }
 
 func (s *SymTable) Set(name string, st SymbolType, symbol interface{}) {
-	s.scope.Set(name, st, symbol)
-}
-
-func (s *Scope) Set(name string, st SymbolType, symbol interface{}) {
 	s.Table[name] = symbol
 }
 
 func (s *SymTable) Get(name string, st SymbolType) (interface{}, bool) {
-	return s.scope.Get(name, st)
-}
-
-func (s *Scope) Get(name string, st SymbolType) (interface{}, bool) {
 	cur := s
 	for {
 		if sym, ok := cur.Table[name]; ok {
@@ -53,17 +38,12 @@ func (s *Scope) Get(name string, st SymbolType) (interface{}, bool) {
 	}
 }
 
-func (s *SymTable) Enter() {
-	s.scope = &Scope{
-		Table:  make(Table, 0),
-		parent: s.scope,
-	}
+func ScopeEnter(s *SymTable) *SymTable {
+	t := New()
+	t.parent = s
+	return t
 }
 
-func (s *SymTable) Leave() {
-	s.scope = s.scope.parent
-}
-
-func (s SymTable) Current() *Scope {
-	return s.scope
+func ScopeLeave(s *SymTable) *SymTable {
+	return s.parent
 }

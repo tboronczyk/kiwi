@@ -14,7 +14,7 @@ type (
 
 	Analyzer struct {
 		stack    util.Stack
-		symtable *symtable.SymTable
+		symTable *symtable.SymTable
 	}
 )
 
@@ -30,15 +30,15 @@ const (
 func New() *Analyzer {
 	return &Analyzer{
 		stack:    util.NewStack(),
-		symtable: symtable.New(),
+		symTable: symtable.New(),
 	}
 }
 
 func (a *Analyzer) VisitAssignNode(n *ast.AssignNode) {
 	n.Expr.Accept(a)
 	expr := a.stack.Pop()
-	a.symtable.Set(n.Name, symtable.VARIABLE, expr)
-	n.Scope = a.symtable.Current()
+	a.symTable.Set(n.Name, symtable.VARIABLE, expr)
+	n.SymTable = a.symTable
 }
 
 func (a *Analyzer) VisitBinaryOpNode(n *ast.BinaryOpNode) {
@@ -69,7 +69,7 @@ func (a *Analyzer) VisitCastNode(n *ast.CastNode) {
 }
 
 func (a *Analyzer) VisitFuncCallNode(n *ast.FuncCallNode) {
-	dtype, ok := a.symtable.Get(n.Name, symtable.FUNCTION)
+	dtype, ok := a.symTable.Get(n.Name, symtable.FUNCTION)
 	if !ok {
 		panic("Function not defined")
 	}
@@ -78,16 +78,16 @@ func (a *Analyzer) VisitFuncCallNode(n *ast.FuncCallNode) {
 }
 
 func (a *Analyzer) VisitFuncDefNode(n *ast.FuncDefNode) {
-	a.symtable.Set(n.Name, symtable.FUNCTION, UNKNOWN)
-	a.symtable.Enter()
+	a.symTable.Set(n.Name, symtable.FUNCTION, UNKNOWN)
+	a.symTable = symtable.ScopeEnter(a.symTable)
 	for _, arg := range n.Args {
-		a.symtable.Set(arg, symtable.VARIABLE, ANY)
+		a.symTable.Set(arg, symtable.VARIABLE, ANY)
 	}
 	for _, stmt := range n.Body {
 		stmt.Accept(a)
 	}
-	n.Scope = a.symtable.Current()
-	a.symtable.Leave()
+	n.SymTable = a.symTable
+	a.symTable = symtable.ScopeLeave(a.symTable)
 }
 
 func (a *Analyzer) VisitIfNode(n *ast.IfNode) {
@@ -136,10 +136,11 @@ func (a *Analyzer) VisitValueNode(n *ast.ValueNode) {
 }
 
 func (a *Analyzer) VisitVariableNode(n *ast.VariableNode) {
-	dtype, ok := a.symtable.Get(n.Name, symtable.VARIABLE)
+	dtype, ok := a.symTable.Get(n.Name, symtable.VARIABLE)
 	if !ok {
 		panic("Variable not defined")
 	}
+	n.SymTable = a.symTable
 	a.stack.Push(dtype)
 }
 

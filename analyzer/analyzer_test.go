@@ -47,7 +47,7 @@ func TestVisitValueNodeUnknown(t *testing.T) {
 
 func TestVisitUnaryNodeBoolNot(t *testing.T) {
 	node := &ast.UnaryOpNode{
-		Op:    token.NOT,
+		Op:   token.NOT,
 		Expr: &ast.ValueNode{Type: token.BOOL},
 	}
 	a := New()
@@ -59,7 +59,7 @@ func TestVisitUnaryNodeBoolNot(t *testing.T) {
 
 func TestVisitUnaryNodeNumberPos(t *testing.T) {
 	node := &ast.UnaryOpNode{
-		Op:    token.ADD,
+		Op:   token.ADD,
 		Expr: &ast.ValueNode{Type: token.NUMBER},
 	}
 	a := New()
@@ -71,7 +71,7 @@ func TestVisitUnaryNodeNumberPos(t *testing.T) {
 
 func TestVisitUnaryNodeNeg(t *testing.T) {
 	node := &ast.UnaryOpNode{
-		Op:    token.SUBTRACT,
+		Op:   token.SUBTRACT,
 		Expr: &ast.ValueNode{Type: token.NUMBER},
 	}
 	a := New()
@@ -83,7 +83,7 @@ func TestVisitUnaryNodeNeg(t *testing.T) {
 
 func TestVisitUnaryNodeInvalid(t *testing.T) {
 	node := &ast.UnaryOpNode{
-		Op:    token.ADD,
+		Op:   token.ADD,
 		Expr: &ast.ValueNode{Type: token.BOOL},
 	}
 	a := New()
@@ -96,7 +96,7 @@ func TestVisitUnaryNodeInvalid(t *testing.T) {
 func TestVisitVariableNodeAssigned(t *testing.T) {
 	node := &ast.VariableNode{Name: "foo"}
 	a := New()
-	a.symtable.Set("foo", symtable.VARIABLE, STRING)
+	a.symTable.Set("foo", symtable.VARIABLE, STRING)
 	node.Accept(a)
 
 	actual := a.stack.Pop()
@@ -120,7 +120,7 @@ func TestVisitAssignNode(t *testing.T) {
 	a := New()
 	node.Accept(a)
 
-	expr, ok := a.symtable.Get("foo", symtable.VARIABLE)
+	expr, ok := a.symTable.Get("foo", symtable.VARIABLE)
 	assert.Equal(t, STRING, expr)
 	assert.True(t, ok)
 }
@@ -139,20 +139,20 @@ func TestVisitFuncDefNode(t *testing.T) {
 	a := New()
 	node.Accept(a)
 
-	expr, ok := a.symtable.Get("foo", symtable.FUNCTION)
+	expr, ok := a.symTable.Get("foo", symtable.FUNCTION)
 	assert.Equal(t, expr, UNKNOWN)
 	assert.True(t, ok)
 
-	value, _ := node.Scope.Table["bar"]
+	value, _ := node.SymTable.Table["bar"]
 	assert.Equal(t, value, ANY)
 
-	value, _ = node.Scope.Table["baz"]
+	value, _ = node.SymTable.Table["baz"]
 	assert.Equal(t, value, ANY)
 
-	value, _ = node.Scope.Table["qux"]
+	value, _ = node.SymTable.Table["qux"]
 	assert.Equal(t, value, STRING)
 
-	_, ok = node.Scope.Table["norf"]
+	_, ok = node.SymTable.Table["norf"]
 	assert.False(t, ok)
 }
 
@@ -176,8 +176,8 @@ func TestVisitBinaryOpNodeAnyType(t *testing.T) {
 		Right: &ast.VariableNode{Name: "bar"},
 	}
 	a := New()
-	a.symtable.Set("foo", symtable.VARIABLE, ANY)
-	a.symtable.Set("bar", symtable.VARIABLE, ANY)
+	a.symTable.Set("foo", symtable.VARIABLE, ANY)
+	a.symTable.Set("bar", symtable.VARIABLE, ANY)
 	node.Accept(a)
 
 	actual := a.stack.Pop()
@@ -191,8 +191,8 @@ func TestVisitBinaryOpNodeTypeFail(t *testing.T) {
 		Right: &ast.VariableNode{Name: "bar"},
 	}
 	a := New()
-	a.symtable.Set("foo", symtable.VARIABLE, STRING)
-	a.symtable.Set("bar", symtable.VARIABLE, NUMBER)
+	a.symTable.Set("foo", symtable.VARIABLE, STRING)
+	a.symTable.Set("bar", symtable.VARIABLE, NUMBER)
 
 	assert.Panics(t, func() {
 		node.Accept(a)
@@ -202,7 +202,7 @@ func TestVisitBinaryOpNodeTypeFail(t *testing.T) {
 func TestVisitFuncCallNode(t *testing.T) {
 	node := &ast.FuncCallNode{Name: "foo"}
 	a := New()
-	a.symtable.Set("foo", symtable.FUNCTION, ANY)
+	a.symTable.Set("foo", symtable.FUNCTION, ANY)
 	node.Accept(a)
 
 	actual := a.stack.Pop()
@@ -287,10 +287,10 @@ func TestVisitIfNode(t *testing.T) {
 	a := New()
 	node.Accept(a)
 
-	_, ok := a.symtable.Get("foo", symtable.VARIABLE)
+	_, ok := a.symTable.Get("foo", symtable.VARIABLE)
 	assert.True(t, ok)
 
-	_, ok = a.symtable.Get("bar", symtable.VARIABLE)
+	_, ok = a.symTable.Get("bar", symtable.VARIABLE)
 	assert.True(t, ok)
 }
 
@@ -317,7 +317,7 @@ func TestVisitWhileNode(t *testing.T) {
 	a := New()
 	node.Accept(a)
 
-	_, ok := a.symtable.Get("foo", symtable.VARIABLE)
+	_, ok := a.symTable.Get("foo", symtable.VARIABLE)
 	assert.True(t, ok)
 }
 
