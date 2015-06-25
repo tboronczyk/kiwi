@@ -44,12 +44,36 @@ func (a *Analyzer) VisitAssignNode(n *ast.AssignNode) {
 func (a *Analyzer) VisitBinaryOpNode(n *ast.BinaryOpNode) {
 	n.Left.Accept(a)
 	left := a.stack.Pop()
+
 	n.Right.Accept(a)
 	right := a.stack.Pop()
+
 	if left != ANY && right != ANY && left != right {
 		panic("Type mis-match")
 	}
-	a.stack.Push(left)
+
+	if (left == NUMBER || right == NUMBER) &&
+		(n.Op == token.ADD || n.Op == token.SUBTRACT ||
+			n.Op == token.MULTIPLY || n.Op == token.DIVIDE ||
+			n.Op == token.MODULO) {
+		a.stack.Push(NUMBER)
+		return
+	}
+	if (left == STRING || right == STRING) &&
+		(n.Op == token.ADD) {
+		a.stack.Push(STRING)
+		return
+	}
+
+	if n.Op == token.EQUAL || n.Op == token.NOT_EQUAL ||
+		n.Op == token.LESS || n.Op == token.LESS_EQ ||
+		n.Op == token.GREATER || n.Op == token.GREATER_EQ ||
+		n.Op == token.AND || n.Op == token.OR {
+		a.stack.Push(BOOL)
+		return
+	}
+
+	a.stack.Push(ANY)
 }
 
 func (a *Analyzer) VisitCastNode(n *ast.CastNode) {
