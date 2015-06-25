@@ -229,7 +229,7 @@ func (s *Scanner) scanString() (token.Token, string) {
 
 // scanIdent consumes an identifier lexeme and returns its Token and value. An
 // identifier will be recognized as a keyword if it matches the list of Kiwi
-// keywords and is not escaped. 
+// keywords and is not escaped.
 func (s *Scanner) scanIdent() (token.Token, string) {
 	var buf bytes.Buffer
 	buf.WriteRune(s.read())

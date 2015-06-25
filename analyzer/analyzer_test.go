@@ -45,7 +45,7 @@ func TestVisitValueNodeUnknown(t *testing.T) {
 	})
 }
 
-func TestVisitUnaryNode(t *testing.T) {
+func TestVisitUnaryNodeBoolNot(t *testing.T) {
 	node := &ast.UnaryOpNode{
 		Op:    token.NOT,
 		Right: &ast.ValueNode{Type: token.BOOL},
@@ -55,6 +55,42 @@ func TestVisitUnaryNode(t *testing.T) {
 
 	actual := a.stack.Pop()
 	assert.Equal(t, BOOL, actual)
+}
+
+func TestVisitUnaryNodeNumberPos(t *testing.T) {
+	node := &ast.UnaryOpNode{
+		Op:    token.ADD,
+		Right: &ast.ValueNode{Type: token.NUMBER},
+	}
+	a := New()
+	node.Accept(a)
+
+	actual := a.stack.Pop()
+	assert.Equal(t, NUMBER, actual)
+}
+
+func TestVisitUnaryNodeNeg(t *testing.T) {
+	node := &ast.UnaryOpNode{
+		Op:    token.SUBTRACT,
+		Right: &ast.ValueNode{Type: token.NUMBER},
+	}
+	a := New()
+	node.Accept(a)
+
+	actual := a.stack.Pop()
+	assert.Equal(t, NUMBER, actual)
+}
+
+func TestVisitUnaryNodeInvalid(t *testing.T) {
+	node := &ast.UnaryOpNode{
+		Op:    token.ADD,
+		Right: &ast.ValueNode{Type: token.BOOL},
+	}
+	a := New()
+
+	assert.Panics(t, func() {
+		node.Accept(a)
+	})
 }
 
 func TestVisitVariableNodeAssigned(t *testing.T) {

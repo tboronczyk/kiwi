@@ -1,26 +1,61 @@
 package symtable
 
 type (
-	SymTable map[string]entry
+	SymbolType uint8
 
-	entry struct {
-		value interface{}
-		dtype DataType
+	Table map[string]interface{}
+
+	Scope struct {
+		Table
+		parent *Scope
+	}
+
+	SymTable struct {
+		scope *Scope
 	}
 )
 
-func New() SymTable {
-	return make(SymTable, 0)
-}
+const (
+	UNKNOWN SymbolType = iota
+	VARIABLE
+	FUNCTION
+)
 
-func (s *SymTable) Set(k string, v interface{}, t DataType) {
-	(*s)[k] = entry{value: v, dtype: t}
-}
-
-func (s SymTable) Get(k string) (interface{}, DataType, bool) {
-	e, ok := s[k]
-	if !ok {
-		return nil, UNKNOWN, ok
+func New() *SymTable {
+	s := &SymTable{
+		scope: &Scope{Table: make(Table, 0)},
 	}
-	return e.value, e.dtype, ok
+	return s
+}
+
+func (s *SymTable) Set(name string, st SymbolType, symbol interface{}) {
+	s.scope.Table[name] = symbol
+}
+
+func (s *SymTable) Get(name string, st SymbolType) (interface{}, bool) {
+	cur := s.scope
+	for {
+		if sym, ok := cur.Table[name]; ok {
+			return sym, true
+		}
+		if cur.parent == nil {
+			return nil, false
+		}
+		cur = cur.parent
+	}
+}
+
+func (s *SymTable) Enter() {
+	s.scope = &Scope{
+		Table:  make(Table, 0),
+		parent: s.scope,
+	}
+}
+
+func (s *SymTable) Leave() {
+	s.scope = s.scope.parent
+}
+
+func (s SymTable) Current() *Scope {
+	return s.scope
 }

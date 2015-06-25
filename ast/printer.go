@@ -2,10 +2,11 @@ package ast
 
 import (
 	"fmt"
-	"github.com/tboronczyk/kiwi/token"
-	"github.com/tboronczyk/kiwi/util"
 	"strconv"
 	"strings"
+
+	"github.com/tboronczyk/kiwi/token"
+	"github.com/tboronczyk/kiwi/util"
 )
 
 // AstPrinter implements the NodeVisitor interface to traverse nodes in an
@@ -38,7 +39,7 @@ func (p *AstPrinter) pop() string {
 }
 
 // VisitValueNode prints the value expression node n.
-func (p AstPrinter) VisitValueNode(n ValueNode) {
+func (p AstPrinter) VisitValueNode(n *ValueNode) {
 	value := ""
 	switch n.Type {
 	case token.STRING:
@@ -70,7 +71,7 @@ func (p AstPrinter) VisitValueNode(n ValueNode) {
 }
 
 // VisitCastNode prints the cast expression node n.
-func (p AstPrinter) VisitCastNode(n CastNode) {
+func (p AstPrinter) VisitCastNode(n *CastNode) {
 	fmt.Println("CastNode")
 	fmt.Println(p.peek() + "├ Cast: " + n.Cast)
 	fmt.Print(p.peek() + "╰ Expr: ")
@@ -80,13 +81,13 @@ func (p AstPrinter) VisitCastNode(n CastNode) {
 }
 
 // VisitVariableNode prints the variable expression node n.
-func (p AstPrinter) VisitVariableNode(n VariableNode) {
+func (p AstPrinter) VisitVariableNode(n *VariableNode) {
 	fmt.Println("VariableNode")
 	fmt.Println(p.peek() + "╰ Name: " + n.Name)
 }
 
 // VisitUnaryOpNode prints the unary operator expression node n.
-func (p AstPrinter) VisitUnaryOpNode(n UnaryOpNode) {
+func (p AstPrinter) VisitUnaryOpNode(n *UnaryOpNode) {
 	fmt.Println("UnaryOpNode")
 	fmt.Println(p.peek() + "├ Op: " + n.Op.String())
 	fmt.Print(p.peek() + "╰ Right: ")
@@ -96,7 +97,7 @@ func (p AstPrinter) VisitUnaryOpNode(n UnaryOpNode) {
 }
 
 // VisitBinaryOpNode prints the binary operator expression node n.
-func (p AstPrinter) VisitBinaryOpNode(n BinaryOpNode) {
+func (p AstPrinter) VisitBinaryOpNode(n *BinaryOpNode) {
 	fmt.Println("BinaryOpNode")
 	fmt.Println(p.peek() + "├ Op: " + n.Op.String())
 	fmt.Print(p.peek() + "├ Left: ")
@@ -110,7 +111,7 @@ func (p AstPrinter) VisitBinaryOpNode(n BinaryOpNode) {
 }
 
 // VisitFuncCallNode prints the function call node n.
-func (p AstPrinter) VisitFuncCallNode(n FuncCallNode) {
+func (p AstPrinter) VisitFuncCallNode(n *FuncCallNode) {
 	fmt.Println("FuncCallNode")
 	fmt.Println(p.peek() + "├ Name: " + n.Name)
 	fmt.Print(p.peek() + "╰ Args: ")
@@ -128,7 +129,7 @@ func (p AstPrinter) VisitFuncCallNode(n FuncCallNode) {
 }
 
 // VisitAssignNode prints the assignment node n.
-func (p AstPrinter) VisitAssignNode(n AssignNode) {
+func (p AstPrinter) VisitAssignNode(n *AssignNode) {
 	fmt.Println("AssignNode")
 	fmt.Println(p.peek() + "├ Name: " + n.Name)
 	fmt.Print(p.peek() + "╰ Expr: ")
@@ -138,7 +139,7 @@ func (p AstPrinter) VisitAssignNode(n AssignNode) {
 }
 
 // VisitFuncDefNode prints the function definition node n.
-func (p AstPrinter) VisitFuncDefNode(n FuncDefNode) {
+func (p AstPrinter) VisitFuncDefNode(n *FuncDefNode) {
 	fmt.Println("FuncDefNode")
 	fmt.Println(p.peek() + "├ Name: " + n.Name)
 	fmt.Print(p.peek() + "├ Args: ")
@@ -167,7 +168,7 @@ func (p AstPrinter) VisitFuncDefNode(n FuncDefNode) {
 }
 
 // VisitIfNode prints the if construct node n.
-func (p AstPrinter) VisitIfNode(n IfNode) {
+func (p AstPrinter) VisitIfNode(n *IfNode) {
 	fmt.Println("IfNode")
 	fmt.Print(p.peek() + "├ Condition: ")
 	p.push(p.peek() + "│            ")
@@ -198,7 +199,7 @@ func (p AstPrinter) VisitIfNode(n IfNode) {
 }
 
 // VisitReturnNode prints the return statement node n.
-func (p AstPrinter) VisitReturnNode(n ReturnNode) {
+func (p AstPrinter) VisitReturnNode(n *ReturnNode) {
 	fmt.Println("ReturnNode")
 	fmt.Print(p.peek() + "╰ Expr: ")
 	p.push(p.peek() + "        ")
@@ -207,7 +208,7 @@ func (p AstPrinter) VisitReturnNode(n ReturnNode) {
 }
 
 // VisitWhileNode prints the while construct node n.
-func (p AstPrinter) VisitWhileNode(n WhileNode) {
+func (p AstPrinter) VisitWhileNode(n *WhileNode) {
 	fmt.Println("WhileNode")
 	fmt.Print(p.peek() + "├ Condition: ")
 	p.push(p.peek() + "│            ")

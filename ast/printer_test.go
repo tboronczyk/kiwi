@@ -2,11 +2,12 @@ package ast
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
-	"github.com/tboronczyk/kiwi/token"
 	"io"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/tboronczyk/kiwi/token"
 )
 
 func capture(f func()) string {
@@ -36,7 +37,7 @@ func TestPrintValueNodeNumber(t *testing.T) {
 		"├ Value: 1\n" +
 		"╰ Type: NUMBER\n"
 	actual := capture(func() {
-		n := ValueNode{Value: "1.0", Type: token.NUMBER}
+		n := &ValueNode{Value: "1.0", Type: token.NUMBER}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
@@ -47,7 +48,7 @@ func TestPrintValueNodeString(t *testing.T) {
 		"├ Value: \"foo\"\n" +
 		"╰ Type: STRING\n"
 	actual := capture(func() {
-		n := ValueNode{Value: "foo", Type: token.STRING}
+		n := &ValueNode{Value: "foo", Type: token.STRING}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
@@ -58,7 +59,7 @@ func TestPrintValueNodeBool(t *testing.T) {
 		"├ Value: true\n" +
 		"╰ Type: BOOL\n"
 	actual := capture(func() {
-		n := ValueNode{Value: "True", Type: token.BOOL}
+		n := &ValueNode{Value: "True", Type: token.BOOL}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
@@ -71,7 +72,10 @@ func TestPrintCast(t *testing.T) {
 		"        ├ Value: \"foo\"\n" +
 		"        ╰ Type: STRING\n"
 	actual := capture(func() {
-		n := CastNode{Cast: "string", Expr: ValueNode{Value: "foo", Type: token.STRING}}
+		n := &CastNode{
+			Cast: "string",
+			Expr: &ValueNode{Value: "foo", Type: token.STRING},
+		}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
@@ -81,7 +85,7 @@ func TestPrintVariableNode(t *testing.T) {
 	expected := "VariableNode\n" +
 		"╰ Name: foo\n"
 	actual := capture(func() {
-		n := VariableNode{Name: "foo"}
+		n := &VariableNode{Name: "foo"}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
@@ -93,9 +97,9 @@ func TestPrintUnaryOpNode(t *testing.T) {
 		"╰ Right: VariableNode\n" +
 		"         ╰ Name: foo\n"
 	actual := capture(func() {
-		n := UnaryOpNode{
+		n := &UnaryOpNode{
 			Op:    token.SUBTRACT,
-			Right: VariableNode{Name: "foo"},
+			Right: &VariableNode{Name: "foo"},
 		}
 		n.Accept(NewAstPrinter())
 	})
@@ -110,10 +114,10 @@ func TestPrintBinaryOpNode(t *testing.T) {
 		"╰ Right: VariableNode\n" +
 		"         ╰ Name: bar\n"
 	actual := capture(func() {
-		n := BinaryOpNode{
+		n := &BinaryOpNode{
 			Op:    token.ADD,
-			Left:  VariableNode{Name: "foo"},
-			Right: VariableNode{Name: "bar"},
+			Left:  &VariableNode{Name: "foo"},
+			Right: &VariableNode{Name: "bar"},
 		}
 		n.Accept(NewAstPrinter())
 	})
@@ -126,9 +130,9 @@ func TestPrintAssignNode(t *testing.T) {
 		"╰ Expr: VariableNode\n" +
 		"        ╰ Name: bar\n"
 	actual := capture(func() {
-		n := AssignNode{
+		n := &AssignNode{
 			Name: "foo",
-			Expr: VariableNode{Name: "bar"},
+			Expr: &VariableNode{Name: "bar"},
 		}
 		n.Accept(NewAstPrinter())
 	})
@@ -141,7 +145,7 @@ func TestPrintFuncDefNodeNoArgsOrBody(t *testing.T) {
 		"├ Args: ␀\n" +
 		"╰ Body: ␀\n"
 	actual := capture(func() {
-		n := FuncDefNode{Name: "foo"}
+		n := &FuncDefNode{Name: "foo"}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
@@ -160,15 +164,15 @@ func TestPrintFuncDefNode(t *testing.T) {
 		"        ╰ Expr: VariableNode\n" +
 		"                ╰ Name: baz\n"
 	actual := capture(func() {
-		n := FuncDefNode{
+		n := &FuncDefNode{
 			Name: "foo",
 			Args: []string{"bar", "baz"},
 			Body: []Node{
-				AssignNode{
+				&AssignNode{
 					Name: "bar",
-					Expr: VariableNode{Name: "baz"},
+					Expr: &VariableNode{Name: "baz"},
 				},
-				ReturnNode{Expr: VariableNode{Name: "baz"}},
+				&ReturnNode{Expr: &VariableNode{Name: "baz"}},
 			},
 		}
 		n.Accept(NewAstPrinter())
@@ -181,7 +185,7 @@ func TestPrintFuncCallNodeNoArgs(t *testing.T) {
 		"├ Name: foo\n" +
 		"╰ Args: ␀\n"
 	actual := capture(func() {
-		n := FuncCallNode{Name: "foo"}
+		n := &FuncCallNode{Name: "foo"}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
@@ -195,11 +199,11 @@ func TestPrintFuncCallNode(t *testing.T) {
 		"        VariableNode\n" +
 		"        ╰ Name: bar\n"
 	actual := capture(func() {
-		n := FuncCallNode{
+		n := &FuncCallNode{
 			Name: "foo",
 			Args: []Node{
-				VariableNode{Name: "foo"},
-				VariableNode{Name: "bar"},
+				&VariableNode{Name: "foo"},
+				&VariableNode{Name: "bar"},
 			},
 		}
 		n.Accept(NewAstPrinter())
@@ -214,7 +218,7 @@ func TestPrintIfNodeNoBody(t *testing.T) {
 		"├ Body: ␀\n" +
 		"╰ Else: ␀\n"
 	actual := capture(func() {
-		n := IfNode{Condition: VariableNode{Name: "foo"}}
+		n := &IfNode{Condition: &VariableNode{Name: "foo"}}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
@@ -239,20 +243,20 @@ func TestPrintIfNode(t *testing.T) {
 		"        ├ Body: ␀\n" +
 		"        ╰ Else: ␀\n"
 	actual := capture(func() {
-		n := IfNode{
-			Condition: VariableNode{Name: "foo"},
+		n := &IfNode{
+			Condition: &VariableNode{Name: "foo"},
 			Body: []Node{
-				AssignNode{
+				&AssignNode{
 					Name: "bar",
-					Expr: VariableNode{Name: "baz"},
+					Expr: &VariableNode{Name: "baz"},
 				},
-				AssignNode{
+				&AssignNode{
 					Name: "quux",
-					Expr: VariableNode{Name: "norf"},
+					Expr: &VariableNode{Name: "norf"},
 				},
 			},
-			Else: IfNode{
-				Condition: ValueNode{
+			Else: &IfNode{
+				Condition: &ValueNode{
 					Value: "true",
 					Type:  token.BOOL,
 				},
@@ -268,7 +272,7 @@ func TestPrintReturnNode(t *testing.T) {
 		"╰ Expr: VariableNode\n" +
 		"        ╰ Name: foo\n"
 	actual := capture(func() {
-		n := ReturnNode{Expr: VariableNode{Name: "foo"}}
+		n := &ReturnNode{Expr: &VariableNode{Name: "foo"}}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
@@ -280,7 +284,7 @@ func TestPrintWhileNodeNoBody(t *testing.T) {
 		"│            ╰ Name: foo\n" +
 		"╰ Body: ␀\n"
 	actual := capture(func() {
-		n := WhileNode{Condition: VariableNode{Name: "foo"}}
+		n := &WhileNode{Condition: &VariableNode{Name: "foo"}}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
@@ -299,16 +303,16 @@ func TestPrintWhileNode(t *testing.T) {
 		"        ╰ Expr: VariableNode\n" +
 		"                ╰ Name: norf\n"
 	actual := capture(func() {
-		n := WhileNode{
-			Condition: VariableNode{Name: "foo"},
+		n := &WhileNode{
+			Condition: &VariableNode{Name: "foo"},
 			Body: []Node{
-				AssignNode{
+				&AssignNode{
 					Name: "bar",
-					Expr: VariableNode{Name: "baz"},
+					Expr: &VariableNode{Name: "baz"},
 				},
-				AssignNode{
+				&AssignNode{
 					Name: "quux",
-					Expr: VariableNode{Name: "norf"},
+					Expr: &VariableNode{Name: "norf"},
 				},
 			},
 		}

@@ -38,6 +38,7 @@ func (a *Analyzer) VisitAssignNode(n *ast.AssignNode) {
 	n.Expr.Accept(a)
 	expr := a.stack.Pop()
 	a.symtable.Set(n.Name, symtable.VARIABLE, expr)
+	n.Scope = a.symtable.Current()
 }
 
 func (a *Analyzer) VisitBinaryOpNode(n *ast.BinaryOpNode) {
@@ -108,8 +109,12 @@ func (a *Analyzer) VisitReturnNode(n *ast.ReturnNode) {
 
 func (a *Analyzer) VisitUnaryOpNode(n *ast.UnaryOpNode) {
 	n.Right.Accept(a)
-	// right := a.stack.Pop()
-	// a.stack.Push(right)
+	t := a.stack.Pop()
+	if (t == NUMBER && n.Op != token.ADD && n.Op != token.SUBTRACT) ||
+		(t == BOOL && n.Op != token.NOT) {
+		panic("Invalid type for operator")
+	}
+	a.stack.Push(t)
 }
 
 func (a *Analyzer) VisitValueNode(n *ast.ValueNode) {

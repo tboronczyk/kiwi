@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"github.com/tboronczyk/kiwi/symtable"
 	"github.com/tboronczyk/kiwi/token"
 )
 
@@ -17,7 +18,7 @@ type CastNode struct {
 }
 
 // Accept visits the CastNode node using v.
-func (n CastNode) Accept(v NodeVisitor) {
+func (n *CastNode) Accept(v NodeVisitor) {
 	v.VisitCastNode(n)
 }
 
@@ -28,17 +29,18 @@ type ValueNode struct {
 }
 
 // Accept visits the value expression node using v.
-func (n ValueNode) Accept(v NodeVisitor) {
+func (n *ValueNode) Accept(v NodeVisitor) {
 	v.VisitValueNode(n)
 }
 
 // VariableNode represents a variable expression as an AST node.
 type VariableNode struct {
 	Name string
+	*symtable.Scope
 }
 
 // Accept visits the variable expression node using v.
-func (n VariableNode) Accept(v NodeVisitor) {
+func (n *VariableNode) Accept(v NodeVisitor) {
 	v.VisitVariableNode(n)
 }
 
@@ -49,7 +51,7 @@ type UnaryOpNode struct {
 }
 
 // Accept visits the unary operator expression node using v.
-func (n UnaryOpNode) Accept(v NodeVisitor) {
+func (n *UnaryOpNode) Accept(v NodeVisitor) {
 	v.VisitUnaryOpNode(n)
 }
 
@@ -61,7 +63,7 @@ type BinaryOpNode struct {
 }
 
 // Accept visits the binary operator expression node using v.
-func (n BinaryOpNode) Accept(v NodeVisitor) {
+func (n *BinaryOpNode) Accept(v NodeVisitor) {
 	v.VisitBinaryOpNode(n)
 }
 
@@ -69,10 +71,11 @@ func (n BinaryOpNode) Accept(v NodeVisitor) {
 type FuncCallNode struct {
 	Name string
 	Args []Node
+	*symtable.Scope
 }
 
 // Accept visits the function call node using v.
-func (n FuncCallNode) Accept(v NodeVisitor) {
+func (n *FuncCallNode) Accept(v NodeVisitor) {
 	v.VisitFuncCallNode(n)
 }
 
@@ -80,10 +83,11 @@ func (n FuncCallNode) Accept(v NodeVisitor) {
 type AssignNode struct {
 	Name string
 	Expr Node
+	*symtable.Scope
 }
 
 // Accept visits the assignment node using v.
-func (n AssignNode) Accept(v NodeVisitor) {
+func (n *AssignNode) Accept(v NodeVisitor) {
 	v.VisitAssignNode(n)
 }
 
@@ -92,10 +96,11 @@ type FuncDefNode struct {
 	Name string
 	Args []string
 	Body []Node
+	*symtable.Scope
 }
 
 // Accept visits the function definition node using v.
-func (n FuncDefNode) Accept(v NodeVisitor) {
+func (n *FuncDefNode) Accept(v NodeVisitor) {
 	v.VisitFuncDefNode(n)
 }
 
@@ -107,7 +112,7 @@ type IfNode struct {
 }
 
 // Accept visits the if construct node using v.
-func (n IfNode) Accept(v NodeVisitor) {
+func (n *IfNode) Accept(v NodeVisitor) {
 	v.VisitIfNode(n)
 }
 
@@ -117,7 +122,7 @@ type ReturnNode struct {
 }
 
 // Accept visits the return statement node using v.
-func (n ReturnNode) Accept(v NodeVisitor) {
+func (n *ReturnNode) Accept(v NodeVisitor) {
 	v.VisitReturnNode(n)
 }
 
@@ -128,6 +133,6 @@ type WhileNode struct {
 }
 
 // Accept visits the while construct node using v.
-func (n WhileNode) Accept(v NodeVisitor) {
+func (n *WhileNode) Accept(v NodeVisitor) {
 	v.VisitWhileNode(n)
 }
