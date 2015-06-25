@@ -36,7 +36,7 @@ func (n *ValueNode) Accept(v NodeVisitor) {
 // VariableNode represents a variable expression as an AST node.
 type VariableNode struct {
 	Name string
-	*symtable.Scope
+	*symtable.SymTable
 }
 
 // Accept visits the variable expression node using v.
@@ -46,7 +46,7 @@ func (n *VariableNode) Accept(v NodeVisitor) {
 
 // UnaryOpNode represents a unary operator expression as an AST node.
 type UnaryOpNode struct {
-	Op    token.Token
+	Op   token.Token
 	Expr Node
 }
 
@@ -71,7 +71,7 @@ func (n *BinaryOpNode) Accept(v NodeVisitor) {
 type FuncCallNode struct {
 	Name string
 	Args []Node
-	*symtable.Scope
+	*symtable.SymTable
 }
 
 // Accept visits the function call node using v.
@@ -83,7 +83,7 @@ func (n *FuncCallNode) Accept(v NodeVisitor) {
 type AssignNode struct {
 	Name string
 	Expr Node
-	*symtable.Scope
+	*symtable.SymTable
 }
 
 // Accept visits the assignment node using v.
@@ -96,7 +96,7 @@ type FuncDefNode struct {
 	Name string
 	Args []string
 	Body []Node
-	*symtable.Scope
+	*symtable.SymTable
 }
 
 // Accept visits the function definition node using v.

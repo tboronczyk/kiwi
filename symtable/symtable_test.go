@@ -25,7 +25,7 @@ func TestSymbolTableGetNoExist(t *testing.T) {
 func TestSymbolTableNewScopeGet(t *testing.T) {
 	s := New()
 	s.Set("foo", VARIABLE, 42)
-	s.Enter()
+	s = ScopeEnter(s)
 
 	value, ok := s.Get("foo", VARIABLE)
 	assert.Equal(t, 42, value)
@@ -34,7 +34,7 @@ func TestSymbolTableNewScopeGet(t *testing.T) {
 
 func TestSymbolTableNewScopeGetNoExit(t *testing.T) {
 	s := New()
-	s.Enter()
+	s = ScopeEnter(s)
 
 	value, ok := s.Get("foo", VARIABLE)
 	assert.Nil(t, value)
@@ -44,14 +44,14 @@ func TestSymbolTableNewScopeGetNoExit(t *testing.T) {
 func TestSymbolTableNewScopeSet(t *testing.T) {
 	s := New()
 	s.Set("foo", VARIABLE, 42)
-	s.Enter()
+	s = ScopeEnter(s)
 	s.Set("foo", VARIABLE, 73)
 
 	value, ok := s.Get("foo", VARIABLE)
 	assert.Equal(t, 73, value)
 	assert.True(t, ok)
 
-	s.Leave()
+	s = ScopeLeave(s)
 	value, ok = s.Get("foo", VARIABLE)
 	assert.Equal(t, 42, value)
 	assert.True(t, ok)
