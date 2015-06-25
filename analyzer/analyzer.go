@@ -20,7 +20,6 @@ type (
 
 const (
 	UNKNOWN DataType = iota
-	ANY
 	BOOL
 	FUNCTION
 	NUMBER
@@ -37,7 +36,7 @@ func New() *Analyzer {
 func (a *Analyzer) VisitAssignNode(n *ast.AssignNode) {
 	n.Expr.Accept(a)
 	expr := a.stack.Pop()
-	a.symTable.Set(n.Name, symtable.VARIABLE, expr)
+	a.symTable.Set(n.Name, expr)
 	n.SymTable = a.symTable
 }
 
@@ -48,7 +47,7 @@ func (a *Analyzer) VisitBinaryOpNode(n *ast.BinaryOpNode) {
 	n.Right.Accept(a)
 	right := a.stack.Pop()
 
-	if left != ANY && right != ANY && left != right {
+	if left != right {
 		panic("Type mis-match")
 	}
 
@@ -73,7 +72,7 @@ func (a *Analyzer) VisitBinaryOpNode(n *ast.BinaryOpNode) {
 		return
 	}
 
-	a.stack.Push(ANY)
+	a.stack.Push(UNKNOWN)
 }
 
 func (a *Analyzer) VisitCastNode(n *ast.CastNode) {
@@ -93,7 +92,7 @@ func (a *Analyzer) VisitCastNode(n *ast.CastNode) {
 }
 
 func (a *Analyzer) VisitFuncCallNode(n *ast.FuncCallNode) {
-	dtype, ok := a.symTable.Get(n.Name, symtable.FUNCTION)
+	dtype, ok := a.symTable.Get(n.Name)
 	if !ok {
 		panic("Function not defined")
 	}
@@ -102,10 +101,10 @@ func (a *Analyzer) VisitFuncCallNode(n *ast.FuncCallNode) {
 }
 
 func (a *Analyzer) VisitFuncDefNode(n *ast.FuncDefNode) {
-	a.symTable.Set(n.Name, symtable.FUNCTION, UNKNOWN)
+	a.symTable.Set(n.Name, UNKNOWN)
 	a.symTable = symtable.ScopeEnter(a.symTable)
 	for _, arg := range n.Args {
-		a.symTable.Set(arg, symtable.VARIABLE, ANY)
+		a.symTable.Set(arg, UNKNOWN)
 	}
 	for _, stmt := range n.Body {
 		stmt.Accept(a)
@@ -160,7 +159,7 @@ func (a *Analyzer) VisitValueNode(n *ast.ValueNode) {
 }
 
 func (a *Analyzer) VisitVariableNode(n *ast.VariableNode) {
-	dtype, ok := a.symTable.Get(n.Name, symtable.VARIABLE)
+	dtype, ok := a.symTable.Get(n.Name)
 	if !ok {
 		panic("Variable not defined")
 	}

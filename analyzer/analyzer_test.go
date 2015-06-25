@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tboronczyk/kiwi/ast"
-	"github.com/tboronczyk/kiwi/symtable"
 	"github.com/tboronczyk/kiwi/token"
 )
 
@@ -96,7 +95,7 @@ func TestVisitUnaryNodeInvalid(t *testing.T) {
 func TestVisitVariableNodeAssigned(t *testing.T) {
 	node := &ast.VariableNode{Name: "foo"}
 	a := New()
-	a.symTable.Set("foo", symtable.VARIABLE, STRING)
+	a.symTable.Set("foo", STRING)
 	node.Accept(a)
 
 	actual := a.stack.Pop()
@@ -120,7 +119,7 @@ func TestVisitAssignNode(t *testing.T) {
 	a := New()
 	node.Accept(a)
 
-	expr, ok := a.symTable.Get("foo", symtable.VARIABLE)
+	expr, ok := a.symTable.Get("foo")
 	assert.Equal(t, STRING, expr)
 	assert.True(t, ok)
 }
@@ -139,15 +138,15 @@ func TestVisitFuncDefNode(t *testing.T) {
 	a := New()
 	node.Accept(a)
 
-	expr, ok := a.symTable.Get("foo", symtable.FUNCTION)
+	expr, ok := a.symTable.Get("foo")
 	assert.Equal(t, expr, UNKNOWN)
 	assert.True(t, ok)
 
 	value, _ := node.SymTable.Table["bar"]
-	assert.Equal(t, value, ANY)
+	assert.Equal(t, value, UNKNOWN)
 
 	value, _ = node.SymTable.Table["baz"]
-	assert.Equal(t, value, ANY)
+	assert.Equal(t, value, UNKNOWN)
 
 	value, _ = node.SymTable.Table["qux"]
 	assert.Equal(t, value, STRING)
@@ -176,12 +175,12 @@ func TestVisitBinaryOpNodeAnyType(t *testing.T) {
 		Right: &ast.VariableNode{Name: "bar"},
 	}
 	a := New()
-	a.symTable.Set("foo", symtable.VARIABLE, ANY)
-	a.symTable.Set("bar", symtable.VARIABLE, ANY)
+	a.symTable.Set("foo", UNKNOWN)
+	a.symTable.Set("bar", UNKNOWN)
 	node.Accept(a)
 
 	actual := a.stack.Pop()
-	assert.Equal(t, ANY, actual)
+	assert.Equal(t, UNKNOWN, actual)
 }
 
 func TestVisitBinaryOpNodeTypeFail(t *testing.T) {
@@ -191,8 +190,8 @@ func TestVisitBinaryOpNodeTypeFail(t *testing.T) {
 		Right: &ast.VariableNode{Name: "bar"},
 	}
 	a := New()
-	a.symTable.Set("foo", symtable.VARIABLE, STRING)
-	a.symTable.Set("bar", symtable.VARIABLE, NUMBER)
+	a.symTable.Set("foo", STRING)
+	a.symTable.Set("bar", NUMBER)
 
 	assert.Panics(t, func() {
 		node.Accept(a)
@@ -202,11 +201,11 @@ func TestVisitBinaryOpNodeTypeFail(t *testing.T) {
 func TestVisitFuncCallNode(t *testing.T) {
 	node := &ast.FuncCallNode{Name: "foo"}
 	a := New()
-	a.symTable.Set("foo", symtable.FUNCTION, ANY)
+	a.symTable.Set("foo", UNKNOWN)
 	node.Accept(a)
 
 	actual := a.stack.Pop()
-	assert.Equal(t, ANY, actual)
+	assert.Equal(t, UNKNOWN, actual)
 }
 
 func TestVisitFuncCallNodeNoExist(t *testing.T) {
@@ -287,10 +286,10 @@ func TestVisitIfNode(t *testing.T) {
 	a := New()
 	node.Accept(a)
 
-	_, ok := a.symTable.Get("foo", symtable.VARIABLE)
+	_, ok := a.symTable.Get("foo")
 	assert.True(t, ok)
 
-	_, ok = a.symTable.Get("bar", symtable.VARIABLE)
+	_, ok = a.symTable.Get("bar")
 	assert.True(t, ok)
 }
 
@@ -317,7 +316,7 @@ func TestVisitWhileNode(t *testing.T) {
 	a := New()
 	node.Accept(a)
 
-	_, ok := a.symTable.Get("foo", symtable.VARIABLE)
+	_, ok := a.symTable.Get("foo")
 	assert.True(t, ok)
 }
 
