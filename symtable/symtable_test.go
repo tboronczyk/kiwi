@@ -5,26 +5,54 @@ import (
 	"testing"
 )
 
-func TestSymbolTableSet(t *testing.T) {
+func TestSymbolTableSetGet(t *testing.T) {
 	s := New()
-	s.Set("foo", 42, NUMBER)
+	s.Set("foo", VARIABLE, 42)
 
-	actual := s["foo"]
-	assert.Equal(t, 42, actual.value)
-	assert.Equal(t, NUMBER, actual.dtype)
-}
-
-func TestSymbolTableGet(t *testing.T) {
-	s := New()
-	s.Set("foo", 42, NUMBER)
-
-	value, dtype, _ := s.Get("foo")
+	value, ok := s.Get("foo", VARIABLE)
 	assert.Equal(t, 42, value)
-	assert.Equal(t, NUMBER, dtype)
+	assert.True(t, ok)
 }
 
 func TestSymbolTableGetNoExist(t *testing.T) {
 	s := New()
-	_, _, ok := s.Get("foo")
+
+	value, ok := s.Get("foo", VARIABLE)
+	assert.Nil(t, value)
 	assert.False(t, ok)
+}
+
+func TestSymbolTableNewScopeGet(t *testing.T) {
+	s := New()
+	s.Set("foo", VARIABLE, 42)
+	s.Enter()
+
+	value, ok := s.Get("foo", VARIABLE)
+	assert.Equal(t, 42, value)
+	assert.True(t, ok)
+}
+
+func TestSymbolTableNewScopeGetNoExit(t *testing.T) {
+	s := New()
+	s.Enter()
+
+	value, ok := s.Get("foo", VARIABLE)
+	assert.Nil(t, value)
+	assert.False(t, ok)
+}
+
+func TestSymbolTableNewScopeSet(t *testing.T) {
+	s := New()
+	s.Set("foo", VARIABLE, 42)
+	s.Enter()
+	s.Set("foo", VARIABLE, 73)
+
+	value, ok := s.Get("foo", VARIABLE)
+	assert.Equal(t, 73, value)
+	assert.True(t, ok)
+
+	s.Leave()
+	value, ok = s.Get("foo", VARIABLE)
+	assert.Equal(t, 42, value)
+	assert.True(t, ok)
 }
