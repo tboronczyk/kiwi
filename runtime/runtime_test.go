@@ -48,7 +48,7 @@ func TestEvalAssignNode(t *testing.T) {
 	n.Accept(analyzer.New())
 	n.Accept(New())
 
-	e, _ := n.SymTable.Get("foo", symtable.VARIABLE)
+	e, _ := n.SymTable.Get("foo", symtable.VAR)
 	assert.Equal(t, "bar", e.(stackEntry).Value)
 	assert.Equal(t, analyzer.STRING, e.(stackEntry).Type)
 }
@@ -56,12 +56,13 @@ func TestEvalAssignNode(t *testing.T) {
 func TestEvalVariableNode(t *testing.T) {
 	n := &ast.VariableNode{Name: "foo"}
 	n.SymTable = symtable.New()
-	n.SymTable.Set("foo", symtable.VARIABLE,
+	n.SymTable.Set("foo",
+		symtable.VAR,
 		stackEntry{Value: 42, Type: analyzer.NUMBER},
 	)
 	n.Accept(New())
 
-	e, _ := n.SymTable.Get("foo", symtable.VARIABLE)
+	e, _ := n.SymTable.Get("foo", symtable.VAR)
 	assert.Equal(t, 42, e.(stackEntry).Value)
 	assert.Equal(t, analyzer.NUMBER, e.(stackEntry).Type)
 }
@@ -546,7 +547,9 @@ func TestEvalWhileNode(t *testing.T) {
 		},
 	}
 	s := symtable.New()
-	s.Set("foo", symtable.VARIABLE,
+	s.Set(
+		"foo",
+		symtable.VAR,
 		stackEntry{Value: 0.0, Type: analyzer.NUMBER},
 	)
 	n.Condition.(*ast.BinaryOpNode).Left.(*ast.VariableNode).SymTable = s
@@ -555,7 +558,7 @@ func TestEvalWhileNode(t *testing.T) {
 	r := New()
 	n.Accept(r)
 
-	e, _ := s.Get("foo", symtable.VARIABLE)
+	e, _ := s.Get("foo", symtable.VAR)
 	assert.Equal(t, 10.0, e.(stackEntry).Value)
 }
 
@@ -581,7 +584,7 @@ func TestEvalIfNodeTrue(t *testing.T) {
 		},
 	}
 	s := symtable.New()
-	s.Set("foo", symtable.VARIABLE,
+	s.Set("foo", symtable.VAR,
 		stackEntry{Value: 0.0, Type: analyzer.NUMBER},
 	)
 	n.Condition.(*ast.BinaryOpNode).Left.(*ast.VariableNode).SymTable = s
@@ -590,7 +593,7 @@ func TestEvalIfNodeTrue(t *testing.T) {
 	r := New()
 	n.Accept(r)
 
-	e, _ := s.Get("foo", symtable.VARIABLE)
+	e, _ := s.Get("foo", symtable.VAR)
 	assert.Equal(t, 1.0, e.(stackEntry).Value)
 }
 
@@ -619,7 +622,8 @@ func TestEvalIfNodeFalse(t *testing.T) {
 		},
 	}
 	s := symtable.New()
-	s.Set("foo", symtable.VARIABLE,
+	s.Set("foo",
+		symtable.VAR,
 		stackEntry{Value: 20.0, Type: analyzer.NUMBER},
 	)
 	n.Condition.(*ast.BinaryOpNode).Left.(*ast.VariableNode).SymTable = s
@@ -628,6 +632,6 @@ func TestEvalIfNodeFalse(t *testing.T) {
 	r := New()
 	n.Accept(r)
 
-	e, _ := s.Get("foo", symtable.VARIABLE)
+	e, _ := s.Get("foo", symtable.VAR)
 	assert.Equal(t, 21.0, e.(stackEntry).Value)
 }

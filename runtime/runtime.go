@@ -8,13 +8,15 @@ import (
 
 	"github.com/tboronczyk/kiwi/analyzer"
 	"github.com/tboronczyk/kiwi/ast"
+	"github.com/tboronczyk/kiwi/symtable"
 	"github.com/tboronczyk/kiwi/token"
 	"github.com/tboronczyk/kiwi/util"
 )
 
 type (
 	Runtime struct {
-		stack util.Stack
+		stack     util.Stack
+		sawReturn bool
 	}
 
 	stackEntry struct {
@@ -25,13 +27,14 @@ type (
 
 func New() *Runtime {
 	return &Runtime{
-		stack: util.NewStack(),
+		stack:     util.NewStack(),
+		sawReturn: false,
 	}
 }
 
 func (r *Runtime) VisitAssignNode(n *ast.AssignNode) {
 	n.Expr.Accept(r)
-	n.SymTable.Set(n.Name, r.stack.Pop())
+	n.SymTable.Set(n.Name, symtable.VAR, r.stack.Pop())
 }
 
 func (r *Runtime) VisitBinaryOpNode(n *ast.BinaryOpNode) {
@@ -199,6 +202,29 @@ func (r *Runtime) VisitCastNode(n *ast.CastNode) {
 }
 
 func (r *Runtime) VisitFuncCallNode(n *ast.FuncCallNode) {
+	defer func() {
+		r.sawReturn = false
+	}()
+	f, _ := n.SymTable.Get(n.Name, symtable.FUNC)
+
+	for i, arg := range n.Args {
+		arg.Accept(r)
+		argName, _ := f.(*ast.FuncDefNode).SymTable.Get(
+			f.(*ast.FuncDefNode).Args[i],
+			symtable.VAR,
+		)
+		f.(*ast.FuncDefNode).SymTable.Set(
+			argName.(string),
+			symtable.VAR,
+			r.stack.Pop(),
+		)
+	}
+	for _, stmt := range f.(*ast.FuncDefNode).Body {
+		stmt.Accept(r)
+		if r.sawReturn {
+			return
+		}
+	}
 }
 
 func (r *Runtime) VisitFuncDefNode(n *ast.FuncDefNode) {
@@ -210,6 +236,9 @@ func (r *Runtime) VisitIfNode(n *ast.IfNode) {
 	if cond.Value.(bool) {
 		for _, stmt := range n.Body {
 			stmt.Accept(r)
+			if r.sawReturn {
+				return
+			}
 		}
 	} else if n.Else != nil {
 		n.Else.Accept(r)
@@ -217,6 +246,8 @@ func (r *Runtime) VisitIfNode(n *ast.IfNode) {
 }
 
 func (r *Runtime) VisitReturnNode(n *ast.ReturnNode) {
+	n.Expr.Accept(r)
+	r.sawReturn = true
 }
 
 func (r *Runtime) VisitUnaryOpNode(n *ast.UnaryOpNode) {
@@ -269,7 +300,7 @@ func (r *Runtime) VisitValueNode(n *ast.ValueNode) {
 }
 
 func (r *Runtime) VisitVariableNode(n *ast.VariableNode) {
-	value, _ := n.SymTable.Get(n.Name)
+	value, _ := n.SymTable.Get(n.Name, symtable.VAR)
 	r.stack.Push(value)
 }
 
@@ -282,6 +313,9 @@ func (r *Runtime) VisitWhileNode(n *ast.WhileNode) {
 		}
 		for _, stmt := range n.Body {
 			stmt.Accept(r)
+			if r.sawReturn {
+				return
+			}
 		}
 	}
 }

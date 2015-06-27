@@ -13,30 +13,39 @@ type (
 	DataType uint8
 
 	Analyzer struct {
-		stack    util.Stack
-		symTable *symtable.SymTable
+		stack      util.Stack
+		symTable   *symtable.SymTable
+		funcStack  util.Stack
+	}
+
+	StackEntry struct {
+		Value interface{}
+		Type  DataType
 	}
 )
 
 const (
 	UNKNOWN DataType = iota
 	BOOL
-	FUNCTION
+	FUNC
 	NUMBER
 	STRING
 )
 
 func New() *Analyzer {
-	return &Analyzer{
-		stack:    util.NewStack(),
-		symTable: symtable.New(),
+	a := &Analyzer{
+		stack:     util.NewStack(),
+		symTable:  symtable.New(),
+		funcStack: util.NewStack(),
 	}
+
+	return a
 }
 
 func (a *Analyzer) VisitAssignNode(n *ast.AssignNode) {
 	n.Expr.Accept(a)
 	expr := a.stack.Pop()
-	a.symTable.Set(n.Name, expr)
+	a.symTable.Set(n.Name, symtable.VARTYPE, expr)
 	n.SymTable = a.symTable
 }
 
@@ -92,25 +101,38 @@ func (a *Analyzer) VisitCastNode(n *ast.CastNode) {
 }
 
 func (a *Analyzer) VisitFuncCallNode(n *ast.FuncCallNode) {
-	dtype, ok := a.symTable.Get(n.Name)
+	dtype, ok := a.symTable.Get(n.Name, symtable.FUNCTYPE)
 	if !ok {
 		panic("Function not defined")
 	}
+	n.SymTable = a.symTable
 	a.stack.Push(dtype)
-
 }
 
 func (a *Analyzer) VisitFuncDefNode(n *ast.FuncDefNode) {
-	a.symTable.Set(n.Name, UNKNOWN)
-	a.symTable = symtable.ScopeEnter(a.symTable)
+	a.funcStack.Push(n.Name)
+	a.symTable.Set(n.Name, symtable.FUNCTYPE, UNKNOWN)
+	a.symTable = symtable.NewScope(a.symTable)
+
 	for _, arg := range n.Args {
-		a.symTable.Set(arg, UNKNOWN)
+		a.symTable.Set(arg, symtable.VARTYPE, UNKNOWN)
 	}
 	for _, stmt := range n.Body {
 		stmt.Accept(a)
+		// set function's type from return type
+		if a.stack.Size() > 0 {
+			newType := a.stack.Pop()
+			oldType, _ := a.symTable.P.Get(n.Name, symtable.FUNCTYPE)
+			// multiple return statements may be present
+			if oldType != UNKNOWN && newType != oldType {
+				panic("Inconsistent return types")
+			}
+			a.symTable.P.Set(n.Name, symtable.FUNCTYPE, newType)
+		}
 	}
 	n.SymTable = a.symTable
-	a.symTable = symtable.ScopeLeave(a.symTable)
+	a.symTable = a.symTable.Parent()
+	a.funcStack.Pop()
 }
 
 func (a *Analyzer) VisitIfNode(n *ast.IfNode) {
@@ -121,6 +143,23 @@ func (a *Analyzer) VisitIfNode(n *ast.IfNode) {
 	}
 	for _, stmt := range n.Body {
 		stmt.Accept(a)
+		// if in a function, set its type from return
+		if a.stack.Size() > 0 {
+			newType := a.stack.Pop()
+			oldType, _ := a.symTable.P.Get(
+				a.funcStack.Peek().(string),
+				symtable.FUNCTYPE,
+			)
+			// multiple return statements may be present
+			if oldType != UNKNOWN && newType != oldType {
+				panic("Inconsistent return types")
+			}
+			a.symTable.P.Set(
+				a.funcStack.Peek().(string),
+				symtable.FUNCTYPE,
+				 newType,
+			)
+		}
 	}
 	if n.Else != nil {
 		n.Else.Accept(a)
@@ -128,6 +167,7 @@ func (a *Analyzer) VisitIfNode(n *ast.IfNode) {
 }
 
 func (a *Analyzer) VisitReturnNode(n *ast.ReturnNode) {
+	n.Expr.Accept(a)
 }
 
 func (a *Analyzer) VisitUnaryOpNode(n *ast.UnaryOpNode) {
@@ -159,7 +199,7 @@ func (a *Analyzer) VisitValueNode(n *ast.ValueNode) {
 }
 
 func (a *Analyzer) VisitVariableNode(n *ast.VariableNode) {
-	dtype, ok := a.symTable.Get(n.Name)
+	dtype, ok := a.symTable.Get(n.Name, symtable.VARTYPE)
 	if !ok {
 		panic("Variable not defined")
 	}
@@ -175,5 +215,22 @@ func (a *Analyzer) VisitWhileNode(n *ast.WhileNode) {
 	}
 	for _, stmt := range n.Body {
 		stmt.Accept(a)
+		// if in a function, set its type from return
+		if a.stack.Size() > 0 {
+			newType := a.stack.Pop()
+			oldType, _ := a.symTable.P.Get(
+				a.funcStack.Peek().(string),
+				symtable.FUNCTYPE,
+			)
+			// multiple return statements may be present
+			if oldType != UNKNOWN && newType != oldType {
+				panic("Inconsistent return types")
+			}
+			a.symTable.P.Set(
+				a.funcStack.Peek().(string),
+				symtable.FUNCTYPE,
+				 newType,
+			)
+		}
 	}
 }

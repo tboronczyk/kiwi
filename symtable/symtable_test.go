@@ -7,52 +7,36 @@ import (
 
 func TestSymbolTableSetGet(t *testing.T) {
 	s := New()
-	s.Set("foo", 42)
+	s.Set("foo", VAR, 42)
 
-	value, ok := s.Get("foo")
+	value, ok := s.Get("foo", VAR)
 	assert.Equal(t, 42, value)
 	assert.True(t, ok)
-}
 
-func TestSymbolTableGetNoExist(t *testing.T) {
-	s := New()
-
-	value, ok := s.Get("foo")
-	assert.Nil(t, value)
+	_, ok = s.Get("foo", FUNC)
 	assert.False(t, ok)
 }
 
-func TestSymbolTableNewScopeGet(t *testing.T) {
+func TestSymbolTableNewScopeSetGet(t *testing.T) {
 	s := New()
-	s.Set("foo", 42)
-	s = ScopeEnter(s)
+	s.Set("foo", VAR, 42)
+	s = NewScope(s)
 
-	value, ok := s.Get("foo")
-	assert.Equal(t, 42, value)
-	assert.True(t, ok)
-}
+	s.Set("foo", VAR, 73)
 
-func TestSymbolTableNewScopeGetNoExit(t *testing.T) {
-	s := New()
-	s = ScopeEnter(s)
-
-	value, ok := s.Get("foo")
-	assert.Nil(t, value)
-	assert.False(t, ok)
-}
-
-func TestSymbolTableNewScopeSet(t *testing.T) {
-	s := New()
-	s.Set("foo", 42)
-	s = ScopeEnter(s)
-	s.Set("foo", 73)
-
-	value, ok := s.Get("foo")
+	value, _ := s.Get("foo", VAR)
 	assert.Equal(t, 73, value)
-	assert.True(t, ok)
 
-	s = ScopeLeave(s)
-	value, ok = s.Get("foo")
+	s = s.Parent()
+	value, _ = s.Get("foo", VAR)
 	assert.Equal(t, 42, value)
-	assert.True(t, ok)
+}
+
+func TestSymbolTableParentSearch(t *testing.T) {
+	s := New()
+	s.Set("foo", VAR, 42)
+	s = NewScope(s)
+
+	value, _ := s.Get("foo", VAR)
+	assert.Equal(t, 42, value)
 }
