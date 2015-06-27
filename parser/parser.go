@@ -1,4 +1,4 @@
-// Package parser provides the parser implementation that constructs an
+// Package parser provides a parser implementation that constructs an
 // abstract syntax tree from a stream of tokens.
 package parser
 
@@ -11,14 +11,14 @@ import (
 
 // Parser produces ASTs from tokens.
 type Parser struct {
-	token   token.Token
-	value   string
-	scanner *scanner.Scanner
+	tkn token.Token
+	val string
+	scn *scanner.Scanner
 }
 
 // New returns a new Parser initialized to read from s.
 func New(s *scanner.Scanner) *Parser {
-	p := &Parser{scanner: s}
+	p := &Parser{scn: s}
 	p.advance()
 	return p
 }
@@ -26,15 +26,15 @@ func New(s *scanner.Scanner) *Parser {
 // match returns a bool indicating the current token in memory is the same
 // as t.
 func (p Parser) match(t token.Token) bool {
-	return p.token == t
+	return p.tkn == t
 }
 
 // advance retrieves the next token/value pair from the token stream and sets
 // them as the current token and value. COMMENT tokens are skipped.
 func (p *Parser) advance() {
 	for {
-		p.token, p.value = p.scanner.Scan()
-		if p.token != token.COMMENT {
+		p.tkn, p.val = p.scn.Scan()
+		if p.tkn != token.COMMENT {
 			break
 		}
 	}
@@ -43,48 +43,36 @@ func (p *Parser) advance() {
 // consume sets the new current token/value pair if the existing current token
 // matches t, otherwise will panic.
 func (p *Parser) consume(t token.Token) {
-	if p.token != t {
-		panic(p.expected(t))
+	if p.tkn != t {
+		panic(t.String())
 	}
 	p.advance()
-}
-
-// expected formats v as an error string. If v is a Token then its value is
-// displayed as its string value, otherwise v is cast directly to string.
-func (p Parser) expected(v interface{}) string {
-	var str string
-	switch v.(type) {
-	case token.Token:
-		str = v.(token.Token).String()
-	default:
-		str = v.(string)
-	}
-	return "Expected " + str + " but saw " + p.token.String()
 }
 
 // Parse consumes the token stream and returns an AST of the production. err
 // is nil for successful parses.
 func (p *Parser) Parse() (node ast.Node, err error) {
-	if p.token == token.EOF {
-		return nil, nil
-	}
 	defer func() {
 		if e := recover(); e != nil {
 			node = nil
-			err = errors.New(e.(string))
+			err = errors.New("Expected " + e.(string) +
+				" but saw " + p.tkn.String())
 		}
 	}()
+	if p.tkn == token.EOF {
+		return nil, nil
+	}
 	return p.stmt(), nil
 }
 
 // expr := relation (log-op expr)? .
 func (p *Parser) expr() ast.Node {
 	n := p.relation()
-	if !p.token.IsLogOp() {
+	if !p.tkn.IsLogOp() {
 		return n
 	}
 
-	node := &ast.BinaryOpNode{Op: p.token, Left: n}
+	node := &ast.BinaryOpNode{Op: p.tkn, Left: n}
 	p.advance()
 	node.Right = p.expr()
 
@@ -94,11 +82,11 @@ func (p *Parser) expr() ast.Node {
 // relation := simple-expr (cmp-op relation)? .
 func (p *Parser) relation() ast.Node {
 	n := p.simpleExpr()
-	if !p.token.IsCmpOp() {
+	if !p.tkn.IsCmpOp() {
 		return n
 	}
 
-	node := &ast.BinaryOpNode{Op: p.token, Left: n}
+	node := &ast.BinaryOpNode{Op: p.tkn, Left: n}
 	p.advance()
 	node.Right = p.relation()
 
@@ -108,11 +96,11 @@ func (p *Parser) relation() ast.Node {
 // simple-expr := term (add-op simple-expr)? .
 func (p *Parser) simpleExpr() ast.Node {
 	n := p.term()
-	if !p.token.IsAddOp() {
+	if !p.tkn.IsAddOp() {
 		return n
 	}
 
-	node := &ast.BinaryOpNode{Op: p.token, Left: n}
+	node := &ast.BinaryOpNode{Op: p.tkn, Left: n}
 	p.advance()
 	node.Right = p.simpleExpr()
 
@@ -122,11 +110,11 @@ func (p *Parser) simpleExpr() ast.Node {
 // term =: factor (mul-op term)? .
 func (p *Parser) term() ast.Node {
 	n := p.factor()
-	if !p.token.IsMulOp() {
+	if !p.tkn.IsMulOp() {
 		return n
 	}
 
-	node := &ast.BinaryOpNode{Op: p.token, Left: n}
+	node := &ast.BinaryOpNode{Op: p.tkn, Left: n}
 	p.advance()
 	node.Right = p.term()
 
@@ -140,8 +128,8 @@ func (p *Parser) factor() ast.Node {
 		p.advance()
 		return p.expr()
 	}
-	if p.token.IsExprOp() {
-		node := &ast.UnaryOpNode{Op: p.token}
+	if p.tkn.IsExprOp() {
+		node := &ast.UnaryOpNode{Op: p.tkn}
 		p.advance()
 		node.Expr = p.factor()
 		return node
@@ -152,7 +140,7 @@ func (p *Parser) factor() ast.Node {
 // cast =: terminal ('!' IDENT)? .
 func (p *Parser) cast() ast.Node {
 	node := p.terminal()
-	if p.token != token.CAST {
+	if p.tkn != token.CAST {
 		return node
 	}
 	p.advance()
@@ -161,14 +149,14 @@ func (p *Parser) cast() ast.Node {
 
 // terminal := boolean | number | STRING | IDENT | func-call .
 func (p *Parser) terminal() ast.Node {
-	if p.token == token.BOOL || p.token == token.NUMBER ||
-		p.token == token.STRING {
+	if p.tkn == token.BOOL || p.tkn == token.NUMBER ||
+		p.tkn == token.STRING {
 		defer p.advance()
-		return &ast.ValueNode{Value: p.value, Type: p.token}
+		return &ast.ValueNode{Value: p.val, Type: p.tkn}
 	}
 
 	name := p.identifier()
-	if p.token != token.LPAREN {
+	if p.tkn != token.LPAREN {
 		return &ast.VariableNode{Name: name}
 	}
 	return &ast.FuncCallNode{Name: name, Args: p.parenExprList()}
@@ -180,12 +168,12 @@ func (p *Parser) parenExprList() []ast.Node {
 	p.consume(token.LPAREN)
 
 	var list []ast.Node
-	if p.token == token.RPAREN {
+	if p.tkn == token.RPAREN {
 		return list
 	}
 	for {
 		list = append(list, p.expr())
-		if p.token != token.COMMA {
+		if p.tkn != token.COMMA {
 			return list
 		}
 		p.advance()
@@ -195,7 +183,7 @@ func (p *Parser) parenExprList() []ast.Node {
 // stmt := if-stmt | while-stmt | func-def | return-stmt | assign-stmt |
 //         func-call .
 func (p *Parser) stmt() ast.Node {
-	switch p.token {
+	switch p.tkn {
 	case token.IF:
 		return p.ifStmt()
 	case token.WHILE:
@@ -207,14 +195,14 @@ func (p *Parser) stmt() ast.Node {
 	case token.IDENTIFIER:
 		return p.assignStmtOrFuncCall()
 	}
-	panic(p.expected("statement"))
+	panic("statement keyword")
 }
 
 // if-stmt := 'if' expr brace-stmt-list (else-clause)? .
 func (p *Parser) ifStmt() *ast.IfNode {
 	p.consume(token.IF)
 	node := &ast.IfNode{Condition: p.expr(), Body: p.braceStmtList()}
-	if p.token == token.ELSE {
+	if p.tkn == token.ELSE {
 		node.Else = p.elseClause()
 	}
 	return node
@@ -227,7 +215,7 @@ func (p *Parser) braceStmtList() []ast.Node {
 
 	var list []ast.Node
 	for {
-		if !(p.token.IsStmtKeyword() || p.token == token.IDENTIFIER) {
+		if !(p.tkn.IsStmtKeyword() || p.tkn == token.IDENTIFIER) {
 			return list
 		}
 		list = append(list, p.stmt())
@@ -240,7 +228,7 @@ func (p *Parser) elseClause() *ast.IfNode {
 	p.consume(token.ELSE)
 	node := &ast.IfNode{}
 	isFinal := false
-	if p.token == token.LBRACE {
+	if p.tkn == token.LBRACE {
 		// a final clause without an expression defaults to an
 		// expression that evaluates true to make evaluation of the
 		// AST easier.
@@ -266,7 +254,7 @@ func (p *Parser) whileStmt() *ast.WhileNode {
 func (p *Parser) funcDef() *ast.FuncDefNode {
 	p.consume(token.FUNC)
 	node := &ast.FuncDefNode{Name: p.identifier()}
-	if p.token != token.LBRACE {
+	if p.tkn != token.LBRACE {
 		node.Args = p.identList()
 	}
 	node.Body = p.braceStmtList()
@@ -278,7 +266,7 @@ func (p *Parser) identList() []string {
 	var list []string
 	for {
 		list = append(list, p.identifier())
-		if p.token != token.COMMA {
+		if p.tkn != token.COMMA {
 			return list
 		}
 		p.advance()
@@ -290,7 +278,7 @@ func (p *Parser) returnStmt() *ast.ReturnNode {
 	defer p.consume(token.DOT)
 	p.consume(token.RETURN)
 	node := &ast.ReturnNode{}
-	if p.token != token.DOT {
+	if p.tkn != token.DOT {
 		node.Expr = p.expr()
 	}
 	return node
@@ -302,19 +290,18 @@ func (p *Parser) assignStmtOrFuncCall() ast.Node {
 	defer p.consume(token.DOT)
 
 	name := p.identifier()
-	if p.token == token.ASSIGN {
+	if p.tkn == token.ASSIGN {
 		p.advance()
 		return &ast.AssignNode{Name: name, Expr: p.expr()}
 	}
-	if p.token == token.LPAREN {
+	if p.tkn == token.LPAREN {
 		return &ast.FuncCallNode{Name: name, Args: p.parenExprList()}
 	}
-	panic(p.expected(
-		token.ASSIGN.String() + " or " + token.LPAREN.String()))
+	panic(token.ASSIGN.String() + " or " + token.LPAREN.String())
 }
 
 // identifier returns the identifier's value.
 func (p *Parser) identifier() string {
 	defer p.consume(token.IDENTIFIER)
-	return p.value
+	return p.val
 }

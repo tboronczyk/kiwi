@@ -117,7 +117,7 @@ func (p AstPrinter) VisitFuncCallNode(n *FuncCallNode) {
 	fmt.Println(p.peek() + "├ Name: " + n.Name)
 	fmt.Print(p.peek() + "╰ Args: ")
 	if n.Args == nil {
-		fmt.Println("0x00")
+		fmt.Println("0x0")
 		return
 	}
 	p.push(p.peek() + "        ")
@@ -146,7 +146,7 @@ func (p AstPrinter) VisitFuncDefNode(n *FuncDefNode) {
 	fmt.Println(p.peek() + "├ Name: " + n.Name)
 	fmt.Print(p.peek() + "├ Args: ")
 	if n.Args == nil {
-		fmt.Println("0x00")
+		fmt.Println("0x0")
 	} else {
 		fmt.Println(n.Args[0])
 		if len(n.Args) > 1 {
@@ -155,18 +155,19 @@ func (p AstPrinter) VisitFuncDefNode(n *FuncDefNode) {
 			}
 		}
 	}
-	fmt.Print(p.peek() + "╰ Body: ")
+	fmt.Print(p.peek() + "├ Body: ")
 	if n.Body == nil {
-		fmt.Println("0x00")
-		return
+		fmt.Println("0x0")
+	} else {
+		p.push(p.peek() + "│       ")
+		n.Body[0].Accept(p)
+		for _, arg := range n.Body[1:] {
+			fmt.Print(p.peek())
+			arg.Accept(p)
+		}
+		p.pop()
 	}
-	p.push(p.peek() + "        ")
-	n.Body[0].Accept(p)
-	for _, arg := range n.Body[1:] {
-		fmt.Print(p.peek())
-		arg.Accept(p)
-	}
-	p.pop()
+	fmt.Printf(p.peek()+"╰ SymTable: %p\n", n.SymTable)
 }
 
 // VisitIfNode prints the if construct node n.
@@ -178,7 +179,7 @@ func (p AstPrinter) VisitIfNode(n *IfNode) {
 	p.pop()
 	fmt.Print(p.peek() + "├ Body: ")
 	if n.Body == nil {
-		fmt.Println("0x00")
+		fmt.Println("0x0")
 	} else {
 		p.push(p.peek() + "│       ")
 		n.Body[0].Accept(p)
@@ -192,7 +193,7 @@ func (p AstPrinter) VisitIfNode(n *IfNode) {
 	}
 	fmt.Print(p.peek() + "╰ Else: ")
 	if n.Else == nil {
-		fmt.Println("0x00")
+		fmt.Println("0x0")
 		return
 	}
 	p.push(p.peek() + "        ")
@@ -218,7 +219,7 @@ func (p AstPrinter) VisitWhileNode(n *WhileNode) {
 	p.pop()
 	fmt.Print(p.peek() + "╰ Body: ")
 	if n.Body == nil {
-		fmt.Println("0x00")
+		fmt.Println("0x0")
 		return
 	}
 	p.push(p.peek() + "        ")

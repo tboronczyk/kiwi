@@ -1,4 +1,4 @@
-// Package scanner provides the scanner implementation that lexes Kiwi source
+// Package scanner provides a scanner implementation that lexes Kiwi source
 // code.
 package scanner
 
@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	// The buffer is a cyclic queue of bufSize capcity.
+	// buffer is a cyclic queue of bufSize capcity
 	bufSize = 3
 	// convenient representation of EOF
 	eof = rune(0)

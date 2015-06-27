@@ -71,7 +71,6 @@ func (n *BinaryOpNode) Accept(v NodeVisitor) {
 type FuncCallNode struct {
 	Name string
 	Args []Node
-	*symtable.SymTable
 }
 
 // Accept visits the function call node using v.
