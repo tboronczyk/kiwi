@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tboronczyk/kiwi/ast"
+	"github.com/tboronczyk/kiwi/symtable"
 	"github.com/tboronczyk/kiwi/token"
 )
 
@@ -95,7 +96,7 @@ func TestVisitUnaryNodeInvalid(t *testing.T) {
 func TestVisitVariableNodeAssigned(t *testing.T) {
 	node := &ast.VariableNode{Name: "foo"}
 	a := New()
-	a.symTable.Set("foo", STRING)
+	a.symTable.Set("foo", symtable.VARTYPE, STRING)
 	node.Accept(a)
 
 	actual := a.stack.Pop()
@@ -119,12 +120,12 @@ func TestVisitAssignNode(t *testing.T) {
 	a := New()
 	node.Accept(a)
 
-	expr, ok := a.symTable.Get("foo")
+	expr, ok := a.symTable.Get("foo", symtable.VARTYPE)
 	assert.Equal(t, STRING, expr)
 	assert.True(t, ok)
 }
 
-func TestVisitFuncDefNode(t *testing.T) {
+func TestVisitFuncDefNodeNoReturn(t *testing.T) {
 	node := &ast.FuncDefNode{
 		Name: "foo",
 		Args: []string{"bar", "baz"},
@@ -138,21 +139,79 @@ func TestVisitFuncDefNode(t *testing.T) {
 	a := New()
 	node.Accept(a)
 
-	expr, ok := a.symTable.Get("foo")
+	expr, ok := a.symTable.Get("foo", symtable.FUNCTYPE)
 	assert.Equal(t, expr, UNKNOWN)
 	assert.True(t, ok)
 
-	value, _ := node.SymTable.Table["bar"]
+	value, _ := node.SymTable.T[symtable.VARTYPE]["bar"]
 	assert.Equal(t, value, UNKNOWN)
 
-	value, _ = node.SymTable.Table["baz"]
+	value, _ = node.SymTable.T[symtable.VARTYPE]["baz"]
 	assert.Equal(t, value, UNKNOWN)
 
-	value, _ = node.SymTable.Table["qux"]
+	value, _ = node.SymTable.T[symtable.VARTYPE]["qux"]
 	assert.Equal(t, value, STRING)
 
-	_, ok = node.SymTable.Table["norf"]
+	_, ok = node.SymTable.T[symtable.VARTYPE]["norf"]
 	assert.False(t, ok)
+}
+
+func TestVisitFuncDefNodeSingleReturn(t *testing.T) {
+	node := &ast.FuncDefNode{
+		Name: "foo",
+		Args: []string{},
+		Body: []ast.Node{
+			&ast.ReturnNode{
+				Expr: &ast.ValueNode{Type: token.STRING},
+			},
+		},
+	}
+	a := New()
+	node.Accept(a)
+
+	expr, ok := a.symTable.Get("foo", symtable.FUNCTYPE)
+	assert.Equal(t, expr, STRING)
+	assert.True(t, ok)
+}
+
+func TestVisitFuncDefNodeMultipleReturn(t *testing.T) {
+	node := &ast.FuncDefNode{
+		Name: "foo",
+		Args: []string{},
+		Body: []ast.Node{
+			&ast.ReturnNode{
+				Expr: &ast.ValueNode{Type: token.STRING},
+			},
+			&ast.ReturnNode{
+				Expr: &ast.ValueNode{Type: token.STRING},
+			},
+		},
+	}
+	a := New()
+	node.Accept(a)
+
+	expr, ok := a.symTable.Get("foo", symtable.FUNCTYPE)
+	assert.Equal(t, expr, STRING)
+	assert.True(t, ok)
+}
+
+func TestVisitFuncDefNodeMultipleReturnBad(t *testing.T) {
+	node := &ast.FuncDefNode{
+		Name: "foo",
+		Args: []string{},
+		Body: []ast.Node{
+			&ast.ReturnNode{
+				Expr: &ast.ValueNode{Type: token.STRING},
+			},
+			&ast.ReturnNode{
+				Expr: &ast.ValueNode{Type: token.NUMBER},
+			},
+		},
+	}
+	a := New()
+	assert.Panics(t, func() {
+		node.Accept(a)
+	})
 }
 
 func TestVisitBinaryOpNodeSameType(t *testing.T) {
@@ -175,8 +234,8 @@ func TestVisitBinaryOpNodeAnyType(t *testing.T) {
 		Right: &ast.VariableNode{Name: "bar"},
 	}
 	a := New()
-	a.symTable.Set("foo", UNKNOWN)
-	a.symTable.Set("bar", UNKNOWN)
+	a.symTable.Set("foo", symtable.VARTYPE, UNKNOWN)
+	a.symTable.Set("bar", symtable.VARTYPE, UNKNOWN)
 	node.Accept(a)
 
 	actual := a.stack.Pop()
@@ -190,8 +249,8 @@ func TestVisitBinaryOpNodeTypeFail(t *testing.T) {
 		Right: &ast.VariableNode{Name: "bar"},
 	}
 	a := New()
-	a.symTable.Set("foo", STRING)
-	a.symTable.Set("bar", NUMBER)
+	a.symTable.Set("foo", symtable.VARTYPE, STRING)
+	a.symTable.Set("bar", symtable.VARTYPE, NUMBER)
 
 	assert.Panics(t, func() {
 		node.Accept(a)
@@ -201,7 +260,7 @@ func TestVisitBinaryOpNodeTypeFail(t *testing.T) {
 func TestVisitFuncCallNode(t *testing.T) {
 	node := &ast.FuncCallNode{Name: "foo"}
 	a := New()
-	a.symTable.Set("foo", UNKNOWN)
+	a.symTable.Set("foo", symtable.FUNCTYPE, UNKNOWN)
 	node.Accept(a)
 
 	actual := a.stack.Pop()
@@ -286,11 +345,32 @@ func TestVisitIfNode(t *testing.T) {
 	a := New()
 	node.Accept(a)
 
-	_, ok := a.symTable.Get("foo")
+	_, ok := a.symTable.Get("foo", symtable.VARTYPE)
 	assert.True(t, ok)
 
-	_, ok = a.symTable.Get("bar")
+	_, ok = a.symTable.Get("bar", symtable.VARTYPE)
 	assert.True(t, ok)
+}
+
+func TestVisitIfNodeInFuncDefReturn(t *testing.T) {
+	node := &ast.FuncDefNode{
+		Name: "foo",
+		Args: []string{},
+		Body: []ast.Node{
+			&ast.IfNode{
+				Condition: &ast.ValueNode{Type: token.BOOL},
+				Body: []ast.Node{
+					&ast.ReturnNode{
+						Expr: &ast.ValueNode{Type: token.NUMBER},
+					},
+				},
+			},
+		},
+	}
+	a := New()
+	node.Accept(a)
+	dtype, _ := a.symTable.Get("foo", symtable.FUNCTYPE)
+	assert.Equal(t, NUMBER, dtype)
 }
 
 func TestVisitIfNodeBadCondition(t *testing.T) {
@@ -316,8 +396,30 @@ func TestVisitWhileNode(t *testing.T) {
 	a := New()
 	node.Accept(a)
 
-	_, ok := a.symTable.Get("foo")
+	_, ok := a.symTable.Get("foo", symtable.VARTYPE)
 	assert.True(t, ok)
+}
+
+func TestVisitWhileNodeInFuncDefReturn(t *testing.T) {
+	node := &ast.FuncDefNode{
+		Name: "foo",
+		Args: []string{},
+		Body: []ast.Node{
+			&ast.WhileNode{
+				Condition: &ast.ValueNode{Type: token.BOOL},
+				Body: []ast.Node{
+					&ast.ReturnNode{
+						Expr: &ast.ValueNode{Type: token.NUMBER},
+					},
+				},
+			},
+		},
+	}
+	a := New()
+	node.Accept(a)
+
+	dtype, _ := a.symTable.Get("foo", symtable.FUNCTYPE)
+	assert.Equal(t, NUMBER, dtype)
 }
 
 func TestVisitWhileNodeBadCondition(t *testing.T) {

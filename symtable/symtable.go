@@ -1,41 +1,66 @@
+// Package symtable provides the symbol table implementation for managing
+// symbols during analysis.
 package symtable
 
-type (
-	Table map[string]interface{}
-
-	SymTable struct {
-		Table
-		parent *SymTable
-	}
+// Type represents the type of value placed in the table. The symbol table
+// keeps types separate; that is, VAR:foo is treated as a different symbol
+// than FUNC:foo.
+type Type uint8
+const (
+	UNKNOWN Type = iota
+	VAR
+	VARTYPE
+	FUNC
+	FUNCTYPE
 )
+const numTypes = 5
 
+type table map[string]interface{}
+
+// SymTable represents a symbol table.
+type SymTable struct {
+	T []table    // symbol table data
+	P *SymTable  // parent table
+}
+
+// New allocates a new SymTable
 func New() *SymTable {
-	return &SymTable{Table: make(Table, 0)}
+	s := new(SymTable)
+	s.T = make([]table, numTypes)
+	for i := 0; i < numTypes; i++ {
+		s.T[i] = make(table, 0)
+	}
+	return s
 }
 
-func (s *SymTable) Set(name string, symbol interface{}) {
-	s.Table[name] = symbol
+// Set places symbol sym in type t's symbol table with key k.
+func (s *SymTable) Set(k string, t Type, sym interface{}) {
+	s.T[t][k] = sym
 }
 
-func (s *SymTable) Get(name string) (interface{}, bool) {
+// Get retrieves the symbol from type t's symbol table identified by key k.
+// If no symbol is stored, ok is false.
+func (s *SymTable) Get(k string, t Type) (sym interface{}, ok bool) {
 	cur := s
 	for {
-		if sym, ok := cur.Table[name]; ok {
-			return sym, true
+		if sym, ok = cur.T[t][k]; ok {
+			return sym, ok
 		}
-		if cur.parent == nil {
+		if cur.P == nil {
 			return nil, false
 		}
-		cur = cur.parent
+		cur = cur.P
 	}
 }
 
-func ScopeEnter(s *SymTable) *SymTable {
+// NewScope allocates and returns a new SymTable with s as its parent.
+func NewScope(s *SymTable) *SymTable {
 	t := New()
-	t.parent = s
+	t.P = s
 	return t
 }
 
-func ScopeLeave(s *SymTable) *SymTable {
-	return s.parent
+// Parent returns the parent of SymTable s.
+func (s *SymTable) Parent() *SymTable {
+	return s.P
 }
