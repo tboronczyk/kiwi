@@ -4,40 +4,41 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tboronczyk/kiwi/analyzer"
 	"github.com/tboronczyk/kiwi/ast"
 	"github.com/tboronczyk/kiwi/symtable"
 	"github.com/tboronczyk/kiwi/token"
 )
 
-func TestEvalValueNodeNumber(t *testing.T) {
-	n := &ast.ValueNode{Value: "42", Type: token.NUMBER}
-	r := New()
-	n.Accept(r)
+func TestEvalValueNode(t *testing.T) {
+	nodeData := []struct {
+		valVal    string
+		valType   token.Token
+		expctVal  interface{}
+		expctType DataType
+	}{
+		{"42", token.NUMBER, 42.0, NUMBER},
+		{"foo", token.STRING, "foo", STRING},
+		{"true", token.BOOL, true, BOOL},
+	}
+	for _, d := range nodeData {
+		n := &ast.ValueNode{
+			Value: d.valVal,
+			Type:  d.valType,
+		}
+		r := New()
+		n.Accept(r)
 
-	actual := r.stack.Pop().(stackEntry)
-	assert.Equal(t, 42.0, actual.Value)
-	assert.Equal(t, analyzer.NUMBER, actual.Type)
+		e := r.stack.Pop().(ValueEntry)
+		assert.Equal(t, d.expctVal, e.Value)
+		assert.Equal(t, d.expctType, e.Type)
+	}
 }
 
-func TestEvalValueNodeString(t *testing.T) {
-	n := &ast.ValueNode{Value: "foo", Type: token.STRING}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.Equal(t, "foo", actual.Value)
-	assert.Equal(t, analyzer.STRING, actual.Type)
-}
-
-func TestEvalValueNodeBool(t *testing.T) {
-	n := &ast.ValueNode{Value: "true", Type: token.BOOL}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.True(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
+func TestEvalValueNodeInvalid(t *testing.T) {
+	n := &ast.ValueNode{Value: "foo", Type: token.UNKNOWN}
+	assert.Panics(t, func() {
+		n.Accept(New())
+	})
 }
 
 func TestEvalAssignNode(t *testing.T) {
@@ -45,484 +46,180 @@ func TestEvalAssignNode(t *testing.T) {
 		Name: "foo",
 		Expr: &ast.ValueNode{Value: "bar", Type: token.STRING},
 	}
-	n.Accept(analyzer.New())
 	n.Accept(New())
 
 	e, _ := n.SymTable.Get("foo", symtable.VAR)
-	assert.Equal(t, "bar", e.(stackEntry).Value)
-	assert.Equal(t, analyzer.STRING, e.(stackEntry).Type)
+	assert.Equal(t, "bar", e.(ValueEntry).Value)
+	assert.Equal(t, STRING, e.(ValueEntry).Type)
 }
 
 func TestEvalVariableNode(t *testing.T) {
-	n := &ast.VariableNode{Name: "foo"}
-	n.SymTable = symtable.New()
-	n.SymTable.Set("foo",
-		symtable.VAR,
-		stackEntry{Value: 42, Type: analyzer.NUMBER},
-	)
-	n.Accept(New())
+	n := &ast.VariableNode{Name: "foo", SymTable: symtable.New()}
+	r := New()
+	r.symTable.Set("foo", symtable.VAR, ValueEntry{Value: 42.0, Type: NUMBER})
+	n.Accept(r)
 
 	e, _ := n.SymTable.Get("foo", symtable.VAR)
-	assert.Equal(t, 42, e.(stackEntry).Value)
-	assert.Equal(t, analyzer.NUMBER, e.(stackEntry).Type)
+	assert.Equal(t, 42.0, e.(ValueEntry).Value)
+	assert.Equal(t, NUMBER, e.(ValueEntry).Type)
 }
 
-func TestEvalUnaryOpNodeNot(t *testing.T) {
+func TestEvalVariableNodeNoExist(t *testing.T) {
+	n := &ast.VariableNode{Name: "foo", SymTable: symtable.New()}
+	assert.Panics(t, func() {
+		n.Accept(New())
+	})
+}
+
+func TestEvalUnaryOpNode(t *testing.T) {
+	nodeData := []struct {
+		op        token.Token
+		exprVal   string
+		exprType  token.Token
+		expctVal  interface{}
+		expctType DataType
+	}{
+		{token.NOT, "false", token.BOOL, true, BOOL},
+		{token.ADD, "-42", token.NUMBER, 42.0, NUMBER},
+		{token.SUBTRACT, "42", token.NUMBER, -42.0, NUMBER},
+	}
+	for _, d := range nodeData {
+		n := &ast.UnaryOpNode{
+			Op:   d.op,
+			Expr: &ast.ValueNode{Value: d.exprVal, Type: d.exprType},
+		}
+		r := New()
+		n.Accept(r)
+
+		e := r.stack.Pop().(ValueEntry)
+		assert.Equal(t, d.expctVal, e.Value)
+		assert.Equal(t, d.expctType, e.Type)
+	}
+}
+
+func TestEvalUnaryOpInvalid(t *testing.T) {
 	n := &ast.UnaryOpNode{
 		Op:   token.NOT,
-		Expr: &ast.ValueNode{Value: "false", Type: token.BOOL},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.True(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-
-func TestEvalUnaryOpNodePositive(t *testing.T) {
-	n := &ast.UnaryOpNode{
-		Op:   token.ADD,
-		Expr: &ast.ValueNode{Value: "-42", Type: token.NUMBER},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.Equal(t, 42.0, actual.Value)
-	assert.Equal(t, analyzer.NUMBER, actual.Type)
-}
-
-func TestEvalUnaryOpNodeNegative(t *testing.T) {
-	n := &ast.UnaryOpNode{
-		Op:   token.SUBTRACT,
-		Expr: &ast.ValueNode{Value: "42", Type: token.NUMBER},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.Equal(t, -42.0, actual.Value)
-	assert.Equal(t, analyzer.NUMBER, actual.Type)
-}
-
-func TestEvalCastNodeStringToString(t *testing.T) {
-	n := &ast.CastNode{
-		Cast: "string",
 		Expr: &ast.ValueNode{Value: "foo", Type: token.STRING},
 	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.Equal(t, "foo", actual.Value)
-	assert.Equal(t, analyzer.STRING, actual.Type)
+	assert.Panics(t, func() {
+		n.Accept(New())
+	})
 }
 
-func TestEvalCastNodeNumberToString(t *testing.T) {
-	n := &ast.CastNode{
-		Cast: "string",
-		Expr: &ast.ValueNode{Value: "42", Type: token.NUMBER},
+func TestCastNode(t *testing.T) {
+	nodeData := []struct {
+		c         string
+		exprVal   string
+		exprType  token.Token
+		expctVal  interface{}
+		expctType DataType
+	}{
+		{"string", "foo", token.STRING, "foo", STRING},
+		{"string", "42", token.NUMBER, "42", STRING},
+		{"string", "true", token.BOOL, "true", STRING},
+		{"number", "foo", token.STRING, 0.0, NUMBER},
+		{"number", "42", token.NUMBER, 42.0, NUMBER},
+		{"number", "true", token.BOOL, 1.0, NUMBER},
+		{"bool", "foo", token.STRING, true, BOOL},
+		{"bool", "42", token.NUMBER, true, BOOL},
+		{"bool", "true", token.BOOL, true, BOOL},
+		{"bool", "", token.STRING, false, BOOL},
+		{"bool", "0", token.NUMBER, false, BOOL},
+		{"bool", "false", token.BOOL, false, BOOL},
 	}
-	r := New()
-	n.Accept(r)
+	for _, d := range nodeData {
+		n := &ast.CastNode{
+			Cast: d.c,
+			Expr: &ast.ValueNode{Value: d.exprVal, Type: d.exprType},
+		}
+		r := New()
+		n.Accept(r)
 
-	actual := r.stack.Pop().(stackEntry)
-	assert.Equal(t, "42", actual.Value)
-	assert.Equal(t, analyzer.STRING, actual.Type)
-}
-
-func TestEvalCastNodeBoolToString(t *testing.T) {
-	n := &ast.CastNode{
-		Cast: "string",
-		Expr: &ast.ValueNode{Value: "TRUE", Type: token.BOOL},
+		e := r.stack.Pop().(ValueEntry)
+		assert.Equal(t, d.expctVal, e.Value)
+		assert.Equal(t, d.expctType, e.Type)
 	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.Equal(t, "true", actual.Value)
-	assert.Equal(t, analyzer.STRING, actual.Type)
 }
 
-func TestEvalCastNodeStringToNumber(t *testing.T) {
-	n := &ast.CastNode{
-		Cast: "number",
-		Expr: &ast.ValueNode{Value: "42", Type: token.STRING},
+func TestEvalBinaryOpNode(t *testing.T) {
+	nodeData := []struct {
+		op        token.Token
+		ex1Val    string
+		ex1Type   token.Token
+		ex2Val    string
+		ex2Type   token.Token
+		expctVal  interface{}
+		expctType DataType
+	}{
+		{token.ADD, "11", token.NUMBER, "7", token.NUMBER, 18.0, NUMBER},
+		{token.SUBTRACT, "11", token.NUMBER, "7", token.NUMBER, 4.0, NUMBER},
+		{token.MULTIPLY, "11", token.NUMBER, "7", token.NUMBER, 77.0, NUMBER},
+		{token.DIVIDE, "11", token.NUMBER, "7", token.NUMBER, 11 / 7.0, NUMBER},
+		{token.MODULO, "11", token.NUMBER, "7", token.NUMBER, 4.0, NUMBER},
+		{token.EQUAL, "11", token.NUMBER, "7", token.NUMBER, false, BOOL},
+		{token.NOT_EQUAL, "11", token.NUMBER, "7", token.NUMBER, true, BOOL},
+		{token.LESS, "11", token.NUMBER, "7", token.NUMBER, false, BOOL},
+		{token.LESS_EQ, "11", token.NUMBER, "7", token.NUMBER, false, BOOL},
+		{token.GREATER, "11", token.NUMBER, "7", token.NUMBER, true, BOOL},
+		{token.GREATER_EQ, "11", token.NUMBER, "7", token.NUMBER, true, BOOL},
+		{token.ADD, "foo", token.STRING, "bar", token.STRING, "foobar", STRING},
+		{token.EQUAL, "foo", token.STRING, "bar", token.STRING, false, BOOL},
+		{token.NOT_EQUAL, "foo", token.STRING, "bar", token.STRING, true, BOOL},
+		{token.AND, "true", token.BOOL, "false", token.BOOL, false, BOOL},
+		{token.OR, "false", token.BOOL, "true", token.BOOL, true, BOOL},
+		{token.EQUAL, "true", token.BOOL, "false", token.BOOL, false, BOOL},
+		{token.NOT_EQUAL, "true", token.BOOL, "false", token.BOOL, true, BOOL},
+		// short circuit
+		{token.AND, "false", token.BOOL, "true", token.BOOL, false, BOOL},
+		{token.OR, "true", token.BOOL, "false", token.BOOL, true, BOOL},
 	}
-	r := New()
-	n.Accept(r)
+	for _, d := range nodeData {
+		n := &ast.BinaryOpNode{
+			Op:    d.op,
+			Left:  &ast.ValueNode{Value: d.ex1Val, Type: d.ex1Type},
+			Right: &ast.ValueNode{Value: d.ex2Val, Type: d.ex2Type},
+		}
+		r := New()
+		n.Accept(r)
 
-	actual := r.stack.Pop().(stackEntry)
-	assert.Equal(t, 42.0, actual.Value)
-	assert.Equal(t, analyzer.NUMBER, actual.Type)
-}
-
-func TestEvalCastNodeNumberToNumber(t *testing.T) {
-	n := &ast.CastNode{
-		Cast: "number",
-		Expr: &ast.ValueNode{Value: "42", Type: token.NUMBER},
+		e := r.stack.Pop().(ValueEntry)
+		assert.Equal(t, d.expctVal, e.Value)
+		assert.Equal(t, d.expctType, e.Type)
 	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.Equal(t, 42.0, actual.Value)
-	assert.Equal(t, analyzer.NUMBER, actual.Type)
 }
 
-func TestEvalCastNodeBoolToNumber(t *testing.T) {
-	n := &ast.CastNode{
-		Cast: "number",
-		Expr: &ast.ValueNode{Value: "TRUE", Type: token.BOOL},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.Equal(t, 1.0, actual.Value)
-	assert.Equal(t, analyzer.NUMBER, actual.Type)
-}
-
-func TestEvalCastNodeStringToBoolTrue(t *testing.T) {
-	n := &ast.CastNode{
-		Cast: "bool",
-		Expr: &ast.ValueNode{Value: "true", Type: token.STRING},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.True(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-
-func TestEvalCastNodeStringToBoolFalse(t *testing.T) {
-	n := &ast.CastNode{
-		Cast: "bool",
-		Expr: &ast.ValueNode{Value: "false", Type: token.STRING},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.False(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-
-func TestEvalCastNodeNumberToBoolTrue(t *testing.T) {
-	n := &ast.CastNode{
-		Cast: "bool",
-		Expr: &ast.ValueNode{Value: "42", Type: token.NUMBER},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.True(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-
-func TestEvalCastNodeNumberToBoolFalse(t *testing.T) {
-	n := &ast.CastNode{
-		Cast: "bool",
-		Expr: &ast.ValueNode{Value: "0", Type: token.NUMBER},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.False(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-
-func TestEvalCastNodeBoolToBool(t *testing.T) {
-	n := &ast.CastNode{
-		Cast: "bool",
-		Expr: &ast.ValueNode{Value: "TRUE", Type: token.BOOL},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.True(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-
-func TestEvalBinaryOpNumberAdd(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.ADD,
-		Left:  &ast.ValueNode{Value: "11", Type: token.NUMBER},
-		Right: &ast.ValueNode{Value: "7", Type: token.NUMBER},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.Equal(t, 18.0, actual.Value.(float64))
-	assert.Equal(t, analyzer.NUMBER, actual.Type)
-}
-
-func TestEvalBinaryOpNumberSubtract(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.SUBTRACT,
-		Left:  &ast.ValueNode{Value: "11", Type: token.NUMBER},
-		Right: &ast.ValueNode{Value: "7", Type: token.NUMBER},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.Equal(t, 4.0, actual.Value.(float64))
-	assert.Equal(t, analyzer.NUMBER, actual.Type)
-}
-
-func TestEvalBinaryOpNumberMultiply(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.MULTIPLY,
-		Left:  &ast.ValueNode{Value: "11", Type: token.NUMBER},
-		Right: &ast.ValueNode{Value: "7", Type: token.NUMBER},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.Equal(t, 77.0, actual.Value.(float64))
-	assert.Equal(t, analyzer.NUMBER, actual.Type)
-}
-
-func TestEvalBinaryOpNumberDivide(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.DIVIDE,
-		Left:  &ast.ValueNode{Value: "11", Type: token.NUMBER},
-		Right: &ast.ValueNode{Value: "7", Type: token.NUMBER},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.Equal(t, 11/7.0, actual.Value.(float64))
-	assert.Equal(t, analyzer.NUMBER, actual.Type)
-}
-
-func TestEvalBinaryOpNumberModulo(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.MODULO,
-		Left:  &ast.ValueNode{Value: "11", Type: token.NUMBER},
-		Right: &ast.ValueNode{Value: "7", Type: token.NUMBER},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.Equal(t, 4.0, actual.Value.(float64))
-	assert.Equal(t, analyzer.NUMBER, actual.Type)
-}
-
-func TestEvalBinaryOpNumberEqual(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.EQUAL,
-		Left:  &ast.ValueNode{Value: "11", Type: token.NUMBER},
-		Right: &ast.ValueNode{Value: "7", Type: token.NUMBER},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.False(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-func TestEvalBinaryOpNumberNotEqual(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.NOT_EQUAL,
-		Left:  &ast.ValueNode{Value: "11", Type: token.NUMBER},
-		Right: &ast.ValueNode{Value: "7", Type: token.NUMBER},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.True(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-func TestEvalBinaryOpNumberLess(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.LESS,
-		Left:  &ast.ValueNode{Value: "11", Type: token.NUMBER},
-		Right: &ast.ValueNode{Value: "7", Type: token.NUMBER},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.False(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-func TestEvalBinaryOpNumberLessEq(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.LESS_EQ,
-		Left:  &ast.ValueNode{Value: "11", Type: token.NUMBER},
-		Right: &ast.ValueNode{Value: "7", Type: token.NUMBER},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.False(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-func TestEvalBinaryOpNumberGreater(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.GREATER,
-		Left:  &ast.ValueNode{Value: "11", Type: token.NUMBER},
-		Right: &ast.ValueNode{Value: "7", Type: token.NUMBER},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.True(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-
-func TestEvalBinaryOpNumberGreaterEq(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.GREATER_EQ,
-		Left:  &ast.ValueNode{Value: "11", Type: token.NUMBER},
-		Right: &ast.ValueNode{Value: "7", Type: token.NUMBER},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.True(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-
-func TestEvalBinaryOpStringAdd(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.ADD,
-		Left:  &ast.ValueNode{Value: "foo", Type: token.STRING},
-		Right: &ast.ValueNode{Value: "bar", Type: token.STRING},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.Equal(t, "foobar", actual.Value.(string))
-	assert.Equal(t, analyzer.STRING, actual.Type)
-}
-
-func TestEvalBinaryOpStringEqual(t *testing.T) {
+func TestEvalBinaryOpNodeMismatch(t *testing.T) {
 	n := &ast.BinaryOpNode{
 		Op:    token.EQUAL,
 		Left:  &ast.ValueNode{Value: "foo", Type: token.STRING},
-		Right: &ast.ValueNode{Value: "bar", Type: token.STRING},
+		Right: &ast.ValueNode{Value: "42", Type: token.NUMBER},
 	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.False(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
+	assert.Panics(t, func() {
+		n.Accept(New())
+	})
 }
 
-func TestEvalBinaryOpStringNotEqual(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.NOT_EQUAL,
-		Left:  &ast.ValueNode{Value: "foo", Type: token.STRING},
-		Right: &ast.ValueNode{Value: "bar", Type: token.STRING},
+func TestEvalBinaryOpNodeNotPermitted(t *testing.T) {
+	nodeData := []struct {
+		op     token.Token
+		exVal  string
+		exType token.Token
+	}{
+		{token.NOT, "42", token.NUMBER},
+		{token.GREATER, "foo", token.STRING},
+		{token.ADD, "true", token.BOOL},
 	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.True(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-
-func TestEvalBinaryOpBoolAnd(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.AND,
-		Left:  &ast.ValueNode{Value: "true", Type: token.BOOL},
-		Right: &ast.ValueNode{Value: "false", Type: token.BOOL},
+	for _, d := range nodeData {
+		n := &ast.BinaryOpNode{
+			Op:    d.op,
+			Left:  &ast.ValueNode{Value: d.exVal, Type: d.exType},
+			Right: &ast.ValueNode{Value: d.exVal, Type: d.exType},
+		}
+		assert.Panics(t, func() {
+			n.Accept(New())
+		})
 	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.False(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-
-func TestEvalBinaryOpBoolOr(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.OR,
-		Left:  &ast.ValueNode{Value: "false", Type: token.BOOL},
-		Right: &ast.ValueNode{Value: "true", Type: token.BOOL},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.True(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-
-func TestEvalBinaryOpBoolEqual(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.EQUAL,
-		Left:  &ast.ValueNode{Value: "true", Type: token.BOOL},
-		Right: &ast.ValueNode{Value: "false", Type: token.BOOL},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.False(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-
-func TestEvalBinaryOpBoolNotEqual(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.NOT_EQUAL,
-		Left:  &ast.ValueNode{Value: "true", Type: token.BOOL},
-		Right: &ast.ValueNode{Value: "false", Type: token.BOOL},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.True(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-
-func TestEvalBinaryOpBoolShortCircuitAnd(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.AND,
-		Left:  &ast.ValueNode{Value: "false", Type: token.BOOL},
-		Right: &ast.ValueNode{Value: "true", Type: token.BOOL},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.False(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
-}
-
-func TestEvalBinaryOpBoolShortCircuitOr(t *testing.T) {
-	n := &ast.BinaryOpNode{
-		Op:    token.OR,
-		Left:  &ast.ValueNode{Value: "true", Type: token.BOOL},
-		Right: &ast.ValueNode{Value: "false", Type: token.BOOL},
-	}
-	r := New()
-	n.Accept(r)
-
-	actual := r.stack.Pop().(stackEntry)
-	assert.True(t, actual.Value.(bool))
-	assert.Equal(t, analyzer.BOOL, actual.Type)
 }
 
 func TestEvalWhileNode(t *testing.T) {
@@ -546,92 +243,141 @@ func TestEvalWhileNode(t *testing.T) {
 			},
 		},
 	}
-	s := symtable.New()
-	s.Set(
+	r := New()
+	r.symTable.Set(
 		"foo",
 		symtable.VAR,
-		stackEntry{Value: 0.0, Type: analyzer.NUMBER},
+		ValueEntry{Value: 0.0, Type: NUMBER},
 	)
-	n.Condition.(*ast.BinaryOpNode).Left.(*ast.VariableNode).SymTable = s
-	n.Body[0].(*ast.AssignNode).SymTable = s
-	n.Body[0].(*ast.AssignNode).Expr.(*ast.BinaryOpNode).Left.(*ast.VariableNode).SymTable = s
-	r := New()
 	n.Accept(r)
 
-	e, _ := s.Get("foo", symtable.VAR)
-	assert.Equal(t, 10.0, e.(stackEntry).Value)
+	e, _ := r.symTable.Get("foo", symtable.VAR)
+	assert.Equal(t, 10.0, e.(ValueEntry).Value)
 }
 
-func TestEvalIfNodeTrue(t *testing.T) {
-	n := &ast.IfNode{
-		Condition: &ast.BinaryOpNode{
-			Op:    token.LESS,
-			Left:  &ast.VariableNode{Name: "foo"},
-			Right: &ast.ValueNode{Value: "10", Type: token.NUMBER},
-		},
-		Body: []ast.Node{
-			&ast.AssignNode{
-				Name: "foo",
-				Expr: &ast.BinaryOpNode{
-					Op:   token.ADD,
-					Left: &ast.VariableNode{Name: "foo"},
-					Right: &ast.ValueNode{
-						Value: "1",
-						Type:  token.NUMBER,
-					},
-				},
-			},
-		},
+func TestEvalWhileNodeNonBool(t *testing.T) {
+	n := &ast.WhileNode{
+		Condition: &ast.ValueNode{Value: "foo", Type: token.STRING},
+		Body:      []ast.Node{},
 	}
-	s := symtable.New()
-	s.Set("foo", symtable.VAR,
-		stackEntry{Value: 0.0, Type: analyzer.NUMBER},
-	)
-	n.Condition.(*ast.BinaryOpNode).Left.(*ast.VariableNode).SymTable = s
-	n.Body[0].(*ast.AssignNode).SymTable = s
-	n.Body[0].(*ast.AssignNode).Expr.(*ast.BinaryOpNode).Left.(*ast.VariableNode).SymTable = s
-	r := New()
-	n.Accept(r)
-
-	e, _ := s.Get("foo", symtable.VAR)
-	assert.Equal(t, 1.0, e.(stackEntry).Value)
+	assert.Panics(t, func() {
+		n.Accept(New())
+	})
 }
 
-func TestEvalIfNodeFalse(t *testing.T) {
-	n := &ast.IfNode{
-		Condition: &ast.BinaryOpNode{
-			Op:    token.LESS,
-			Left:  &ast.VariableNode{Name: "foo"},
-			Right: &ast.ValueNode{Value: "10", Type: token.NUMBER},
-		},
-		Else: &ast.IfNode{
-			Condition: &ast.ValueNode{Value: "true", Type: token.BOOL},
+func TestEvalIfNode(t *testing.T) {
+	nodeData := []struct {
+		cVal  string
+		exVal bool
+	}{
+		{"true", false},
+		{"false", true},
+	}
+	for _, d := range nodeData {
+		n := &ast.IfNode{
+			Condition: &ast.ValueNode{Value: d.cVal, Type: token.BOOL},
 			Body: []ast.Node{
-				&ast.AssignNode{
-					Name: "foo",
-					Expr: &ast.BinaryOpNode{
-						Op:   token.ADD,
-						Left: &ast.VariableNode{Name: "foo"},
-						Right: &ast.ValueNode{
-							Value: "1",
-							Type:  token.NUMBER,
-						},
+				&ast.ReturnNode{
+					Expr: &ast.ValueNode{Value: "false", Type: token.BOOL},
+				},
+			},
+			Else: &ast.IfNode{
+				Condition: &ast.ValueNode{Value: "true", Type: token.BOOL},
+				Body: []ast.Node{
+					&ast.ReturnNode{
+						Expr: &ast.ValueNode{Value: "true", Type: token.BOOL},
 					},
 				},
 			},
-		},
+		}
+		r := New()
+		n.Accept(r)
+		e := r.stack.Pop().(ValueEntry)
+		assert.Equal(t, d.exVal, e.Value)
 	}
-	s := symtable.New()
-	s.Set("foo",
-		symtable.VAR,
-		stackEntry{Value: 20.0, Type: analyzer.NUMBER},
-	)
-	n.Condition.(*ast.BinaryOpNode).Left.(*ast.VariableNode).SymTable = s
-	n.Else.(*ast.IfNode).Body[0].(*ast.AssignNode).SymTable = s
-	n.Else.(*ast.IfNode).Body[0].(*ast.AssignNode).Expr.(*ast.BinaryOpNode).Left.(*ast.VariableNode).SymTable = s
+}
+
+func TestEvalIfNodeNonBool(t *testing.T) {
+	n := &ast.IfNode{
+		Condition: &ast.ValueNode{Value: "foo", Type: token.STRING},
+		Body:      []ast.Node{},
+	}
+	assert.Panics(t, func() {
+		n.Accept(New())
+	})
+}
+
+func TestEvalFuncDefNode(t *testing.T) {
+	n := &ast.FuncDefNode{
+		Name: "foo",
+		Args: []string{},
+		Body: []ast.Node{},
+	}
 	r := New()
 	n.Accept(r)
 
-	e, _ := s.Get("foo", symtable.VAR)
-	assert.Equal(t, 21.0, e.(stackEntry).Value)
+	e, _ := r.symTable.Get("foo", symtable.FUNC)
+	assert.Equal(t, "foo", e.(ValueEntry).Value.(*ast.FuncDefNode).Name)
+}
+
+func TestEvalFuncDefNodeExists(t *testing.T) {
+	r := New()
+	r.symTable.Set("foo", symtable.FUNC, &ast.FuncDefNode{})
+	n := &ast.FuncDefNode{
+		Name: "foo",
+		Args: []string{},
+		Body: []ast.Node{},
+	}
+	assert.Panics(t, func() {
+		n.Accept(r)
+	})
+}
+
+func TestEvalFuncCallNode(t *testing.T) {
+	r := New()
+	f := &ast.FuncDefNode{
+		Name: "foo",
+		Args: []string{"bar"},
+		Body: []ast.Node{
+			&ast.ReturnNode{
+				Expr: &ast.VariableNode{Name: "bar"},
+			},
+		},
+	}
+	f.Accept(r)
+
+	n := &ast.FuncCallNode{
+		Name: "foo",
+		Args: []ast.Node{
+			&ast.ValueNode{Value: "bar", Type: token.STRING},
+		},
+	}
+	n.Accept(r)
+
+	e := r.stack.Pop().(ValueEntry)
+	assert.Equal(t, "bar", e.Value)
+}
+
+func TestEvalFuncCallNodeNotDefined(t *testing.T) {
+	n := &ast.FuncCallNode{
+		Name: "foo",
+		Args: []ast.Node{},
+	}
+	assert.Panics(t, func() {
+		n.Accept(New())
+	})
+}
+
+func TestEvalFuncCallNodeBadCount(t *testing.T) {
+	r := New()
+	r.symTable.Set("foo", symtable.FUNC, &ast.FuncDefNode{})
+	n := &ast.FuncCallNode{
+		Name: "foo",
+		Args: []ast.Node{
+			&ast.ValueNode{Value: "bar", Type: token.STRING},
+		},
+	}
+	assert.Panics(t, func() {
+		n.Accept(r)
+	})
 }

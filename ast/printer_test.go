@@ -148,8 +148,9 @@ func TestPrintAssignNode(t *testing.T) {
 func TestPrintFuncDefNodeNoArgsOrBody(t *testing.T) {
 	expected := "FuncDefNode\n" +
 		"├ Name: foo\n" +
-		"├ Args: 0x00\n" +
-		"╰ Body: 0x00\n"
+		"├ Args: 0x0\n" +
+		"├ Body: 0x0\n" +
+		"╰ SymTable: 0x0\n"
 	actual := capture(func() {
 		n := &FuncDefNode{Name: "foo"}
 		n.Accept(NewAstPrinter())
@@ -162,16 +163,17 @@ func TestPrintFuncDefNode(t *testing.T) {
 		"├ Name: foo\n" +
 		"├ Args: bar\n" +
 		"│       baz\n" +
-		"╰ Body: AssignNode\n" +
-		"        ├ Name: bar\n" +
-		"        ├ Expr: VariableNode\n" +
-		"        │       ├ Name: baz\n" +
-		"        │       ╰ SymTable: 0x0\n" +
-		"        ╰ SymTable: 0x0\n" +
-		"        ReturnNode\n" +
-		"        ╰ Expr: VariableNode\n" +
-		"                ├ Name: baz\n" +
-		"                ╰ SymTable: 0x0\n"
+		"├ Body: AssignNode\n" +
+		"│       ├ Name: bar\n" +
+		"│       ├ Expr: VariableNode\n" +
+		"│       │       ├ Name: baz\n" +
+		"│       │       ╰ SymTable: 0x0\n" +
+		"│       ╰ SymTable: 0x0\n" +
+		"│       ReturnNode\n" +
+		"│       ╰ Expr: VariableNode\n" +
+		"│               ├ Name: baz\n" +
+		"│               ╰ SymTable: 0x0\n" +
+		"╰ SymTable: 0x0\n"
 	actual := capture(func() {
 		n := &FuncDefNode{
 			Name: "foo",
@@ -192,7 +194,7 @@ func TestPrintFuncDefNode(t *testing.T) {
 func TestPrintFuncCallNodeNoArgs(t *testing.T) {
 	expected := "FuncCallNode\n" +
 		"├ Name: foo\n" +
-		"╰ Args: 0x00\n"
+		"╰ Args: 0x0\n"
 	actual := capture(func() {
 		n := &FuncCallNode{Name: "foo"}
 		n.Accept(NewAstPrinter())
@@ -227,8 +229,8 @@ func TestPrintIfNodeNoBody(t *testing.T) {
 		"├ Condition: VariableNode\n" +
 		"│            ├ Name: foo\n" +
 		"│            ╰ SymTable: 0x0\n" +
-		"├ Body: 0x00\n" +
-		"╰ Else: 0x00\n"
+		"├ Body: 0x0\n" +
+		"╰ Else: 0x0\n"
 	actual := capture(func() {
 		n := &IfNode{Condition: &VariableNode{Name: "foo"}}
 		n.Accept(NewAstPrinter())
@@ -257,8 +259,8 @@ func TestPrintIfNode(t *testing.T) {
 		"        ├ Condition: ValueNode\n" +
 		"        │            ├ Value: true\n" +
 		"        │            ╰ Type: BOOL\n" +
-		"        ├ Body: 0x00\n" +
-		"        ╰ Else: 0x00\n"
+		"        ├ Body: 0x0\n" +
+		"        ╰ Else: 0x0\n"
 	actual := capture(func() {
 		n := &IfNode{
 			Condition: &VariableNode{Name: "foo"},
@@ -301,7 +303,7 @@ func TestPrintWhileNodeNoBody(t *testing.T) {
 		"├ Condition: VariableNode\n" +
 		"│            ├ Name: foo\n" +
 		"│            ╰ SymTable: 0x0\n" +
-		"╰ Body: 0x00\n"
+		"╰ Body: 0x0\n"
 	actual := capture(func() {
 		n := &WhileNode{Condition: &VariableNode{Name: "foo"}}
 		n.Accept(NewAstPrinter())

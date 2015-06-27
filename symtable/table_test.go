@@ -1,8 +1,9 @@
 package symtable
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSymbolTableSetGet(t *testing.T) {

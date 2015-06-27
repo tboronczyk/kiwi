@@ -6,33 +6,20 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tboronczyk/kiwi/analyzer"
 	"github.com/tboronczyk/kiwi/ast"
 	"github.com/tboronczyk/kiwi/parser"
 	"github.com/tboronczyk/kiwi/runtime"
 	"github.com/tboronczyk/kiwi/scanner"
 )
 
+var optAst = flag.Bool("ast", false, "Print parsed abstract syntax tree")
+
 func main() {
-	defer func() {
-		if e := recover(); e != nil {
-			fmt.Println(e)
-		}
-	}()
-
-	p := parser.New(scanner.New(bufio.NewReader(os.Stdin)))
-	a := analyzer.New()
-
-	tree := flag.Bool("ast", false, "Display parsed abstract syntax tree")
 	flag.Parse()
 
-	var v ast.NodeVisitor
-	if *tree {
-		v = ast.NewAstPrinter()
-	} else {
-		v = runtime.New()
-	}
-
+	p := parser.New(scanner.New(bufio.NewReader(os.Stdin)))
+	r := runtime.New()
+	v := ast.NewAstPrinter()
 	for {
 		n, err := p.Parse()
 		if n == nil {
@@ -41,7 +28,9 @@ func main() {
 			}
 			return
 		}
-		n.Accept(a)
-		n.Accept(v)
+		if *optAst {
+			n.Accept(v)
+		}
+		n.Accept(r)
 	}
 }
