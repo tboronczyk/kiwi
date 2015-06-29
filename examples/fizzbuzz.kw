@@ -14,6 +14,6 @@ while i < 100 {
         write("Buzz\n")
     }
     else {
-        write(i:str + "\n")
+        write(i, "\n")
     }
 }
