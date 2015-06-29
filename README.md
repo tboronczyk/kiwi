@@ -20,36 +20,36 @@ LICENSE file. Just don’t come after me if it melts down your computer.
     func fibonacci n
     { 
         if n < 2 { 
-            return n.
+            return n
         } 
-        m := fibonacci(n - 1).
-        p := fibonacci(n - 2).
-        return m + p.
+        m := fibonacci(n - 1)
+        p := fibonacci(n - 2)
+        return m + p
     }
 
-    i := 0.
+    i := 0
     while i < 10 { 
-        i := i + 1.
-        fib := fibonacci(i).
-        write(fib:str + "\n").
+        i := i + 1
+        fib := fibonacci(i)
+        write(fib:str + "\n")
     }
 
 ### Fizz Buzz
 
-    i := 0.
+    i := 0
     while i < 100 {
-        i := i + 1.
+        i := i + 1
     
         if i % 15 = 0 {
-            write("Fizz Buzz\n").
+            write("Fizz Buzz\n")
         }
         else i % 3 = 0 {
-            write("Fizz\n").
+            write("Fizz\n")
         }
         else i % 5 = 0 {
-            write("Buzz\n").
+            write("Buzz\n")
         }
         else {
-            write(i:str + "\n").
+            write(i:str + "\n")
         }
     }

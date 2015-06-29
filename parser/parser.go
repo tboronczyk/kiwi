@@ -4,6 +4,7 @@ package parser
 
 import (
 	"errors"
+
 	"github.com/tboronczyk/kiwi/ast"
 	"github.com/tboronczyk/kiwi/scanner"
 	"github.com/tboronczyk/kiwi/token"
@@ -11,8 +12,10 @@ import (
 
 // Parser produces ASTs from tokens.
 type Parser struct {
-	tkn token.Token
-	val string
+	curTkn token.Token
+	prvTkn token.Token
+	curVal string
+	prvVal string
 	scn *scanner.Scanner
 }
 
@@ -24,26 +27,45 @@ func New(s *scanner.Scanner) *Parser {
 }
 
 // match returns a bool indicating the current token in memory is the same
-// as t.
-func (p Parser) match(t token.Token) bool {
-	return p.tkn == t
-}
-
-// advance retrieves the next token/value pair from the token stream and sets
-// them as the current token and value. COMMENT tokens are skipped.
-func (p *Parser) advance() {
-	for {
-		p.tkn, p.val = p.scn.Scan()
-		if p.tkn != token.COMMENT {
-			break
+// as one of the provided tokens.
+func (p Parser) match(tokens ...token.Token) bool {
+	for _, t := range tokens {
+		if p.curTkn == t {
+			return true
 		}
 	}
+	return false
+}
+
+// advance retrieves the next token/value pair, keeping track of the previous
+// pair. COMMENT tokens are always passed over. Multiplie NEWLINE tokens
+// are consolidated as one but never appear as the current pair. This allows
+// the parser to accomodate arbirary newlines in source code but still be
+// aware of their presense when they have semantic meaning.
+func (p *Parser) advance() {
+	p.prvTkn = p.curTkn
+	p.prvVal = p.curVal
+	for {
+		p.curTkn, p.curVal = p.scn.Scan()
+		if p.curTkn != token.COMMENT && p.curTkn != token.NEWLINE {
+			return
+		}
+		if p.curTkn == token.NEWLINE {
+			p.prvTkn = p.curTkn
+			p.prvVal = p.curVal
+		}
+	}
+}
+
+// newline returns whether the previous token in the stream was NEWLINE.
+func (p Parser) newline() bool {
+	return p.prvTkn == token.NEWLINE
 }
 
 // consume sets the new current token/value pair if the existing current token
 // matches t, otherwise will panic.
 func (p *Parser) consume(t token.Token) {
-	if p.tkn != t {
+	if !p.match(t) {
 		panic(t.String())
 	}
 	p.advance()
@@ -56,10 +78,10 @@ func (p *Parser) Parse() (node ast.Node, err error) {
 		if e := recover(); e != nil {
 			node = nil
 			err = errors.New("Expected " + e.(string) +
-				" but saw " + p.tkn.String())
+				" but saw " + p.curTkn.String())
 		}
 	}()
-	if p.tkn == token.EOF {
+	if p.curTkn == token.EOF {
 		return nil, nil
 	}
 	return p.stmt(), nil
@@ -68,11 +90,11 @@ func (p *Parser) Parse() (node ast.Node, err error) {
 // expr := relation (log-op expr)? .
 func (p *Parser) expr() ast.Node {
 	n := p.relation()
-	if !p.tkn.IsLogOp() {
+	if !p.curTkn.IsLogOp() {
 		return n
 	}
 
-	node := &ast.BinaryOpNode{Op: p.tkn, Left: n}
+	node := &ast.BinaryOpNode{Op: p.curTkn, Left: n}
 	p.advance()
 	node.Right = p.expr()
 
@@ -82,11 +104,11 @@ func (p *Parser) expr() ast.Node {
 // relation := simple-expr (cmp-op relation)? .
 func (p *Parser) relation() ast.Node {
 	n := p.simpleExpr()
-	if !p.tkn.IsCmpOp() {
+	if !p.curTkn.IsCmpOp() {
 		return n
 	}
 
-	node := &ast.BinaryOpNode{Op: p.tkn, Left: n}
+	node := &ast.BinaryOpNode{Op: p.curTkn, Left: n}
 	p.advance()
 	node.Right = p.relation()
 
@@ -96,11 +118,11 @@ func (p *Parser) relation() ast.Node {
 // simple-expr := term (add-op simple-expr)? .
 func (p *Parser) simpleExpr() ast.Node {
 	n := p.term()
-	if !p.tkn.IsAddOp() {
+	if !p.curTkn.IsAddOp() {
 		return n
 	}
 
-	node := &ast.BinaryOpNode{Op: p.tkn, Left: n}
+	node := &ast.BinaryOpNode{Op: p.curTkn, Left: n}
 	p.advance()
 	node.Right = p.simpleExpr()
 
@@ -110,11 +132,11 @@ func (p *Parser) simpleExpr() ast.Node {
 // term =: factor (mul-op term)? .
 func (p *Parser) term() ast.Node {
 	n := p.factor()
-	if !p.tkn.IsMulOp() {
+	if !p.curTkn.IsMulOp() {
 		return n
 	}
 
-	node := &ast.BinaryOpNode{Op: p.tkn, Left: n}
+	node := &ast.BinaryOpNode{Op: p.curTkn, Left: n}
 	p.advance()
 	node.Right = p.term()
 
@@ -128,8 +150,8 @@ func (p *Parser) factor() ast.Node {
 		p.advance()
 		return p.expr()
 	}
-	if p.tkn.IsExprOp() {
-		node := &ast.UnaryOpNode{Op: p.tkn}
+	if p.curTkn.IsExprOp() {
+		node := &ast.UnaryOpNode{Op: p.curTkn}
 		p.advance()
 		node.Expr = p.factor()
 		return node
@@ -140,7 +162,7 @@ func (p *Parser) factor() ast.Node {
 // cast =: terminal (':' IDENT)? .
 func (p *Parser) cast() ast.Node {
 	node := p.terminal()
-	if p.tkn != token.COLON {
+	if !p.match(token.COLON) {
 		return node
 	}
 	p.advance()
@@ -149,14 +171,13 @@ func (p *Parser) cast() ast.Node {
 
 // terminal := boolean | number | STRING | IDENT | func-call .
 func (p *Parser) terminal() ast.Node {
-	if p.tkn == token.BOOL || p.tkn == token.NUMBER ||
-		p.tkn == token.STRING {
+	if p.match(token.BOOL, token.NUMBER, token.STRING) {
 		defer p.advance()
-		return &ast.ValueNode{Value: p.val, Type: p.tkn}
+		return &ast.ValueNode{Value: p.curVal, Type: p.curTkn}
 	}
 
 	name := p.identifier()
-	if p.tkn != token.LPAREN {
+	if !p.match(token.LPAREN) {
 		return &ast.VariableNode{Name: name}
 	}
 	return &ast.FuncCallNode{Name: name, Args: p.parenExprList()}
@@ -168,12 +189,12 @@ func (p *Parser) parenExprList() []ast.Node {
 	p.consume(token.LPAREN)
 
 	var list []ast.Node
-	if p.tkn == token.RPAREN {
+	if p.match(token.RPAREN) {
 		return list
 	}
 	for {
 		list = append(list, p.expr())
-		if p.tkn != token.COMMA {
+		if !p.match(token.COMMA) {
 			return list
 		}
 		p.advance()
@@ -183,7 +204,7 @@ func (p *Parser) parenExprList() []ast.Node {
 // stmt := if-stmt | while-stmt | func-def | return-stmt | assign-stmt |
 //         func-call .
 func (p *Parser) stmt() ast.Node {
-	switch p.tkn {
+	switch p.curTkn {
 	case token.IF:
 		return p.ifStmt()
 	case token.WHILE:
@@ -202,7 +223,7 @@ func (p *Parser) stmt() ast.Node {
 func (p *Parser) ifStmt() *ast.IfNode {
 	p.consume(token.IF)
 	node := &ast.IfNode{Condition: p.expr(), Body: p.braceStmtList()}
-	if p.tkn == token.ELSE {
+	if p.match(token.ELSE) {
 		node.Else = p.elseClause()
 	}
 	return node
@@ -215,11 +236,12 @@ func (p *Parser) braceStmtList() []ast.Node {
 
 	var list []ast.Node
 	for {
-		if !(p.tkn.IsStmtKeyword() || p.tkn == token.IDENTIFIER) {
-			return list
+		if !(p.curTkn.IsStmtKeyword() || p.match(token.IDENTIFIER)) {
+			break
 		}
 		list = append(list, p.stmt())
 	}
+	return list
 }
 
 // else-clause := 'else' (brace-stmt-list | expr brace-stmt-list else-clause) .
@@ -228,7 +250,7 @@ func (p *Parser) elseClause() *ast.IfNode {
 	p.consume(token.ELSE)
 	node := &ast.IfNode{}
 	isFinal := false
-	if p.tkn == token.LBRACE {
+	if p.match(token.LBRACE) {
 		// a final clause without an expression defaults to an
 		// expression that evaluates true to make evaluation of the
 		// AST easier.
@@ -254,7 +276,7 @@ func (p *Parser) whileStmt() *ast.WhileNode {
 func (p *Parser) funcDef() *ast.FuncDefNode {
 	p.consume(token.FUNC)
 	node := &ast.FuncDefNode{Name: p.identifier()}
-	if p.tkn != token.LBRACE {
+	if !p.match(token.LBRACE) {
 		node.Args = p.identList()
 	}
 	node.Body = p.braceStmtList()
@@ -266,35 +288,43 @@ func (p *Parser) identList() []string {
 	var list []string
 	for {
 		list = append(list, p.identifier())
-		if p.tkn != token.COMMA {
+		if !p.match(token.COMMA) {
 			return list
 		}
 		p.advance()
 	}
 }
 
-// return-stmt := 'return' (expr)? '.' .
+// return-stmt := 'return' (expr)? NL .
 func (p *Parser) returnStmt() *ast.ReturnNode {
-	defer p.consume(token.DOT)
+	defer func () {
+		if !p.newline() {
+			panic (token.NEWLINE)
+		}
+	}()
 	p.consume(token.RETURN)
 	node := &ast.ReturnNode{}
-	if p.tkn != token.DOT {
+	if !p.newline() {
 		node.Expr = p.expr()
 	}
 	return node
 }
 
-// assign-stmt := IDENT ':=' expr '.' .
+// assign-stmt := IDENT ':=' expr NL .
 //   func-call := IDENT paren-expr-list .
 func (p *Parser) assignStmtOrFuncCall() ast.Node {
-	defer p.consume(token.DOT)
+	defer func () {
+		if !p.newline() {
+			panic (token.NEWLINE)
+		}
+	}()
 
 	name := p.identifier()
-	if p.tkn == token.ASSIGN {
+	if p.match(token.ASSIGN) {
 		p.advance()
 		return &ast.AssignNode{Name: name, Expr: p.expr()}
 	}
-	if p.tkn == token.LPAREN {
+	if p.match(token.LPAREN) {
 		return &ast.FuncCallNode{Name: name, Args: p.parenExprList()}
 	}
 	panic(token.ASSIGN.String() + " or " + token.LPAREN.String())
@@ -303,5 +333,5 @@ func (p *Parser) assignStmtOrFuncCall() ast.Node {
 // identifier returns the identifier's value.
 func (p *Parser) identifier() string {
 	defer p.consume(token.IDENTIFIER)
-	return p.val
+	return p.curVal
 }
