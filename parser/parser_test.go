@@ -191,7 +191,7 @@ func TestParseBraceStmtListEmpty(t *testing.T) {
 }
 
 func TestParseBraceStmtList(t *testing.T) {
-	p := newParser("{foo := 42. bar := 73.}")
+	p := newParser("{foo := 42\nbar := 73\n}")
 	node := p.braceStmtList()
 	assert.Equal(t, "foo", node[0].(*ast.AssignNode).Name)
 	assert.Equal(t, "42", node[0].(*ast.AssignNode).Expr.(*ast.ValueNode).Value)
@@ -200,14 +200,14 @@ func TestParseBraceStmtList(t *testing.T) {
 }
 
 func TestParseBraceStmtListStmtError(t *testing.T) {
-	p := newParser("{foo := 42. bar 73")
+	p := newParser("{foo := 42\n bar 73")
 	assert.Panics(t, func() {
 		p.braceStmtList()
 	})
 }
 
 func TestParseBraceStmtListBraceError(t *testing.T) {
-	p := newParser("{foo := 42.")
+	p := newParser("{foo := 42\n")
 	assert.Panics(t, func() {
 		p.braceStmtList()
 	})
@@ -237,7 +237,7 @@ func TestParseFuncDefManyParams(t *testing.T) {
 }
 
 func TestParseIfStmt(t *testing.T) {
-	p := newParser("if true {foo := 42.}")
+	p := newParser("if true {foo := 42\n}")
 	node := p.stmt().(*ast.IfNode)
 	assert.Equal(t, "TRUE", node.Condition.(*ast.ValueNode).Value)
 	assert.Equal(t, "foo", node.Body[0].(*ast.AssignNode).Name)
@@ -266,19 +266,19 @@ func TestParseIfStmtWithElse(t *testing.T) {
 }
 
 func TestParseReturnStmt(t *testing.T) {
-	p := newParser("return 42.")
+	p := newParser("return 42\n")
 	node := p.stmt().(*ast.ReturnNode)
 	assert.Equal(t, "42", node.Expr.(*ast.ValueNode).Value)
 }
 
 func TestParseReturnStmtNoExpr(t *testing.T) {
-	p := newParser("return.")
+	p := newParser("return\n")
 	node := p.stmt()
 	assert.Nil(t, node.(*ast.ReturnNode).Expr)
 }
 
 func TestParseWhileStmt(t *testing.T) {
-	p := newParser("while foo = true {bar := 42.}")
+	p := newParser("while foo = true {bar := 42\n}")
 	node := p.stmt().(*ast.WhileNode)
 	assert.Equal(t, token.EQUAL, node.Condition.(*ast.BinaryOpNode).Op)
 	assert.Equal(t, "bar", node.Body[0].(*ast.AssignNode).Name)
@@ -292,14 +292,14 @@ func TestParseWhileStmtExprError(t *testing.T) {
 }
 
 func TestParseStmtError(t *testing.T) {
-	p := newParser(".")
+	p := newParser("\n")
 	assert.Panics(t, func() {
 		p.stmt()
 	})
 }
 
 func TestParseAssignStmt(t *testing.T) {
-	p := newParser("foo := 42 + 73.")
+	p := newParser("foo := 42 + 73\n")
 	node := p.stmt().(*ast.AssignNode)
 	assert.Equal(t, "foo", node.Name)
 	assert.Equal(t, token.ADD, node.Expr.(*ast.BinaryOpNode).Op)
@@ -313,7 +313,7 @@ func TestParseAssignSmtExprError(t *testing.T) {
 }
 
 func TestParseFuncCall(t *testing.T) {
-	p := newParser("foo().")
+	p := newParser("foo()\n")
 	node := p.stmt().(*ast.FuncCallNode)
 	assert.Equal(t, "foo", node.Name)
 	assert.Equal(t, 0, len(node.Args))

@@ -52,5 +52,5 @@ multiple-line comments.
          while-stmt := 'while' expr brace-stmt-list .
            func-def := 'func' (ident-list)? brace-stmt-list .
          ident-list := IDENT (',' IDENT)? .
-        return-stmt := 'return' (expr)? '.' .
-        assign-stmt := IDENT ':=' expr '.' .
+        return-stmt := 'return' (expr)? NL .
+        assign-stmt := IDENT ':=' expr NL .

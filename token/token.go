@@ -12,6 +12,7 @@ const (
 	UNKNOWN Token = iota
 	MALFORMED
 	EOF
+	NEWLINE
 
 	addop_start
 	// addition-level operators
@@ -65,7 +66,6 @@ const (
 	COLON
 	COMMA
 	COMMENT
-	DOT
 	ELSE
 	LPAREN
 	RPAREN
@@ -75,6 +75,7 @@ var tokens = []string{
 	UNKNOWN:    "UNKNOWN",
 	MALFORMED:  "MALFORMED",
 	EOF:        "EOF",
+	NEWLINE:    "NEWLINE",
 	ADD:        "+",
 	SUBTRACT:   "-",
 	MULTIPLY:   "*",
@@ -103,7 +104,6 @@ var tokens = []string{
 	COLON:      ":",
 	COMMA:      ",",
 	COMMENT:    "COMMENT",
-	DOT:        ".",
 	ELSE:       "else",
 	LPAREN:     "(",
 	RPAREN:     ")",

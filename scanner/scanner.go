@@ -77,6 +77,8 @@ func (s *Scanner) Scan() (token.Token, string) {
 	switch ch {
 	case eof:
 		return token.EOF, ""
+	case '\n':
+		return token.NEWLINE, "\n"
 	case '+':
 		return token.ADD, "+"
 	case '-':
@@ -152,8 +154,6 @@ func (s *Scanner) Scan() (token.Token, string) {
 		return token.LBRACE, "{"
 	case '}':
 		return token.RBRACE, "}"
-	case '.':
-		return token.DOT, "."
 	case ',':
 		return token.COMMA, ","
 	case '"':
@@ -180,7 +180,7 @@ func (s *Scanner) Scan() (token.Token, string) {
 // non-whitespace rune it encounters.
 func (s *Scanner) skipWhitespace() {
 	for {
-		if ch := s.read(); !unicode.IsSpace(ch) {
+		if ch := s.read(); ch == '\n' || !unicode.IsSpace(ch) {
 			s.unread()
 			break
 		}
