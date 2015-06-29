@@ -148,7 +148,7 @@ func TestParseTerminalVariable(t *testing.T) {
 }
 
 func TestParseCast(t *testing.T) {
-	p := newParser("foo!string")
+	p := newParser("foo:string")
 	node := p.cast().(*ast.CastNode)
 	assert.Equal(t, "string", node.Cast)
 	assert.Equal(t, "foo", node.Expr.(*ast.VariableNode).Name)

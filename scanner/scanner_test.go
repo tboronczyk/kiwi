@@ -9,7 +9,7 @@ import (
 )
 
 func TestScanSimpleTokens(t *testing.T) {
-	str := "+ - * / % := : = < <= > >= && & || | ~ ~= ( ) { } . , ! ?"
+	str := "+ - * / % := : = < <= > >= && & || | ~ ~= ( ) { } . , ?"
 	s := New(strings.NewReader(str))
 
 	tokens := []struct {
@@ -22,7 +22,7 @@ func TestScanSimpleTokens(t *testing.T) {
 		{token.DIVIDE, "/"},
 		{token.MODULO, "%"},
 		{token.ASSIGN, ":="},
-		{token.MALFORMED, ":"},
+		{token.COLON, ":"},
 		{token.EQUAL, "="},
 		{token.LESS, "<"},
 		{token.LESS_EQ, "<="},
@@ -40,7 +40,6 @@ func TestScanSimpleTokens(t *testing.T) {
 		{token.RBRACE, "}"},
 		{token.DOT, "."},
 		{token.COMMA, ","},
-		{token.CAST, "!"},
 		{token.UNKNOWN, "?"},
 		{token.EOF, ""},
 	}

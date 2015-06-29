@@ -34,7 +34,7 @@ multiple-line comments.
                term := factor (mul-op term)? .
              factor := '(' expr ')' | expr-op expr | cast .
             expr-op := '~' | '+' | '-' .
-               cast := terminal ('!' IDENT)? .
+               cast := terminal (':' IDENT)? .
            terminal := boolean | number | STRING | IDENT | func-call .
     paren-expr-list := '(' ')' | '(' expr (',' expr)* ')' .
             boolean := 'true' | 'false' .
