@@ -40,7 +40,15 @@ func New() *Runtime {
 
 func (r *Runtime) VisitAssignNode(n *ast.AssignNode) {
 	n.Expr.Accept(r)
-	r.symTable.Set(n.Name, symtable.VAR, r.stack.Pop())
+	v := r.stack.Pop().(ValueEntry)
+	// preserve datatype if the variable is already set
+	e, ok := r.symTable.Get(n.Name, symtable.VAR)
+	if ok {
+		if e.(ValueEntry).Type != v.Type {
+			panic("value type does not match variable type")
+		}
+	}
+	r.symTable.Set(n.Name, symtable.VAR, v)
 	n.SymTable = r.symTable
 }
 

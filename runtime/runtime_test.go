@@ -53,6 +53,20 @@ func TestEvalAssignNode(t *testing.T) {
 	assert.Equal(t, STRING, e.(ValueEntry).Type)
 }
 
+func TestEvalAssignNodeBadType(t *testing.T) {
+	n := &ast.AssignNode{
+		Name: "foo",
+		Expr: &ast.ValueNode{Value: "bar", Type: token.STRING},
+	}
+	r := New()
+	n.Accept(r)
+
+	n.Expr = &ast.ValueNode{Value: "42", Type: token.NUMBER}
+	assert.Panics(t, func() {
+		n.Accept(r)
+	})
+}
+
 func TestEvalVariableNode(t *testing.T) {
 	n := &ast.VariableNode{Name: "foo", SymTable: symtable.New()}
 	r := New()
