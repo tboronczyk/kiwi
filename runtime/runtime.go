@@ -194,7 +194,7 @@ func (r *Runtime) VisitCastNode(n *ast.CastNode) {
 	n.Expr.Accept(r)
 	expr := r.stack.Pop().(ValueEntry)
 	switch strings.ToUpper(n.Cast) {
-	case "STRING":
+	case "STR":
 		switch expr.Type {
 		case STRING:
 			break
@@ -210,7 +210,7 @@ func (r *Runtime) VisitCastNode(n *ast.CastNode) {
 		}
 		expr.Type = STRING
 		break
-	case "NUMBER":
+	case "NUM":
 		switch expr.Type {
 		case STRING:
 			expr.Value, _ = strconv.ParseFloat(expr.Value.(string), 64)

@@ -62,7 +62,7 @@ const (
 	ASSIGN
 	LBRACE
 	RBRACE
-	CAST
+	COLON
 	COMMA
 	COMMENT
 	DOT
@@ -100,7 +100,7 @@ var tokens = []string{
 	ASSIGN:     ":=",
 	LBRACE:     "{",
 	RBRACE:     "}",
-	CAST:       "!",
+	COLON:      ":",
 	COMMA:      ",",
 	COMMENT:    "COMMENT",
 	DOT:        ".",

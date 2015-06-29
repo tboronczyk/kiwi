@@ -137,10 +137,10 @@ func (p *Parser) factor() ast.Node {
 	return p.cast()
 }
 
-// cast =: terminal ('!' IDENT)? .
+// cast =: terminal (':' IDENT)? .
 func (p *Parser) cast() ast.Node {
 	node := p.terminal()
-	if p.tkn != token.CAST {
+	if p.tkn != token.COLON {
 		return node
 	}
 	p.advance()

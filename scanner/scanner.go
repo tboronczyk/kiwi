@@ -97,12 +97,13 @@ func (s *Scanner) Scan() (token.Token, string) {
 	case '%':
 		return token.MODULO, "%"
 	case ':':
+		// assign or colon
 		ch = s.read()
 		if ch == '=' {
 			return token.ASSIGN, ":="
 		}
 		s.unread()
-		return token.MALFORMED, ":"
+		return token.COLON, ":"
 	case '=':
 		return token.EQUAL, "="
 	case '<':
@@ -155,8 +156,6 @@ func (s *Scanner) Scan() (token.Token, string) {
 		return token.DOT, "."
 	case ',':
 		return token.COMMA, ","
-	case '!':
-		return token.CAST, "!"
 	case '"':
 		return s.scanString()
 	case '`':

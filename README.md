@@ -31,7 +31,7 @@ LICENSE file. Just don’t come after me if it melts down your computer.
     while i < 10 { 
         i := i + 1.
         fib := fibonacci(i).
-        write(fib!string + "\n").
+        write(fib:str + "\n").
     }
 
 ### Fizz Buzz
@@ -50,6 +50,6 @@ LICENSE file. Just don’t come after me if it melts down your computer.
             write("Buzz\n").
         }
         else {
-            write(i!string + "\n").
+            write(i:str + "\n").
         }
     }

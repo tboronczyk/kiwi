@@ -115,12 +115,12 @@ func TestCastNode(t *testing.T) {
 		expctVal  interface{}
 		expctType DataType
 	}{
-		{"string", "foo", token.STRING, "foo", STRING},
-		{"string", "42", token.NUMBER, "42", STRING},
-		{"string", "true", token.BOOL, "true", STRING},
-		{"number", "foo", token.STRING, 0.0, NUMBER},
-		{"number", "42", token.NUMBER, 42.0, NUMBER},
-		{"number", "true", token.BOOL, 1.0, NUMBER},
+		{"str", "foo", token.STRING, "foo", STRING},
+		{"str", "42", token.NUMBER, "42", STRING},
+		{"str", "true", token.BOOL, "true", STRING},
+		{"num", "foo", token.STRING, 0.0, NUMBER},
+		{"num", "42", token.NUMBER, 42.0, NUMBER},
+		{"num", "true", token.BOOL, 1.0, NUMBER},
 		{"bool", "foo", token.STRING, true, BOOL},
 		{"bool", "42", token.NUMBER, true, BOOL},
 		{"bool", "true", token.BOOL, true, BOOL},
