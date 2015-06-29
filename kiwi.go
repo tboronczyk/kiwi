@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
+	"log"
 	"os"
 
 	"github.com/tboronczyk/kiwi/ast"
@@ -15,9 +17,32 @@ import (
 var optAst = flag.Bool("ast", false, "Print parsed abstract syntax tree")
 
 func main() {
-	flag.Parse()
+	defer func() {
+		if e := recover(); e != nil {
+			log.Fatal(e)
+		}
+	}()
 
-	p := parser.New(scanner.New(bufio.NewReader(os.Stdin)))
+	flag.Parse()
+	args := flag.Args()
+
+	var in io.Reader
+	switch len(args) {
+	case 0:
+		in = os.Stdin
+		break
+	case 1:
+		fp, err := os.Open(args[0])
+		if err != nil {
+			panic(err)
+		}
+		in = fp
+		break
+	default:
+		panic("junk arguments")
+	}
+
+	p := parser.New(scanner.New(bufio.NewReader(in)))
 	r := runtime.New()
 	v := ast.NewAstPrinter()
 	for {
