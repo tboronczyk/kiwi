@@ -260,7 +260,7 @@ func (r *Runtime) VisitFuncCallNode(n *ast.FuncCallNode) {
 	}
 
 	if e.(ValueEntry).Type == BUILTIN {
-		builtins[n.Name](p)
+		builtins[n.Name](&r.stack, p)
 		return
 	}
 
