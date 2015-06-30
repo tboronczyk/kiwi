@@ -44,98 +44,30 @@ func TestParseIdentifierError(t *testing.T) {
 	})
 }
 
-func TestParseTerm(t *testing.T) {
-	p := newParser("42 * 73")
-	node := p.term().(*ast.BinaryOpNode)
-	assert.Equal(t, token.MULTIPLY, node.Op)
-	assert.Equal(t, "42", node.Left.(*ast.ValueNode).Value)
-	assert.Equal(t, token.NUMBER, node.Left.(*ast.ValueNode).Type)
-	assert.Equal(t, "73", node.Right.(*ast.ValueNode).Value)
-	assert.Equal(t, token.NUMBER, node.Right.(*ast.ValueNode).Type)
+func TestParseTermParens(t *testing.T) {
+	p := newParser("(42)")
+	node := p.term().(*ast.ValueNode)
+	assert.Equal(t, "42", node.Value)
+	assert.Equal(t, token.NUMBER, node.Type)
 }
 
-func TestParseTermError(t *testing.T) {
-	p := newParser("42 *")
+func TestParseTermParensExprError(t *testing.T) {
+	p := newParser("(")
 	assert.Panics(t, func() {
 		p.term()
 	})
 }
 
-func TestParseSimpleExpr(t *testing.T) {
-	p := newParser("42 + 73")
-	node := p.simpleExpr().(*ast.BinaryOpNode)
-	assert.Equal(t, token.ADD, node.Op)
-	assert.Equal(t, "42", node.Left.(*ast.ValueNode).Value)
-	assert.Equal(t, token.NUMBER, node.Left.(*ast.ValueNode).Type)
-	assert.Equal(t, "73", node.Right.(*ast.ValueNode).Value)
-	assert.Equal(t, token.NUMBER, node.Right.(*ast.ValueNode).Type)
-}
-
-func TestParseSimpleExprError(t *testing.T) {
-	p := newParser("42 +")
-	assert.Panics(t, func() {
-		p.simpleExpr()
-	})
-}
-
-func TestParseRelation(t *testing.T) {
-	p := newParser("42 < 73")
-	node := p.relation().(*ast.BinaryOpNode)
-	assert.Equal(t, token.LESS, node.Op)
-	assert.Equal(t, "42", node.Left.(*ast.ValueNode).Value)
-	assert.Equal(t, token.NUMBER, node.Left.(*ast.ValueNode).Type)
-	assert.Equal(t, "73", node.Right.(*ast.ValueNode).Value)
-	assert.Equal(t, token.NUMBER, node.Right.(*ast.ValueNode).Type)
-}
-
-func TestParseRelationError(t *testing.T) {
-	p := newParser("42 <")
-	assert.Panics(t, func() {
-		p.relation()
-	})
-}
-
-func TestParseExpr(t *testing.T) {
-	p := newParser("true && false")
-	node := p.expr().(*ast.BinaryOpNode)
-	assert.Equal(t, token.AND, node.Op)
-	assert.Equal(t, "TRUE", node.Left.(*ast.ValueNode).Value)
-	assert.Equal(t, token.BOOL, node.Left.(*ast.ValueNode).Type)
-	assert.Equal(t, "FALSE", node.Right.(*ast.ValueNode).Value)
-	assert.Equal(t, token.BOOL, node.Right.(*ast.ValueNode).Type)
-}
-
-func TestParseExprError(t *testing.T) {
-	p := newParser("true &&")
-	assert.Panics(t, func() {
-		p.expr()
-	})
-}
-
-func TestParseFactorParens(t *testing.T) {
-	p := newParser("(42)")
-	node := p.factor().(*ast.ValueNode)
-	assert.Equal(t, "42", node.Value)
-	assert.Equal(t, token.NUMBER, node.Type)
-}
-
-func TestParseFactorParensExprError(t *testing.T) {
-	p := newParser("(")
-	assert.Panics(t, func() {
-		p.factor()
-	})
-}
-
-func TestParseFactorParensCloseError(t *testing.T) {
+func TestParseTermParensCloseError(t *testing.T) {
 	p := newParser("(42")
 	assert.Panics(t, func() {
-		p.factor()
+		p.term()
 	})
 }
 
-func TestParseFactorSigned(t *testing.T) {
+func TestParseTermSigned(t *testing.T) {
 	p := newParser("-42")
-	node := p.factor().(*ast.UnaryOpNode)
+	node := p.term().(*ast.UnaryOpNode)
 	assert.Equal(t, token.SUBTRACT, node.Op)
 	assert.Equal(t, "42", node.Expr.(*ast.ValueNode).Value)
 	assert.Equal(t, token.NUMBER, node.Expr.(*ast.ValueNode).Type)

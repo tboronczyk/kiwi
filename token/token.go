@@ -121,6 +121,33 @@ func (t Token) String() string {
 	return str
 }
 
+// Precedence returns whether the operator represented by t1 has a higher
+// precedence than the one represented by t2. If either t1 or t2 is not an
+// operator token then err is true.
+func Precedence(t1, t2 Token) (bool, err bool) {
+	p1 := precedence(t1)
+	p2 := precedence(t2)
+	if p1 == 0 || p2 == 0 {
+		return false, true
+	}
+	return p1 > p2, false
+}
+// precedence returns an operator's precedence. A higher value is a higher
+// precedence.
+func precedence(t Token) uint8 {
+	if t.IsLogOp() {
+		return 1
+	} else if t.IsCmpOp() {
+		return 2
+	} else if t.IsAddOp() {
+		return 3
+	} else if t.IsMulOp() {
+		return 4
+	} else {
+		return 0
+	}
+}
+
 // IsAddOp returns bool indicating whether the token represents an
 // addition-level operator.
 func (t Token) IsAddOp() bool {
@@ -146,8 +173,14 @@ func (t Token) IsLogOp() bool {
 }
 
 // IsExprOp returns bool indicating whether the token represents an operator
-// that may lead an expression (right-binding unary operators).
+// that may form an expression (left-binding binary operators).
 func (t Token) IsExprOp() bool {
+	return t.IsAddOp() || t.IsMulOp() || t.IsCmpOp() || t.IsLogOp()
+}
+
+// IsTermOp returns bool indicating whether the token represents an operator
+// that may lead a term (right-binding unary operators).
+func (t Token) IsTermOp() bool {
 	return t.IsAddOp() || t == NOT
 }
 

@@ -87,79 +87,51 @@ func (p *Parser) Parse() (node ast.Node, err error) {
 	return p.stmt(), nil
 }
 
-// expr := relation (log-op expr)? .
+// expr =: term (expr-op expr)?
 func (p *Parser) expr() ast.Node {
-	n := p.relation()
-	if !p.curTkn.IsLogOp() {
-		return n
+	term := p.term()
+	if !p.curTkn.IsExprOp() {
+		return term
 	}
 
-	node := &ast.BinaryOpNode{Op: p.curTkn, Left: n}
+	op := p.curTkn
 	p.advance()
-	node.Right = p.expr()
+	expr := p.expr()
 
+	node := &ast.BinaryOpNode{Op: op, Left: term}
+	switch expr.(type) {
+	case *ast.BinaryOpNode:
+		if prec, err := token.Precedence(op,
+			expr.(*ast.BinaryOpNode).Op); err {
+			panic("expected binary operator")
+		} else if prec {
+			// adjust tree for higher precedence of expr's op
+			node.Right = expr.(*ast.BinaryOpNode).Left
+			expr.(*ast.BinaryOpNode).Left = node
+			return expr
+		}
+	}
+	node.Right = expr
 	return node
 }
 
-// relation := simple-expr (cmp-op relation)? .
-func (p *Parser) relation() ast.Node {
-	n := p.simpleExpr()
-	if !p.curTkn.IsCmpOp() {
-		return n
-	}
-
-	node := &ast.BinaryOpNode{Op: p.curTkn, Left: n}
-	p.advance()
-	node.Right = p.relation()
-
-	return node
-}
-
-// simple-expr := term (add-op simple-expr)? .
-func (p *Parser) simpleExpr() ast.Node {
-	n := p.term()
-	if !p.curTkn.IsAddOp() {
-		return n
-	}
-
-	node := &ast.BinaryOpNode{Op: p.curTkn, Left: n}
-	p.advance()
-	node.Right = p.simpleExpr()
-
-	return node
-}
-
-// term =: factor (mul-op term)? .
+// term =: '(' expr ')' | term-op expr | cast
 func (p *Parser) term() ast.Node {
-	n := p.factor()
-	if !p.curTkn.IsMulOp() {
-		return n
-	}
-
-	node := &ast.BinaryOpNode{Op: p.curTkn, Left: n}
-	p.advance()
-	node.Right = p.term()
-
-	return node
-}
-
-// factor =: '(' expr ')' | expr-op expr | cast .
-func (p *Parser) factor() ast.Node {
 	if p.match(token.LPAREN) {
 		defer p.consume(token.RPAREN)
 		p.advance()
 		return p.expr()
 	}
-	if p.curTkn.IsExprOp() {
+	if p.curTkn.IsTermOp() {
 		node := &ast.UnaryOpNode{Op: p.curTkn}
 		p.advance()
-		node.Expr = p.factor()
+		node.Expr = p.term()
 		return node
 	}
 	return p.cast()
 }
 
-// cast =: terminal (':' IDENT)? .
+// cast =: terminal (':' IDENT)?
 func (p *Parser) cast() ast.Node {
 	node := p.terminal()
 	if !p.match(token.COLON) {
@@ -169,7 +141,7 @@ func (p *Parser) cast() ast.Node {
 	return &ast.CastNode{Cast: p.identifier(), Expr: node}
 }
 
-// terminal := boolean | number | STRING | IDENT | func-call .
+// terminal := boolean | number | STRING | IDENT | func-call
 func (p *Parser) terminal() ast.Node {
 	if p.match(token.BOOL, token.NUMBER, token.STRING) {
 		defer p.advance()
@@ -183,7 +155,7 @@ func (p *Parser) terminal() ast.Node {
 	return &ast.FuncCallNode{Name: name, Args: p.parenExprList()}
 }
 
-// paren-expr-list := '(' ')' | '(' expr (',' expr)* ')' .
+// paren-expr-list := '(' ')' | '(' expr (',' expr)* ')'
 func (p *Parser) parenExprList() []ast.Node {
 	defer p.consume(token.RPAREN)
 	p.consume(token.LPAREN)
@@ -202,7 +174,7 @@ func (p *Parser) parenExprList() []ast.Node {
 }
 
 // stmt := if-stmt | while-stmt | func-def | return-stmt | assign-stmt |
-//         func-call .
+//         func-call
 func (p *Parser) stmt() ast.Node {
 	switch p.curTkn {
 	case token.IF:
@@ -219,7 +191,7 @@ func (p *Parser) stmt() ast.Node {
 	panic("statement keyword")
 }
 
-// if-stmt := 'if' expr brace-stmt-list (else-clause)? .
+// if-stmt := 'if' expr brace-stmt-list (else-clause)?
 func (p *Parser) ifStmt() *ast.IfNode {
 	p.consume(token.IF)
 	node := &ast.IfNode{Condition: p.expr(), Body: p.braceStmtList()}
@@ -244,7 +216,7 @@ func (p *Parser) braceStmtList() []ast.Node {
 	return list
 }
 
-// else-clause := 'else' (brace-stmt-list | expr brace-stmt-list else-clause) .
+// else-clause := 'else' (brace-stmt-list | expr brace-stmt-list else-clause)
 // An else with an expression becomes an if-stmt within default else clause.
 func (p *Parser) elseClause() *ast.IfNode {
 	p.consume(token.ELSE)
@@ -266,13 +238,13 @@ func (p *Parser) elseClause() *ast.IfNode {
 	return node
 }
 
-// while-stmt := 'while' expr brace-stmt-list .
+// while-stmt := 'while' expr brace-stmt-list
 func (p *Parser) whileStmt() *ast.WhileNode {
 	p.consume(token.WHILE)
 	return &ast.WhileNode{Condition: p.expr(), Body: p.braceStmtList()}
 }
 
-// func-def := 'func' (ident-list)? brace-stmt-list .
+// func-def := 'func' (ident-list)? brace-stmt-list
 func (p *Parser) funcDef() *ast.FuncDefNode {
 	p.consume(token.FUNC)
 	node := &ast.FuncDefNode{Name: p.identifier()}
@@ -283,7 +255,7 @@ func (p *Parser) funcDef() *ast.FuncDefNode {
 	return node
 }
 
-// ident-list := IDENT (',' IDENT)? .
+// ident-list := IDENT (',' IDENT)?
 func (p *Parser) identList() []string {
 	var list []string
 	for {
@@ -295,7 +267,7 @@ func (p *Parser) identList() []string {
 	}
 }
 
-// return-stmt := 'return' (expr)? NL .
+// return-stmt := 'return' (expr)? NL
 func (p *Parser) returnStmt() *ast.ReturnNode {
 	defer func () {
 		if !p.newline() {
@@ -310,8 +282,8 @@ func (p *Parser) returnStmt() *ast.ReturnNode {
 	return node
 }
 
-// assign-stmt := IDENT ':=' expr NL .
-//   func-call := IDENT paren-expr-list .
+// assign-stmt := IDENT ':=' expr NL
+//   func-call := IDENT paren-expr-list
 func (p *Parser) assignStmtOrFuncCall() ast.Node {
 	defer func () {
 		if !p.newline() {
