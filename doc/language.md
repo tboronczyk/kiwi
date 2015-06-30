@@ -93,30 +93,34 @@ Prec. | Type          | Operators
 
 ### Data Structures
 
-## Language Grammar
+## ABNF Grammar
 
-               expr := term (expr-op expr)?
-            expr-op := add-op | mul-op | cmp-op | log-op
-             add-op := '+' | '-'
-             mul-op := '*' | '/' | '%'
-             cmp-op := '=' | '~=' | '>' | '>=' | '<' | '<='
-             log-op := '&&' | '||'
-               term := '(' expr ')' | term-op expr | cast
-            term-op := '~' | '+' | '-'
-               cast := terminal (':' IDENT)?
-           terminal := boolean | number | STRING | IDENT | func-call
-    paren-expr-list := '(' ')' | '(' expr (',' expr)* ')'
-            boolean := 'true' | 'false'
-             number := (0-9)+ ['.' (0-9)+]
-          func-call := IDENT paren-expr-list
-               stmt := if-stmt | while-stmt | func-def | return-stmt |
-                       assign-stmt | func-call
-            if-stmt := 'if' expr braced-stmt-list (else-clause)?
-    brace-stmt-list := '{' (stmt)* '}'
-        else-clause := 'else' (brace-stmt-list | expr brace-stmt-list
-                       else-clause)
-         while-stmt := 'while' expr brace-stmt-list
-           func-def := 'func' (ident-list)? brace-stmt-list
-         ident-list := IDENT (',' IDENT)?
-        return-stmt := 'return' (expr)? NL
-        assign-stmt := IDENT ':=' expr NL
+    ; RFC5243 App. B defines ALPHA, CHAR, DIGIT, DQUOTE, and LF
+
+    expr            = term [expr-op expr]
+    expr-op         = add-op / mul-op / cmp-op / log-op
+    add-op          = "+" / "-"
+    mul-op          = "*" / "/" / "%"
+    cmp-op          = "=" / "~=" / ">" / ">=" / "<" / "<="
+    log-op          = "&&" / "||"
+    term            = "(" expr ")" / term-op expr / cast
+    term-op         = "~" / "+" / "-"
+    cast            = terminal [":" ident]
+    terminal        = boolean / number / string / ident / func-call
+    paren-expr-list = "(" [expr *("," expr)] ")"
+    boolean         = "true" / "false"
+    func-call       = ident paren-expr-list
+    stmt            = if-stmt / while-stmt / func-def / return-stmt /
+                      assign-stmt / func-call
+    if-stmt         = "if" expr brace-stmt-list [else-clause]
+    brace-stmt-list = "{" *stmt "}"
+    else-clause     = "else" (brace-stmt-list / expr brace-stmt-list
+                      else-clause)
+    while-stmt      = "while" expr brace-stmt-list
+    func-def        = "func" [ident-list] brace-stmt-list
+    ident-list      = ident *("," ident)
+    return-stmt     = "return" [expr] LF
+    assign-stmt     = ident ":=" expr LF
+    ident           = ALPHA *(ALPHA / DIGIT / "_")
+    number          = DIGIT ["." 1*DIGIT]
+    string          = DQUOTE *CHAR DQUOTE
