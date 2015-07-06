@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tboronczyk/kiwi/ast"
-	"github.com/tboronczyk/kiwi/symtable"
 	"github.com/tboronczyk/kiwi/token"
 )
 
@@ -46,9 +45,10 @@ func TestEvalAssignNode(t *testing.T) {
 		Name: "foo",
 		Expr: &ast.ValueNode{Value: "bar", Type: token.STRING},
 	}
-	n.Accept(New())
+	r := New()
+	n.Accept(r)
 
-	e, _ := n.SymTable.Get("foo", symtable.VAR)
+	e, _ := r.varTable.Get("foo")
 	assert.Equal(t, "bar", e.(ValueEntry).Value)
 	assert.Equal(t, STRING, e.(ValueEntry).Type)
 }
@@ -68,21 +68,21 @@ func TestEvalAssignNodeBadType(t *testing.T) {
 }
 
 func TestEvalVariableNode(t *testing.T) {
-	n := &ast.VariableNode{Name: "foo", SymTable: symtable.New()}
+	n := &ast.VariableNode{Name: "foo"}
 	r := New()
-	r.symTable.Set("foo", symtable.VAR, ValueEntry{
+	r.varTable.Set("foo", ValueEntry{
 		Value: 42.0,
 		Type:  NUMBER,
 	})
 	n.Accept(r)
 
-	e, _ := n.SymTable.Get("foo", symtable.VAR)
+	e, _ := r.varTable.Get("foo")
 	assert.Equal(t, 42.0, e.(ValueEntry).Value)
 	assert.Equal(t, NUMBER, e.(ValueEntry).Type)
 }
 
 func TestEvalVariableNodeNoExist(t *testing.T) {
-	n := &ast.VariableNode{Name: "foo", SymTable: symtable.New()}
+	n := &ast.VariableNode{Name: "foo"}
 	assert.Panics(t, func() {
 		n.Accept(New())
 	})
@@ -261,14 +261,10 @@ func TestEvalWhileNode(t *testing.T) {
 		},
 	}
 	r := New()
-	r.symTable.Set(
-		"foo",
-		symtable.VAR,
-		ValueEntry{Value: 0.0, Type: NUMBER},
-	)
+	r.varTable.Set("foo", ValueEntry{Value: 0.0, Type: NUMBER})
 	n.Accept(r)
 
-	e, _ := r.symTable.Get("foo", symtable.VAR)
+	e, _ := r.varTable.Get("foo")
 	assert.Equal(t, 10.0, e.(ValueEntry).Value)
 }
 
@@ -333,13 +329,13 @@ func TestEvalFuncDefNode(t *testing.T) {
 	r := New()
 	n.Accept(r)
 
-	e, _ := r.symTable.Get("foo", symtable.FUNC)
+	e, _ := r.funcTable.Get("foo")
 	assert.Equal(t, "foo", e.(ValueEntry).Value.(*ast.FuncDefNode).Name)
 }
 
 func TestEvalFuncDefNodeExists(t *testing.T) {
 	r := New()
-	r.symTable.Set("foo", symtable.FUNC, &ast.FuncDefNode{})
+	r.funcTable.Set("foo", &ast.FuncDefNode{})
 	n := &ast.FuncDefNode{
 		Name: "foo",
 		Args: []string{},
@@ -400,7 +396,7 @@ func TestEvalFuncCallNodeNotDefined(t *testing.T) {
 
 func TestEvalFuncCallNodeBadCount(t *testing.T) {
 	r := New()
-	r.symTable.Set("foo", symtable.FUNC, ValueEntry{
+	r.funcTable.Set("foo", ValueEntry{
 		Value: &ast.FuncDefNode{},
 		Type:  FUNC,
 	})

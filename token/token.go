@@ -132,6 +132,7 @@ func Precedence(t1, t2 Token) (bool, err bool) {
 	}
 	return p1 > p2, false
 }
+
 // precedence returns an operator's precedence. A higher value is a higher
 // precedence.
 func precedence(t Token) uint8 {
