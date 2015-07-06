@@ -99,10 +99,25 @@ func TestTokenIsLogOp(t *testing.T) {
 func TestTokenIsExprOp(t *testing.T) {
 	for i := 0; i < len(tokens); i++ {
 		tkn := Token(i)
-		if tkn == ADD || tkn == SUBTRACT || tkn == NOT {
+		if tkn == ADD || tkn == SUBTRACT ||
+			tkn == MULTIPLY || tkn == DIVIDE || tkn == MODULO  ||
+			tkn == EQUAL || tkn == NOT_EQUAL || tkn == LESS ||
+			tkn == LESS_EQ || tkn == GREATER || tkn == GREATER_EQ ||
+			tkn == AND || tkn == OR {
 			assert.True(t, tkn.IsExprOp(), tkn.String())
 		} else {
 			assert.False(t, tkn.IsExprOp(), tkn.String())
+		}
+	}
+}
+
+func TestTokenIsTermOp(t *testing.T) {
+	for i := 0; i < len(tokens); i++ {
+		tkn := Token(i)
+		if tkn == ADD || tkn == SUBTRACT || tkn == NOT {
+			assert.True(t, tkn.IsTermOp(), tkn.String())
+		} else {
+			assert.False(t, tkn.IsTermOp(), tkn.String())
 		}
 	}
 }
@@ -128,4 +143,21 @@ func TestTokenIsLiteral(t *testing.T) {
 			assert.False(t, tkn.IsLiteral(), tkn.String())
 		}
 	}
+}
+
+func TestTokenPrecedence(t *testing.T) {
+	tokens := []struct{t1, t2 Token}{
+		{MULTIPLY, ADD},
+		{ADD, LESS},
+		{LESS, AND},
+	}
+	for _, tkns := range tokens {
+		p, _ := Precedence(tkns.t1, tkns.t2)
+		assert.True(t, p, tkns.t1.String() + " and " + tkns.t2.String())
+	}
+}
+
+func TestTokenPrecedenceBadToken(t *testing.T) {
+	_, e := Precedence(ADD, IF);
+	assert.True(t, e);
 }

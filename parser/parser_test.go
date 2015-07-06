@@ -2,11 +2,12 @@ package parser
 
 import (
 	"bytes"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/tboronczyk/kiwi/ast"
 	"github.com/tboronczyk/kiwi/scanner"
 	"github.com/tboronczyk/kiwi/token"
-	"testing"
 )
 
 func newParser(s string) *Parser {
@@ -42,6 +43,26 @@ func TestParseIdentifierError(t *testing.T) {
 	assert.Panics(t, func() {
 		p.identifier()
 	})
+}
+
+func TestParseExprOpPrecedenceLower(t *testing.T) {
+	p := newParser("42 + 73 * 101")
+	node := p.expr().(*ast.BinaryOpNode)
+	assert.Equal(t, "42", node.Left.(*ast.ValueNode).Value)
+	assert.Equal(t, token.ADD, node.Op)
+	assert.Equal(t, token.MULTIPLY, node.Right.(*ast.BinaryOpNode).Op)
+	assert.Equal(t, "73", node.Right.(*ast.BinaryOpNode).Left.(*ast.ValueNode).Value)
+	assert.Equal(t, "101", node.Right.(*ast.BinaryOpNode).Right.(*ast.ValueNode).Value)
+}
+
+func TestParseExprOpPrecedenceHigher(t *testing.T) {
+	p := newParser("42 * 73 + 101")
+	node := p.expr().(*ast.BinaryOpNode)
+	assert.Equal(t, "42", node.Left.(*ast.BinaryOpNode).Left.(*ast.ValueNode).Value)
+	assert.Equal(t, token.MULTIPLY, node.Left.(*ast.BinaryOpNode).Op)
+	assert.Equal(t, "73", node.Left.(*ast.BinaryOpNode).Right.(*ast.ValueNode).Value)
+	assert.Equal(t, token.ADD, node.Op)
+	assert.Equal(t, "101", node.Right.(*ast.ValueNode).Value)
 }
 
 func TestParseTermParens(t *testing.T) {
@@ -207,6 +228,13 @@ func TestParseReturnStmtNoExpr(t *testing.T) {
 	p := newParser("return\n")
 	node := p.stmt()
 	assert.Nil(t, node.(*ast.ReturnNode).Expr)
+}
+
+func TestParseReturnStmtError(t *testing.T) {
+	p := newParser("return }")
+	assert.Panics(t, func() {
+		p.stmt()
+	})
 }
 
 func TestParseWhileStmt(t *testing.T) {

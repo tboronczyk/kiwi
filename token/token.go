@@ -175,7 +175,8 @@ func (t Token) IsLogOp() bool {
 // IsExprOp returns bool indicating whether the token represents an operator
 // that may form an expression (left-binding binary operators).
 func (t Token) IsExprOp() bool {
-	return t.IsAddOp() || t.IsMulOp() || t.IsCmpOp() || t.IsLogOp()
+	return (t.IsAddOp() || t.IsMulOp() || t.IsCmpOp() || t.IsLogOp()) &&
+		t != NOT
 }
 
 // IsTermOp returns bool indicating whether the token represents an operator
