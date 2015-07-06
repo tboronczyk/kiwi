@@ -101,10 +101,8 @@ func (p *Parser) expr() ast.Node {
 	node := &ast.BinaryOpNode{Op: op, Left: term}
 	switch expr.(type) {
 	case *ast.BinaryOpNode:
-		if prec, err := token.Precedence(op,
-			expr.(*ast.BinaryOpNode).Op); err {
-			panic("expected binary operator")
-		} else if prec {
+		prec, _ := token.Precedence(op, expr.(*ast.BinaryOpNode).Op)
+		if prec {
 			// adjust tree for higher precedence of expr's op
 			node.Right = expr.(*ast.BinaryOpNode).Left
 			expr.(*ast.BinaryOpNode).Left = node

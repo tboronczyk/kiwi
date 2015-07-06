@@ -70,7 +70,10 @@ func TestEvalAssignNodeBadType(t *testing.T) {
 func TestEvalVariableNode(t *testing.T) {
 	n := &ast.VariableNode{Name: "foo", SymTable: symtable.New()}
 	r := New()
-	r.symTable.Set("foo", symtable.VAR, ValueEntry{Value: 42.0, Type: NUMBER})
+	r.symTable.Set("foo", symtable.VAR, ValueEntry{
+		Value: 42.0,
+		Type:  NUMBER,
+	})
 	n.Accept(r)
 
 	e, _ := n.SymTable.Get("foo", symtable.VAR)
@@ -372,6 +375,19 @@ func TestEvalFuncCallNode(t *testing.T) {
 	assert.Equal(t, "bar", e.Value)
 }
 
+func TestEvalFuncCallNodeBuiltin(t *testing.T) {
+	n := &ast.FuncCallNode{
+		Name: "strlen",
+		Args: []ast.Node{
+			&ast.ValueNode{Value: "foo", Type: token.STRING},
+		},
+	}
+	r := New()
+	assert.NotPanics(t, func() {
+		n.Accept(r)
+	})
+}
+
 func TestEvalFuncCallNodeNotDefined(t *testing.T) {
 	n := &ast.FuncCallNode{
 		Name: "foo",
@@ -384,7 +400,10 @@ func TestEvalFuncCallNodeNotDefined(t *testing.T) {
 
 func TestEvalFuncCallNodeBadCount(t *testing.T) {
 	r := New()
-	r.symTable.Set("foo", symtable.FUNC, &ast.FuncDefNode{})
+	r.symTable.Set("foo", symtable.FUNC, ValueEntry{
+		Value: &ast.FuncDefNode{},
+		Type:  FUNC,
+	})
 	n := &ast.FuncCallNode{
 		Name: "foo",
 		Args: []ast.Node{
