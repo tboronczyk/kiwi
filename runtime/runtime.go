@@ -14,8 +14,9 @@ import (
 
 type (
 	Runtime struct {
-		stack    util.Stack
-		symTable *symtable.SymTable
+		stack     util.Stack
+		varTable  *symtable.SymTable
+		funcTable *symtable.SymTable
 	}
 
 	ValueEntry struct {
@@ -28,12 +29,12 @@ type (
 
 func New() *Runtime {
 	r := &Runtime{
-		stack:    util.NewStack(),
-		symTable: symtable.New(),
+		stack:     util.NewStack(),
+		varTable:  symtable.New(),
+		funcTable: symtable.New(),
 	}
 	for n, f := range builtins {
-		r.symTable.Set(n, symtable.FUNC,
-			ValueEntry{Type: BUILTIN, Value: f})
+		r.funcTable.Set(n, ValueEntry{Type: BUILTIN, Value: f})
 	}
 	return r
 }
@@ -42,14 +43,13 @@ func (r *Runtime) VisitAssignNode(n *ast.AssignNode) {
 	n.Expr.Accept(r)
 	v := r.stack.Pop().(ValueEntry)
 	// preserve datatype if the variable is already set
-	e, ok := r.symTable.Get(n.Name, symtable.VAR)
+	e, ok := r.varTable.Get(n.Name)
 	if ok {
 		if e.(ValueEntry).Type != v.Type {
 			panic("value type does not match variable type")
 		}
 	}
-	r.symTable.Set(n.Name, symtable.VAR, v)
-	n.SymTable = r.symTable
+	r.varTable.Set(n.Name, v)
 }
 
 func (r *Runtime) VisitBinaryOpNode(n *ast.BinaryOpNode) {
@@ -256,7 +256,7 @@ func (r *Runtime) VisitCastNode(n *ast.CastNode) {
 
 func (r *Runtime) VisitFuncCallNode(n *ast.FuncCallNode) {
 
-	e, ok := r.symTable.Get(n.Name, symtable.FUNC)
+	e, ok := r.funcTable.Get(n.Name)
 	if !ok {
 		panic("Function not defined")
 	}
@@ -277,26 +277,27 @@ func (r *Runtime) VisitFuncCallNode(n *ast.FuncCallNode) {
 		panic("wrong number of arguments in function call")
 	}
 
-	r.symTable = symtable.NewScope(r.symTable)
+	r.varTable = symtable.NewScope(r.varTable)
 	for i, arg := range f.Args {
-		r.symTable.Set(arg, symtable.VAR, p[i])
+		r.varTable.Set(arg, p[i])
 	}
+	r.funcTable = symtable.NewScope(r.funcTable)
 	for _, stmt := range f.Body {
 		stmt.Accept(r)
 		if r.stack.Size() > 0 {
 			break
 		}
 	}
-	r.symTable = r.symTable.Parent()
+	r.varTable = r.varTable.Parent()
+	r.funcTable = r.funcTable.Parent()
 }
 
 func (r *Runtime) VisitFuncDefNode(n *ast.FuncDefNode) {
-	_, ok := r.symTable.Get(n.Name, symtable.FUNC)
+	_, ok := r.funcTable.Get(n.Name)
 	if ok {
 		panic("function is already defined")
 	}
-	n.SymTable = r.symTable
-	r.symTable.Set(n.Name, symtable.FUNC, ValueEntry{Type: FUNC, Value: n})
+	r.funcTable.Set(n.Name, ValueEntry{Type: FUNC, Value: n})
 }
 
 func (r *Runtime) VisitIfNode(n *ast.IfNode) {
@@ -375,12 +376,11 @@ func (r *Runtime) VisitValueNode(n *ast.ValueNode) {
 }
 
 func (r *Runtime) VisitVariableNode(n *ast.VariableNode) {
-	expr, ok := r.symTable.Get(n.Name, symtable.VAR)
+	expr, ok := r.varTable.Get(n.Name)
 	if !ok {
 		panic("variable is not defined")
 	}
 	r.stack.Push(expr)
-	n.SymTable = r.symTable
 }
 
 func (r *Runtime) VisitWhileNode(n *ast.WhileNode) {

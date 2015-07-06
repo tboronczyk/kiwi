@@ -100,7 +100,7 @@ func TestTokenIsExprOp(t *testing.T) {
 	for i := 0; i < len(tokens); i++ {
 		tkn := Token(i)
 		if tkn == ADD || tkn == SUBTRACT ||
-			tkn == MULTIPLY || tkn == DIVIDE || tkn == MODULO  ||
+			tkn == MULTIPLY || tkn == DIVIDE || tkn == MODULO ||
 			tkn == EQUAL || tkn == NOT_EQUAL || tkn == LESS ||
 			tkn == LESS_EQ || tkn == GREATER || tkn == GREATER_EQ ||
 			tkn == AND || tkn == OR {
@@ -146,18 +146,18 @@ func TestTokenIsLiteral(t *testing.T) {
 }
 
 func TestTokenPrecedence(t *testing.T) {
-	tokens := []struct{t1, t2 Token}{
+	tokens := []struct{ t1, t2 Token }{
 		{MULTIPLY, ADD},
 		{ADD, LESS},
 		{LESS, AND},
 	}
 	for _, tkns := range tokens {
 		p, _ := Precedence(tkns.t1, tkns.t2)
-		assert.True(t, p, tkns.t1.String() + " and " + tkns.t2.String())
+		assert.True(t, p, tkns.t1.String()+" and "+tkns.t2.String())
 	}
 }
 
 func TestTokenPrecedenceBadToken(t *testing.T) {
-	_, e := Precedence(ADD, IF);
-	assert.True(t, e);
+	_, e := Precedence(ADD, IF)
+	assert.True(t, e)
 }

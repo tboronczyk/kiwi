@@ -1,7 +1,6 @@
 package ast
 
 import (
-	"github.com/tboronczyk/kiwi/symtable"
 	"github.com/tboronczyk/kiwi/token"
 )
 
@@ -36,7 +35,6 @@ func (n *ValueNode) Accept(v NodeVisitor) {
 // VariableNode represents a variable expression as an AST node.
 type VariableNode struct {
 	Name string
-	*symtable.SymTable
 }
 
 // Accept visits the variable expression node using v.
@@ -82,7 +80,6 @@ func (n *FuncCallNode) Accept(v NodeVisitor) {
 type AssignNode struct {
 	Name string
 	Expr Node
-	*symtable.SymTable
 }
 
 // Accept visits the assignment node using v.
@@ -95,7 +92,6 @@ type FuncDefNode struct {
 	Name string
 	Args []string
 	Body []Node
-	*symtable.SymTable
 }
 
 // Accept visits the function definition node using v.

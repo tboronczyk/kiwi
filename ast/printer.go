@@ -83,8 +83,7 @@ func (p AstPrinter) VisitCastNode(n *CastNode) {
 // VisitVariableNode prints the variable expression node n.
 func (p AstPrinter) VisitVariableNode(n *VariableNode) {
 	fmt.Println("VariableNode")
-	fmt.Println(p.peek() + "├ Name: " + n.Name)
-	fmt.Printf(p.peek()+"╰ SymTable: %p\n", n.SymTable)
+	fmt.Println(p.peek() + "╰ Name: " + n.Name)
 }
 
 // VisitUnaryOpNode prints the unary operator expression node n.
@@ -133,11 +132,10 @@ func (p AstPrinter) VisitFuncCallNode(n *FuncCallNode) {
 func (p AstPrinter) VisitAssignNode(n *AssignNode) {
 	fmt.Println("AssignNode")
 	fmt.Println(p.peek() + "├ Name: " + n.Name)
-	fmt.Print(p.peek() + "├ Expr: ")
-	p.push(p.peek() + "│       ")
+	fmt.Print(p.peek() + "╰ Expr: ")
+	p.push(p.peek() + "        ")
 	n.Expr.Accept(p)
 	p.pop()
-	fmt.Printf(p.peek()+"╰ SymTable: %p\n", n.SymTable)
 }
 
 // VisitFuncDefNode prints the function definition node n.
@@ -155,11 +153,11 @@ func (p AstPrinter) VisitFuncDefNode(n *FuncDefNode) {
 			}
 		}
 	}
-	fmt.Print(p.peek() + "├ Body: ")
+	fmt.Print(p.peek() + "╰ Body: ")
 	if n.Body == nil {
 		fmt.Println("0x0")
 	} else {
-		p.push(p.peek() + "│       ")
+		p.push(p.peek() + "        ")
 		n.Body[0].Accept(p)
 		for _, arg := range n.Body[1:] {
 			fmt.Print(p.peek())
@@ -167,7 +165,6 @@ func (p AstPrinter) VisitFuncDefNode(n *FuncDefNode) {
 		}
 		p.pop()
 	}
-	fmt.Printf(p.peek()+"╰ SymTable: %p\n", n.SymTable)
 }
 
 // VisitIfNode prints the if construct node n.

@@ -16,7 +16,7 @@ type Parser struct {
 	prvTkn token.Token
 	curVal string
 	prvVal string
-	scn *scanner.Scanner
+	scn    *scanner.Scanner
 }
 
 // New returns a new Parser initialized to read from s.
@@ -265,11 +265,11 @@ func (p *Parser) identList() []string {
 	}
 }
 
-// return-stmt = "return" [expr] LF 
+// return-stmt = "return" [expr] LF
 func (p *Parser) returnStmt() *ast.ReturnNode {
-	defer func () {
+	defer func() {
 		if !p.newline() {
-			panic (token.NEWLINE)
+			panic(token.NEWLINE)
 		}
 	}()
 	p.consume(token.RETURN)
@@ -283,9 +283,9 @@ func (p *Parser) returnStmt() *ast.ReturnNode {
 // assign-stmt = ident ":=" expr LF
 //   func-call = ident paren-expr-list
 func (p *Parser) assignStmtOrFuncCall() ast.Node {
-	defer func () {
+	defer func() {
 		if !p.newline() {
-			panic (token.NEWLINE)
+			panic(token.NEWLINE)
 		}
 	}()
 
