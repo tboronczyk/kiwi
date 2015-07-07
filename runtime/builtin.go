@@ -12,31 +12,31 @@ import (
 var rdStdin = bufio.NewReader(os.Stdin)
 
 // built-in functions, [name]func{implementation}
-var builtins = map[string]func(*util.Stack, Params){
+var builtins = map[string]func(*util.Stack, params){
 
 	// strlen - returns the length of a string
-	"strlen": func(s *util.Stack, p Params) {
-		s.Push(ValueEntry{
-			Value: len(p[0].Value.(string)),
-			Type:  NUMBER,
+	"strlen": func(s *util.Stack, p params) {
+		s.Push(valueEntry{
+			value: len(p[0].value.(string)),
+			dtype: NUMBER,
 		})
 
 	},
 	// write - prints a value
-	"write": func(s *util.Stack, p Params) {
+	"write": func(s *util.Stack, p params) {
 		for i, _ := range p {
-			fmt.Print(p[i].Value)
+			fmt.Print(p[i].value)
 		}
 	},
 	// read - read a string
-	"read": func(s *util.Stack, p Params) {
+	"read": func(s *util.Stack, p params) {
 		str, err := rdStdin.ReadString('\n')
 		if err != nil {
 			panic(err)
 		}
-		s.Push(ValueEntry{
-			Value: strings.TrimRight(str, "\n"),
-			Type:  STRING,
+		s.Push(valueEntry{
+			value: strings.TrimRight(str, "\n"),
+			dtype: STRING,
 		})
 	},
 }

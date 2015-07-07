@@ -27,9 +27,9 @@ func TestEvalValueNode(t *testing.T) {
 		r := New()
 		n.Accept(r)
 
-		e := r.stack.Pop().(ValueEntry)
-		assert.Equal(t, d.expctVal, e.Value)
-		assert.Equal(t, d.expctType, e.Type)
+		e := r.stack.Pop().(valueEntry)
+		assert.Equal(t, d.expctVal, e.value)
+		assert.Equal(t, d.expctType, e.dtype)
 	}
 }
 
@@ -49,8 +49,8 @@ func TestEvalAssignNode(t *testing.T) {
 	n.Accept(r)
 
 	e, _ := r.varTable.Get("foo")
-	assert.Equal(t, "bar", e.(ValueEntry).Value)
-	assert.Equal(t, STRING, e.(ValueEntry).Type)
+	assert.Equal(t, "bar", e.(valueEntry).value)
+	assert.Equal(t, STRING, e.(valueEntry).dtype)
 }
 
 func TestEvalAssignNodeBadType(t *testing.T) {
@@ -70,15 +70,15 @@ func TestEvalAssignNodeBadType(t *testing.T) {
 func TestEvalVariableNode(t *testing.T) {
 	n := &ast.VariableNode{Name: "foo"}
 	r := New()
-	r.varTable.Set("foo", ValueEntry{
-		Value: 42.0,
-		Type:  NUMBER,
+	r.varTable.Set("foo", valueEntry{
+		value: 42.0,
+		dtype: NUMBER,
 	})
 	n.Accept(r)
 
 	e, _ := r.varTable.Get("foo")
-	assert.Equal(t, 42.0, e.(ValueEntry).Value)
-	assert.Equal(t, NUMBER, e.(ValueEntry).Type)
+	assert.Equal(t, 42.0, e.(valueEntry).value)
+	assert.Equal(t, NUMBER, e.(valueEntry).dtype)
 }
 
 func TestEvalVariableNodeNoExist(t *testing.T) {
@@ -108,9 +108,9 @@ func TestEvalUnaryOpNode(t *testing.T) {
 		r := New()
 		n.Accept(r)
 
-		e := r.stack.Pop().(ValueEntry)
-		assert.Equal(t, d.expctVal, e.Value)
-		assert.Equal(t, d.expctType, e.Type)
+		e := r.stack.Pop().(valueEntry)
+		assert.Equal(t, d.expctVal, e.value)
+		assert.Equal(t, d.expctType, e.dtype)
 	}
 }
 
@@ -153,9 +153,9 @@ func TestCastNode(t *testing.T) {
 		r := New()
 		n.Accept(r)
 
-		e := r.stack.Pop().(ValueEntry)
-		assert.Equal(t, d.expctVal, e.Value)
-		assert.Equal(t, d.expctType, e.Type)
+		e := r.stack.Pop().(valueEntry)
+		assert.Equal(t, d.expctVal, e.value)
+		assert.Equal(t, d.expctType, e.dtype)
 	}
 }
 
@@ -200,9 +200,9 @@ func TestEvalBinaryOpNode(t *testing.T) {
 		r := New()
 		n.Accept(r)
 
-		e := r.stack.Pop().(ValueEntry)
-		assert.Equal(t, d.expctVal, e.Value)
-		assert.Equal(t, d.expctType, e.Type)
+		e := r.stack.Pop().(valueEntry)
+		assert.Equal(t, d.expctVal, e.value)
+		assert.Equal(t, d.expctType, e.dtype)
 	}
 }
 
@@ -261,11 +261,11 @@ func TestEvalWhileNode(t *testing.T) {
 		},
 	}
 	r := New()
-	r.varTable.Set("foo", ValueEntry{Value: 0.0, Type: NUMBER})
+	r.varTable.Set("foo", valueEntry{value: 0.0, dtype: NUMBER})
 	n.Accept(r)
 
 	e, _ := r.varTable.Get("foo")
-	assert.Equal(t, 10.0, e.(ValueEntry).Value)
+	assert.Equal(t, 10.0, e.(valueEntry).value)
 }
 
 func TestEvalWhileNodeNonBool(t *testing.T) {
@@ -305,8 +305,8 @@ func TestEvalIfNode(t *testing.T) {
 		}
 		r := New()
 		n.Accept(r)
-		e := r.stack.Pop().(ValueEntry)
-		assert.Equal(t, d.exVal, e.Value)
+		e := r.stack.Pop().(valueEntry)
+		assert.Equal(t, d.exVal, e.value)
 	}
 }
 
@@ -330,7 +330,7 @@ func TestEvalFuncDefNode(t *testing.T) {
 	n.Accept(r)
 
 	e, _ := r.funcTable.Get("foo")
-	assert.Equal(t, "foo", e.(ValueEntry).Value.(*ast.FuncDefNode).Name)
+	assert.Equal(t, "foo", e.(valueEntry).value.(*ast.FuncDefNode).Name)
 }
 
 func TestEvalFuncDefNodeExists(t *testing.T) {
@@ -367,8 +367,8 @@ func TestEvalFuncCallNode(t *testing.T) {
 	}
 	n.Accept(r)
 
-	e := r.stack.Pop().(ValueEntry)
-	assert.Equal(t, "bar", e.Value)
+	e := r.stack.Pop().(valueEntry)
+	assert.Equal(t, "bar", e.value)
 }
 
 func TestEvalFuncCallNodeBuiltin(t *testing.T) {
@@ -396,9 +396,9 @@ func TestEvalFuncCallNodeNotDefined(t *testing.T) {
 
 func TestEvalFuncCallNodeBadCount(t *testing.T) {
 	r := New()
-	r.funcTable.Set("foo", ValueEntry{
-		Value: &ast.FuncDefNode{},
-		Type:  FUNC,
+	r.funcTable.Set("foo", valueEntry{
+		value: &ast.FuncDefNode{},
+		dtype: FUNC,
 	})
 	n := &ast.FuncCallNode{
 		Name: "foo",
