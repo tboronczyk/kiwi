@@ -144,7 +144,7 @@ func TestParseBraceStmtListEmpty(t *testing.T) {
 }
 
 func TestParseBraceStmtList(t *testing.T) {
-	p := newParser("{foo := 42\nbar := 73\n}")
+	p := newParser("{foo := 42\nbar := 73}")
 	node := p.braceStmtList()
 	assert.Equal(t, "foo", node[0].(*ast.AssignNode).Name)
 	assert.Equal(t, "42", node[0].(*ast.AssignNode).Expr.(*ast.ValueNode).Value)
@@ -190,7 +190,7 @@ func TestParseFuncDefManyParams(t *testing.T) {
 }
 
 func TestParseIfStmt(t *testing.T) {
-	p := newParser("if true {foo := 42\n}")
+	p := newParser("if true {foo := 42}")
 	node := p.stmt().(*ast.IfNode)
 	assert.Equal(t, "TRUE", node.Condition.(*ast.ValueNode).Value)
 	assert.Equal(t, "foo", node.Body[0].(*ast.AssignNode).Name)
@@ -238,7 +238,7 @@ func TestParseReturnStmtError(t *testing.T) {
 }
 
 func TestParseWhileStmt(t *testing.T) {
-	p := newParser("while foo = true {bar := 42\n}")
+	p := newParser("while foo = true {bar := 42}")
 	node := p.stmt().(*ast.WhileNode)
 	assert.Equal(t, token.EQUAL, node.Condition.(*ast.BinaryOpNode).Op)
 	assert.Equal(t, "bar", node.Body[0].(*ast.AssignNode).Name)

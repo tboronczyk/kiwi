@@ -16,6 +16,7 @@ type Parser struct {
 	prvTkn token.Token
 	curVal string
 	prvVal string
+	braces int
 	scn    *scanner.Scanner
 }
 
@@ -201,8 +202,13 @@ func (p *Parser) ifStmt() *ast.IfNode {
 
 // brace-stmt-list = "{" *stmt "}"
 func (p *Parser) braceStmtList() []ast.Node {
-	defer p.consume(token.RBRACE)
+	defer func() {
+		p.consume(token.RBRACE)
+		p.braces--
+	}()
+
 	p.consume(token.LBRACE)
+	p.braces++
 
 	var list []ast.Node
 	for {
@@ -268,7 +274,7 @@ func (p *Parser) identList() []string {
 // return-stmt = "return" [expr] LF
 func (p *Parser) returnStmt() *ast.ReturnNode {
 	defer func() {
-		if !p.newline() {
+		if !(p.newline() || (p.curTkn == token.RBRACE && p.braces > 0)) {
 			panic(token.NEWLINE)
 		}
 	}()
@@ -284,7 +290,7 @@ func (p *Parser) returnStmt() *ast.ReturnNode {
 //   func-call = ident paren-expr-list
 func (p *Parser) assignStmtOrFuncCall() ast.Node {
 	defer func() {
-		if !p.newline() {
+		if !(p.newline() || (p.curTkn == token.RBRACE && p.braces > 0)) {
 			panic(token.NEWLINE)
 		}
 	}()
