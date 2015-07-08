@@ -13,17 +13,13 @@ import (
 )
 
 const (
-	// buffer is a cyclic queue of bufSize capcity
-	bufSize = 3
 	// convenient representation of EOF
 	eof = rune(0)
 )
 
 // Scanner lexes a stream of characters (runes) into tokens and lexemes.
 type Scanner struct {
-	r          *bufio.Reader
-	rPos, wPos uint8         // read and write positions in chars buffer.
-	chars      [bufSize]rune // buffer to support more than one unread.
+	r *bufio.Reader
 }
 
 // New returns a new scanner that reads from r.
@@ -33,39 +29,18 @@ func New(r io.Reader) *Scanner {
 	}
 }
 
-// read manages the scanner's buffer and returns runes from it. If there isn't
-// a rune in the buffer beyond the current read position (a.k.a. the next rune
-// to return), a rune is consumed from the reader into the buffer at the
-// current write position and the write position is advanced. No such write is
-// performed if runes are buffered beyond the current read position. The read
-// position is then advanced and the rune it points to is returned.
+// read manages the scanner's buffer and returns runes from it.
 func (s *Scanner) read() rune {
-	if s.rPos == s.wPos {
-		if s.wPos++; s.wPos == bufSize {
-			s.wPos = 0
-		}
-		ch, _, err := s.r.ReadRune()
-		if err != nil {
-			ch = eof
-		}
-		s.chars[s.wPos] = ch
+	ch, _, err := s.r.ReadRune()
+	if err != nil {
+		ch = eof
 	}
-
-	if s.rPos++; s.rPos == bufSize {
-		s.rPos = 0
-	}
-	ch := s.chars[s.rPos]
 	return ch
 }
 
-// unread adjusts the read position backwards in the buffer so the previous
-// rune is current. The formerly-current rune will be returned on the next call
-// to read.
+// unread pushes the most recently read rune back to the stream.
 func (s *Scanner) unread() {
-	if s.rPos == 0 {
-		s.rPos = bufSize
-	}
-	s.rPos--
+	s.r.UnreadRune()
 }
 
 // Scan consumes a lexeme from the reader's stream and returns its Token and
@@ -130,14 +105,14 @@ func (s *Scanner) Scan() (token.Token, string) {
 			return token.AND, "&&"
 		}
 		s.unread()
-		return token.MALFORMED, "&"
+		return token.UNKNOWN, "&"
 	case '|':
 		ch = s.read()
 		if ch == '|' {
 			return token.OR, "||"
 		}
 		s.unread()
-		return token.MALFORMED, "|"
+		return token.UNKNOWN, "|"
 	case '~':
 		// not or non-equality
 		ch = s.read()
@@ -195,7 +170,7 @@ func (s *Scanner) scanString() (token.Token, string) {
 		if ch := s.read(); ch != '"' {
 			// must have a closing quote
 			if ch == eof {
-				return token.MALFORMED, buf.String()
+				return token.UNKNOWN, buf.String()
 			}
 			if ch == '\\' {
 				switch s.read() {
@@ -234,7 +209,8 @@ func (s *Scanner) scanIdent() (token.Token, string) {
 	buf.WriteRune(s.read())
 
 	for {
-		if ch := s.read(); unicode.IsLetter(ch) || unicode.IsDigit(ch) || ch == '_' {
+		if ch := s.read(); unicode.IsLetter(ch) ||
+			unicode.IsDigit(ch) || ch == '_' {
 			buf.WriteRune(ch)
 		} else {
 			s.unread()
@@ -331,7 +307,7 @@ func (s *Scanner) scanMultiComment() (token.Token, string) {
 	for {
 		// must have a proper closing
 		if ch1 == eof {
-			return token.MALFORMED, buf.String()
+			return token.UNKNOWN, buf.String()
 		}
 		if ch1 == '*' && ch2 == '/' {
 			buf.WriteString("*/")
