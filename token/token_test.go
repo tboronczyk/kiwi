@@ -9,7 +9,6 @@ import (
 func TestTokenToString(t *testing.T) {
 	tokens := []struct{ actual, expected string }{
 		{UNKNOWN.String(), "UNKNOWN"},
-		{MALFORMED.String(), "MALFORMED"},
 		{EOF.String(), "EOF"},
 		{NEWLINE.String(), "NEWLINE"},
 		{ADD.String(), "+"},

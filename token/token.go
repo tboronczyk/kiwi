@@ -10,7 +10,6 @@ type Token uint8
 
 const (
 	UNKNOWN Token = iota
-	MALFORMED
 	EOF
 	NEWLINE
 
@@ -73,7 +72,6 @@ const (
 
 var tokens = []string{
 	UNKNOWN:    "UNKNOWN",
-	MALFORMED:  "MALFORMED",
 	EOF:        "EOF",
 	NEWLINE:    "NEWLINE",
 	ADD:        "+",

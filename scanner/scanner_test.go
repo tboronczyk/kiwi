@@ -29,9 +29,9 @@ func TestScanSimpleTokens(t *testing.T) {
 		{token.GREATER, ">"},
 		{token.GREATER_EQ, ">="},
 		{token.AND, "&&"},
-		{token.MALFORMED, "&"},
+		{token.UNKNOWN, "&"},
 		{token.OR, "||"},
-		{token.MALFORMED, "|"},
+		{token.UNKNOWN, "|"},
 		{token.NOT, "~"},
 		{token.NOT_EQUAL, "~="},
 		{token.LPAREN, "("},
@@ -91,7 +91,7 @@ func TestScanStrings(t *testing.T) {
 		{token.STRING, "abc"},
 		{token.STRING, ""},
 		{token.STRING, "\\\"\r\n\t\\x"},
-		{token.MALFORMED, "broken"},
+		{token.UNKNOWN, "broken"},
 	}
 
 	for _, expected := range tokens {
@@ -131,7 +131,7 @@ func TestScanMultiLineComments(t *testing.T) {
 	}{
 		{token.COMMENT, "/**/"},
 		{token.COMMENT, "/* a /* nested */ comment */"},
-		{token.MALFORMED, "/* broken"},
+		{token.UNKNOWN, "/* broken"},
 	}
 
 	for _, expected := range tokens {
