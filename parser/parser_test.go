@@ -16,7 +16,7 @@ func newParser(s string) *Parser {
 
 func TestSkipComment(t *testing.T) {
 	p := newParser("//\n \tfoo")
-	str := p.identifier()
+	str := p.ident()
 	assert.Equal(t, "foo", str)
 }
 
@@ -34,14 +34,14 @@ func TestParseRecovery(t *testing.T) {
 
 func TestParseIdentifier(t *testing.T) {
 	p := newParser("foo")
-	str := p.identifier()
+	str := p.ident()
 	assert.Equal(t, "foo", str)
 }
 
 func TestParseIdentifierError(t *testing.T) {
 	p := newParser("42")
 	assert.Panics(t, func() {
-		p.identifier()
+		p.ident()
 	})
 }
 

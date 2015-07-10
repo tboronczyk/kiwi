@@ -12,64 +12,70 @@ import (
 
 // Parser produces ASTs from tokens.
 type Parser struct {
-	curTkn token.Token
-	prvTkn token.Token
-	curVal string
-	prvVal string
-	braces int
-	scn    *scanner.Scanner
+	curToken token.Token
+	prvToken token.Token
+	curValue string
+	prvValue string
+	braces   int
+	scanner  *scanner.Scanner
 }
 
-// New returns a new Parser initialized to read from s.
+// New returns a new Parser instance initialized to read from s.
 func New(s *scanner.Scanner) *Parser {
-	p := &Parser{scn: s}
+	p := &Parser{scanner: s}
 	p.advance()
 	return p
 }
 
-// match returns a bool indicating the current token in memory is the same
-// as one of the provided tokens.
+// match returns a bool indicating whether the current token matches one of the
+// provided tokens.
 func (p Parser) match(tokens ...token.Token) bool {
 	for _, t := range tokens {
-		if p.curTkn == t {
+		if p.curToken == t {
 			return true
 		}
 	}
 	return false
 }
 
-// advance retrieves the next token/value pair, keeping track of the previous
-// pair. COMMENT tokens are always passed over. Multiplie NEWLINE tokens
-// are consolidated as one but never appear as the current pair. This allows
-// the parser to accomodate arbirary newlines in source code but still be
+// advance retrieves the next token/value pair from the scanner, keeping track
+// of the previous pair. COMMENT tokens are always passed over. Multiple
+// NEWLINE tokens are consolidated but never appear as the current pair. This
+// allows the parser to treat arbirary newlines as whitespace but to still be
 // aware of their presense when they have semantic meaning.
 func (p *Parser) advance() {
-	p.prvTkn = p.curTkn
-	p.prvVal = p.curVal
+	p.prvToken, p.prvValue = p.curToken, p.curValue
 	for {
-		p.curTkn, p.curVal = p.scn.Scan()
-		if p.curTkn != token.COMMENT && p.curTkn != token.NEWLINE {
+		p.curToken, p.curValue = p.scanner.Scan()
+		if p.curToken != token.COMMENT && p.curToken != token.NEWLINE {
 			return
 		}
-		if p.curTkn == token.NEWLINE {
-			p.prvTkn = p.curTkn
-			p.prvVal = p.curVal
+		if p.curToken == token.NEWLINE {
+			p.prvToken, p.prvValue = p.curToken, p.curValue
 		}
 	}
 }
 
-// newline returns whether the previous token in the stream was NEWLINE.
+// newline returns whether the previous token was NEWLINE.
 func (p Parser) newline() bool {
-	return p.prvTkn == token.NEWLINE
+	return p.prvToken == token.NEWLINE
 }
 
 // consume sets the new current token/value pair if the existing current token
 // matches t, otherwise will panic.
 func (p *Parser) consume(t token.Token) {
 	if !p.match(t) {
-		panic(t.String())
+		panic("unexpected " + p.curToken.String())
 	}
 	p.advance()
+}
+
+// stmtEnd is called by statement-parsing methods to ensure their statements
+// terminate with NEWLINE when they aren't the last statement in a block.
+func (p *Parser) stmtEnd() {
+	if !(p.newline() || (p.curToken == token.RBRACE && p.braces > 0)) {
+		panic("unexpected " + p.curToken.String())
+	}
 }
 
 // Parse consumes the token stream and returns an AST of the production. err
@@ -78,11 +84,10 @@ func (p *Parser) Parse() (node ast.Node, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			node = nil
-			err = errors.New("Expected " + e.(string) +
-				" but saw " + p.curTkn.String())
+			err = errors.New(e.(string))
 		}
 	}()
-	if p.curTkn == token.EOF {
+	if p.curToken == token.EOF {
 		return nil, nil
 	}
 	return p.stmt(), nil
@@ -91,11 +96,11 @@ func (p *Parser) Parse() (node ast.Node, err error) {
 // expr = term [expr-op expr]
 func (p *Parser) expr() ast.Node {
 	term := p.term()
-	if !p.curTkn.IsExprOp() {
+	if !p.curToken.IsExprOp() {
 		return term
 	}
 
-	op := p.curTkn
+	op := p.curToken
 	p.advance()
 	expr := p.expr()
 
@@ -121,8 +126,8 @@ func (p *Parser) term() ast.Node {
 		p.advance()
 		return p.expr()
 	}
-	if p.curTkn.IsTermOp() {
-		node := &ast.UnaryOpNode{Op: p.curTkn}
+	if p.curToken.IsTermOp() {
+		node := &ast.UnaryOpNode{Op: p.curToken}
 		p.advance()
 		node.Expr = p.term()
 		return node
@@ -137,17 +142,17 @@ func (p *Parser) cast() ast.Node {
 		return node
 	}
 	p.advance()
-	return &ast.CastNode{Cast: p.identifier(), Expr: node}
+	return &ast.CastNode{Cast: p.ident(), Expr: node}
 }
 
 // terminal := boolean / number / STRING / IDENT / func-call
 func (p *Parser) terminal() ast.Node {
 	if p.match(token.BOOL, token.NUMBER, token.STRING) {
 		defer p.advance()
-		return &ast.ValueNode{Value: p.curVal, Type: p.curTkn}
+		return &ast.ValueNode{Value: p.curValue, Type: p.curToken}
 	}
 
-	name := p.identifier()
+	name := p.ident()
 	if !p.match(token.LPAREN) {
 		return &ast.VariableNode{Name: name}
 	}
@@ -173,9 +178,9 @@ func (p *Parser) parenExprList() []ast.Node {
 }
 
 // stmt = if-stmt / while-stmt / func-def / return-stmt / assign-stmt /
-//         func-call
+//        func-call
 func (p *Parser) stmt() ast.Node {
-	switch p.curTkn {
+	switch p.curToken {
 	case token.IF:
 		return p.ifStmt()
 	case token.WHILE:
@@ -187,7 +192,7 @@ func (p *Parser) stmt() ast.Node {
 	case token.IDENTIFIER:
 		return p.assignStmtOrFuncCall()
 	}
-	panic("statement keyword")
+	panic("unexpected " + p.curToken.String())
 }
 
 // if-stmt = "if" expr brace-stmt-list [else-clause]
@@ -212,7 +217,7 @@ func (p *Parser) braceStmtList() []ast.Node {
 
 	var list []ast.Node
 	for {
-		if !(p.curTkn.IsStmtKeyword() || p.match(token.IDENTIFIER)) {
+		if !(p.curToken.IsStmtKeyword() || p.match(token.IDENTIFIER)) {
 			break
 		}
 		list = append(list, p.stmt())
@@ -251,7 +256,7 @@ func (p *Parser) whileStmt() *ast.WhileNode {
 // func-def = "func" [ident-list] brace-stmt-list
 func (p *Parser) funcDef() *ast.FuncDefNode {
 	p.consume(token.FUNC)
-	node := &ast.FuncDefNode{Name: p.identifier()}
+	node := &ast.FuncDefNode{Name: p.ident()}
 	if !p.match(token.LBRACE) {
 		node.Args = p.identList()
 	}
@@ -263,7 +268,7 @@ func (p *Parser) funcDef() *ast.FuncDefNode {
 func (p *Parser) identList() []string {
 	var list []string
 	for {
-		list = append(list, p.identifier())
+		list = append(list, p.ident())
 		if !p.match(token.COMMA) {
 			return list
 		}
@@ -273,11 +278,7 @@ func (p *Parser) identList() []string {
 
 // return-stmt = "return" [expr] LF
 func (p *Parser) returnStmt() *ast.ReturnNode {
-	defer func() {
-		if !(p.newline() || (p.curTkn == token.RBRACE && p.braces > 0)) {
-			panic(token.NEWLINE)
-		}
-	}()
+	defer p.stmtEnd()
 	p.consume(token.RETURN)
 	node := &ast.ReturnNode{}
 	if !p.newline() {
@@ -287,15 +288,10 @@ func (p *Parser) returnStmt() *ast.ReturnNode {
 }
 
 // assign-stmt = ident ":=" expr LF
-//   func-call = ident paren-expr-list
+// func-call   = ident paren-expr-list
 func (p *Parser) assignStmtOrFuncCall() ast.Node {
-	defer func() {
-		if !(p.newline() || (p.curTkn == token.RBRACE && p.braces > 0)) {
-			panic(token.NEWLINE)
-		}
-	}()
-
-	name := p.identifier()
+	defer p.stmtEnd()
+	name := p.ident()
 	if p.match(token.ASSIGN) {
 		p.advance()
 		return &ast.AssignNode{Name: name, Expr: p.expr()}
@@ -303,11 +299,11 @@ func (p *Parser) assignStmtOrFuncCall() ast.Node {
 	if p.match(token.LPAREN) {
 		return &ast.FuncCallNode{Name: name, Args: p.parenExprList()}
 	}
-	panic(token.ASSIGN.String() + " or " + token.LPAREN.String())
+	panic("unexpected " + p.curToken.String())
 }
 
-// identifier returns the identifier's value.
-func (p *Parser) identifier() string {
+// identifier returns the lexeme value of the current identifier.
+func (p *Parser) ident() string {
 	defer p.consume(token.IDENTIFIER)
-	return p.curVal
+	return p.curValue
 }
