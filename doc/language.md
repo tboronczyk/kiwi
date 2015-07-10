@@ -6,15 +6,15 @@
 
 Both single and multiple-line comments are supported. Single-line comments
 begin with `//` and span to the end of the current line. Multiple-line
-comments open with `/*` and close with `*/`. It is possible to nest
-multiple-line comments.
+comments begin with `/*` and end with `*/`. It’s possible for multiple-line
+comments to be nested.
 
     // this is a single-line comment
 
     /* this is a multiple-line comment
-    that spans multiple lines. It also
-    /* this is a nested comment */
-    allows nested comments. */
+    that spans multiple lines. Nested
+     /* this is a nested comment */
+    comments are allowed. */
 
 ### Data Types
 
@@ -31,7 +31,7 @@ value assigned to it.
 
     foo := true // foo takes type from boolean literal and is type bool
     bar := 42   // bar takes type from numeric literal and is type number
-    baz := boo  // baz takes type from value of foo (bool) and is type bool
+    baz := foo  // baz takes type from value of foo (bool) and is type bool
 
 A variable may only be assigned a value of the same data type.
 
@@ -98,18 +98,18 @@ Prec. | Type          | Operators
     ; RFC5243 App. B defines ALPHA, CHAR, DIGIT, DQUOTE, and LF
 
     expr            = term [expr-op expr]
-    expr-op         = add-op / mul-op / cmp-op / log-op
-    add-op          = "+" / "-"
+    expr-op         = mul-op / add-op / cmp-op / log-op
     mul-op          = "*" / "/" / "%"
+    add-op          = "+" / "-"
     cmp-op          = "=" / "~=" / ">" / ">=" / "<" / "<="
     log-op          = "&&" / "||"
-    term            = "(" expr ")" / term-op expr / cast
-    term-op         = "~" / "+" / "-"
+    term            = "(" expr ")" / unary-op expr / cast
+    unary-op        = "+" / "-" / "~"
     cast            = terminal [":" ident]
     terminal        = boolean / number / string / ident / func-call
-    paren-expr-list = "(" [expr *("," expr)] ")"
     boolean         = "true" / "false"
     func-call       = ident paren-expr-list
+    paren-expr-list = "(" [expr *("," expr)] ")"
     stmt            = if-stmt / while-stmt / func-def / return-stmt /
                       assign-stmt / func-call
     if-stmt         = "if" expr brace-stmt-list [else-clause]
