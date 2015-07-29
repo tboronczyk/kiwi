@@ -3,7 +3,7 @@ package ast
 // NodeVisitor is the basic type capable of visiting all node types.
 type NodeVisitor interface {
 	VisitAssignNode(*AssignNode)
-	VisitBinaryOpNode(*BinaryOpNode)
+	VisitBinOpNode(*BinOpNode)
 	VisitCastNode(*CastNode)
 	VisitFuncCallNode(*FuncCallNode)
 	VisitFuncDefNode(*FuncDefNode)

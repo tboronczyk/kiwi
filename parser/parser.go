@@ -1,5 +1,6 @@
-// Package parser provides a parser implementation that constructs an
-// abstract syntax tree from a stream of tokens.
+// Package parser provides the implementation of a parser that constructs an
+// abstract syntax tree from a stream of tokens to represent a Kiwi program in
+// memory.
 package parser
 
 import (
@@ -12,23 +13,23 @@ import (
 
 // Parser produces ASTs from tokens.
 type Parser struct {
-	curToken token.Token
-	prvToken token.Token
-	curValue string
-	prvValue string
-	braces   int
+	curToken token.Token // the current token
+	prvToken token.Token // the previous token
+	curValue string      // the current lexeme value
+	prvValue string      // the previous lexeme value
+	braces   int         // pseudo-stack counter tracking brace nesting
 	scanner  *scanner.Scanner
 }
 
-// New returns a new Parser instance initialized to read from s.
+// New returns a new Parser instance that is initialized to read from s.
 func New(s *scanner.Scanner) *Parser {
 	p := &Parser{scanner: s}
 	p.advance()
 	return p
 }
 
-// match returns a bool indicating whether the current token matches one of the
-// provided tokens.
+// match returns a bool to indicate whether the current token matches one of
+// specified tokens.
 func (p Parser) match(tokens ...token.Token) bool {
 	for _, t := range tokens {
 		if p.curToken == t {
@@ -39,10 +40,11 @@ func (p Parser) match(tokens ...token.Token) bool {
 }
 
 // advance retrieves the next token/value pair from the scanner, keeping track
-// of the previous pair. COMMENT tokens are always passed over. Multiple
-// NEWLINE tokens are consolidated but never appear as the current pair. This
-// allows the parser to treat arbirary newlines as whitespace but to still be
-// aware of their presense when they have semantic meaning.
+// of the previous pair. NOTE: COMMENT tokens are always passed over. Multiple
+// NEWLINE tokens are consolidated. A NEWLINE will never appear as the current
+// pair (only previous). This allows the parser to treat arbirary newlines as
+// whitespace and still be aware of their presense when they have semantic
+// meaning.
 func (p *Parser) advance() {
 	p.prvToken, p.prvValue = p.curToken, p.curValue
 	for {
@@ -56,13 +58,13 @@ func (p *Parser) advance() {
 	}
 }
 
-// newline returns whether the previous token was NEWLINE.
+// newline returns a bool to indicate whether the previous token was NEWLINE.
 func (p Parser) newline() bool {
 	return p.prvToken == token.NEWLINE
 }
 
-// consume sets the new current token/value pair if the existing current token
-// matches t, otherwise will panic.
+// consume advances the parser to the next token/value pair if the current token
+// matches t, otherwise it will panic.
 func (p *Parser) consume(t token.Token) {
 	if !p.match(t) {
 		panic("unexpected " + p.curToken.String())
@@ -70,8 +72,9 @@ func (p *Parser) consume(t token.Token) {
 	p.advance()
 }
 
-// stmtEnd is called by statement-parsing methods to ensure their statements
-// terminate with NEWLINE when they aren't the last statement in a block.
+// stmtEnd may be called by a statement-parsing method to ensure a statement
+// is terminated by a NEWLINE when it isn't the last statement in a block
+// (the terminating NEWLINE is optional for final statements in blocks).
 func (p *Parser) stmtEnd() {
 	if !(p.newline() || (p.curToken == token.RBRACE && p.braces > 0)) {
 		panic("unexpected " + p.curToken.String())
@@ -93,10 +96,10 @@ func (p *Parser) Parse() (node ast.Node, err error) {
 	return p.stmt(), nil
 }
 
-// expr = term [expr-op expr]
+// expr = term [bin-op expr]
 func (p *Parser) expr() ast.Node {
 	term := p.term()
-	if !p.curToken.IsExprOp() {
+	if !p.curToken.IsBinOp() {
 		return term
 	}
 
@@ -104,14 +107,13 @@ func (p *Parser) expr() ast.Node {
 	p.advance()
 	expr := p.expr()
 
-	node := &ast.BinaryOpNode{Op: op, Left: term}
+	node := &ast.BinOpNode{Op: op, Left: term}
 	switch expr.(type) {
-	case *ast.BinaryOpNode:
-		prec, _ := token.Precedence(op, expr.(*ast.BinaryOpNode).Op)
-		if prec {
+	case *ast.BinOpNode:
+		if token.Precedence(op) > token.Precedence(expr.(*ast.BinOpNode).Op) {
 			// adjust tree for higher precedence of expr's op
-			node.Right = expr.(*ast.BinaryOpNode).Left
-			expr.(*ast.BinaryOpNode).Left = node
+			node.Right = expr.(*ast.BinOpNode).Left
+			expr.(*ast.BinOpNode).Left = node
 			return expr
 		}
 	}
@@ -119,44 +121,34 @@ func (p *Parser) expr() ast.Node {
 	return node
 }
 
-// term = "(" expr ")" / term-op expr / cast
+// term = "(" expr ")" / unary-op term / boolean / number / string / ident /
+//        func-call / term [":" ident]
 func (p *Parser) term() ast.Node {
+	var node ast.Node
 	if p.match(token.LPAREN) {
-		defer p.consume(token.RPAREN)
 		p.advance()
-		return p.expr()
-	}
-	if p.curToken.IsTermOp() {
-		node := &ast.UnaryOpNode{Op: p.curToken}
+		node = p.expr()
+		p.consume(token.RPAREN)
+	} else if p.curToken.IsUnaryOp() {
+		op := p.curToken
 		p.advance()
-		node.Expr = p.term()
-		return node
+		node = &ast.UnaryOpNode{Op: op, Term: p.term()}
+	} else if p.match(token.BOOL, token.NUMBER, token.STRING) {
+		node = &ast.ValueNode{Value: p.curValue, Type: p.curToken}
+		p.advance()
+	} else {
+		name := p.ident()
+		if p.match(token.LPAREN) {
+			node = &ast.FuncCallNode{Name: name, Args: p.parenExprList()}
+		} else {
+			node = &ast.VariableNode{Name: name}
+		}
 	}
-	return p.cast()
-}
-
-// cast =: terminal [":" ident]
-func (p *Parser) cast() ast.Node {
-	node := p.terminal()
-	if !p.match(token.COLON) {
-		return node
+	if p.match(token.COLON) {
+		p.advance()
+		node = &ast.CastNode{Cast: p.ident(), Term: node}
 	}
-	p.advance()
-	return &ast.CastNode{Cast: p.ident(), Expr: node}
-}
-
-// terminal := boolean / number / STRING / IDENT / func-call
-func (p *Parser) terminal() ast.Node {
-	if p.match(token.BOOL, token.NUMBER, token.STRING) {
-		defer p.advance()
-		return &ast.ValueNode{Value: p.curValue, Type: p.curToken}
-	}
-
-	name := p.ident()
-	if !p.match(token.LPAREN) {
-		return &ast.VariableNode{Name: name}
-	}
-	return &ast.FuncCallNode{Name: name, Args: p.parenExprList()}
+	return node
 }
 
 // paren-expr-list = "(" [expr *("," expr)] ")"
@@ -226,7 +218,8 @@ func (p *Parser) braceStmtList() []ast.Node {
 }
 
 // else-clause = "else" (brace-stmt-list / expr brace-stmt-list else-clause)
-// An else with an expression becomes an if-stmt within default else clause.
+// Note: an else with an expression becomes an if-stmt within a default else
+// clause.
 func (p *Parser) elseClause() *ast.IfNode {
 	p.consume(token.ELSE)
 	node := &ast.IfNode{}
@@ -253,27 +246,22 @@ func (p *Parser) whileStmt() *ast.WhileNode {
 	return &ast.WhileNode{Condition: p.expr(), Body: p.braceStmtList()}
 }
 
-// func-def = "func" [ident-list] brace-stmt-list
+// func-def = "func" ident *ident brace-stmt-list
 func (p *Parser) funcDef() *ast.FuncDefNode {
 	p.consume(token.FUNC)
 	node := &ast.FuncDefNode{Name: p.ident()}
 	if !p.match(token.LBRACE) {
-		node.Args = p.identList()
+		var list []string
+		for {
+			list = append(list, p.ident())
+			if !p.match(token.IDENTIFIER) {
+				break
+			}
+		}
+		node.Args = list
 	}
 	node.Body = p.braceStmtList()
 	return node
-}
-
-// ident-list = ident *("," ident)
-func (p *Parser) identList() []string {
-	var list []string
-	for {
-		list = append(list, p.ident())
-		if !p.match(token.COMMA) {
-			return list
-		}
-		p.advance()
-	}
 }
 
 // return-stmt = "return" [expr] LF

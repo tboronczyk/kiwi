@@ -13,7 +13,7 @@ type Node interface {
 // CastNode represents a cast expression as an AST node.
 type CastNode struct {
 	Cast string
-	Expr Node
+	Term Node
 }
 
 // Accept visits the CastNode node using v.
@@ -45,7 +45,7 @@ func (n *VariableNode) Accept(v NodeVisitor) {
 // UnaryOpNode represents a unary operator expression as an AST node.
 type UnaryOpNode struct {
 	Op   token.Token
-	Expr Node
+	Term Node
 }
 
 // Accept visits the unary operator expression node using v.
@@ -53,16 +53,16 @@ func (n *UnaryOpNode) Accept(v NodeVisitor) {
 	v.VisitUnaryOpNode(n)
 }
 
-// BinaryOpNode represents a binary operator expression as an AST node.
-type BinaryOpNode struct {
+// BinOpNode represents a binary operator expression as an AST node.
+type BinOpNode struct {
 	Op    token.Token
 	Left  Node
 	Right Node
 }
 
 // Accept visits the binary operator expression node using v.
-func (n *BinaryOpNode) Accept(v NodeVisitor) {
-	v.VisitBinaryOpNode(n)
+func (n *BinOpNode) Accept(v NodeVisitor) {
+	v.VisitBinOpNode(n)
 }
 
 // FuncCallNode represents a function call as an AST node.

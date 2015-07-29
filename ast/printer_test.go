@@ -68,13 +68,13 @@ func TestPrintValueNodeBool(t *testing.T) {
 func TestPrintCast(t *testing.T) {
 	expected := "CastNode\n" +
 		"├ Cast: string\n" +
-		"╰ Expr: ValueNode\n" +
+		"╰ Term: ValueNode\n" +
 		"        ├ Value: \"foo\"\n" +
 		"        ╰ Type: STRING\n"
 	actual := capture(func() {
 		n := &CastNode{
 			Cast: "string",
-			Expr: &ValueNode{Value: "foo", Type: token.STRING},
+			Term: &ValueNode{Value: "foo", Type: token.STRING},
 		}
 		n.Accept(NewAstPrinter())
 	})
@@ -94,27 +94,27 @@ func TestPrintVariableNode(t *testing.T) {
 func TestPrintUnaryOpNode(t *testing.T) {
 	expected := "UnaryOpNode\n" +
 		"├ Op: -\n" +
-		"╰ Expr: VariableNode\n" +
+		"╰ Term: VariableNode\n" +
 		"        ╰ Name: foo\n"
 	actual := capture(func() {
 		n := &UnaryOpNode{
 			Op:   token.SUBTRACT,
-			Expr: &VariableNode{Name: "foo"},
+			Term: &VariableNode{Name: "foo"},
 		}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestPrintBinaryOpNode(t *testing.T) {
-	expected := "BinaryOpNode\n" +
+func TestPrintBinOpNode(t *testing.T) {
+	expected := "BinOpNode\n" +
 		"├ Op: +\n" +
 		"├ Left: VariableNode\n" +
 		"│       ╰ Name: foo\n" +
 		"╰ Right: VariableNode\n" +
 		"         ╰ Name: bar\n"
 	actual := capture(func() {
-		n := &BinaryOpNode{
+		n := &BinOpNode{
 			Op:    token.ADD,
 			Left:  &VariableNode{Name: "foo"},
 			Right: &VariableNode{Name: "bar"},

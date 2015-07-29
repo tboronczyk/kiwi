@@ -95,7 +95,7 @@ func TestTokenIsLogOp(t *testing.T) {
 	}
 }
 
-func TestTokenIsExprOp(t *testing.T) {
+func TestTokenIsBinOp(t *testing.T) {
 	for i := 0; i < len(tokens); i++ {
 		tkn := Token(i)
 		if tkn == ADD || tkn == SUBTRACT ||
@@ -103,20 +103,20 @@ func TestTokenIsExprOp(t *testing.T) {
 			tkn == EQUAL || tkn == NOT_EQUAL || tkn == LESS ||
 			tkn == LESS_EQ || tkn == GREATER || tkn == GREATER_EQ ||
 			tkn == AND || tkn == OR {
-			assert.True(t, tkn.IsExprOp(), tkn.String())
+			assert.True(t, tkn.IsBinOp(), tkn.String())
 		} else {
-			assert.False(t, tkn.IsExprOp(), tkn.String())
+			assert.False(t, tkn.IsBinOp(), tkn.String())
 		}
 	}
 }
 
-func TestTokenIsTermOp(t *testing.T) {
+func TestTokenIsUnaryOp(t *testing.T) {
 	for i := 0; i < len(tokens); i++ {
 		tkn := Token(i)
 		if tkn == ADD || tkn == SUBTRACT || tkn == NOT {
-			assert.True(t, tkn.IsTermOp(), tkn.String())
+			assert.True(t, tkn.IsUnaryOp(), tkn.String())
 		} else {
-			assert.False(t, tkn.IsTermOp(), tkn.String())
+			assert.False(t, tkn.IsUnaryOp(), tkn.String())
 		}
 	}
 }
@@ -151,12 +151,12 @@ func TestTokenPrecedence(t *testing.T) {
 		{LESS, AND},
 	}
 	for _, tkns := range tokens {
-		p, _ := Precedence(tkns.t1, tkns.t2)
+		p := Precedence(tkns.t1) > Precedence(tkns.t2)
 		assert.True(t, p, tkns.t1.String()+" and "+tkns.t2.String())
 	}
 }
 
 func TestTokenPrecedenceBadToken(t *testing.T) {
-	_, e := Precedence(ADD, IF)
-	assert.True(t, e)
+	i := Precedence(IF)
+	assert.Equal(t, 0, i)
 }

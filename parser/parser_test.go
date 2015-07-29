@@ -47,20 +47,20 @@ func TestParseIdentifierError(t *testing.T) {
 
 func TestParseExprOpPrecedenceLower(t *testing.T) {
 	p := newParser("42 + 73 * 101")
-	node := p.expr().(*ast.BinaryOpNode)
+	node := p.expr().(*ast.BinOpNode)
 	assert.Equal(t, "42", node.Left.(*ast.ValueNode).Value)
 	assert.Equal(t, token.ADD, node.Op)
-	assert.Equal(t, token.MULTIPLY, node.Right.(*ast.BinaryOpNode).Op)
-	assert.Equal(t, "73", node.Right.(*ast.BinaryOpNode).Left.(*ast.ValueNode).Value)
-	assert.Equal(t, "101", node.Right.(*ast.BinaryOpNode).Right.(*ast.ValueNode).Value)
+	assert.Equal(t, token.MULTIPLY, node.Right.(*ast.BinOpNode).Op)
+	assert.Equal(t, "73", node.Right.(*ast.BinOpNode).Left.(*ast.ValueNode).Value)
+	assert.Equal(t, "101", node.Right.(*ast.BinOpNode).Right.(*ast.ValueNode).Value)
 }
 
 func TestParseExprOpPrecedenceHigher(t *testing.T) {
 	p := newParser("42 * 73 + 101")
-	node := p.expr().(*ast.BinaryOpNode)
-	assert.Equal(t, "42", node.Left.(*ast.BinaryOpNode).Left.(*ast.ValueNode).Value)
-	assert.Equal(t, token.MULTIPLY, node.Left.(*ast.BinaryOpNode).Op)
-	assert.Equal(t, "73", node.Left.(*ast.BinaryOpNode).Right.(*ast.ValueNode).Value)
+	node := p.expr().(*ast.BinOpNode)
+	assert.Equal(t, "42", node.Left.(*ast.BinOpNode).Left.(*ast.ValueNode).Value)
+	assert.Equal(t, token.MULTIPLY, node.Left.(*ast.BinOpNode).Op)
+	assert.Equal(t, "73", node.Left.(*ast.BinOpNode).Right.(*ast.ValueNode).Value)
 	assert.Equal(t, token.ADD, node.Op)
 	assert.Equal(t, "101", node.Right.(*ast.ValueNode).Value)
 }
@@ -72,69 +72,35 @@ func TestParseTermParens(t *testing.T) {
 	assert.Equal(t, token.NUMBER, node.Type)
 }
 
-func TestParseTermParensExprError(t *testing.T) {
-	p := newParser("(")
-	assert.Panics(t, func() {
-		p.term()
-	})
-}
-
-func TestParseTermParensCloseError(t *testing.T) {
-	p := newParser("(42")
-	assert.Panics(t, func() {
-		p.term()
-	})
-}
-
 func TestParseTermSigned(t *testing.T) {
 	p := newParser("-42")
 	node := p.term().(*ast.UnaryOpNode)
 	assert.Equal(t, token.SUBTRACT, node.Op)
-	assert.Equal(t, "42", node.Expr.(*ast.ValueNode).Value)
-	assert.Equal(t, token.NUMBER, node.Expr.(*ast.ValueNode).Type)
-}
-
-func TestParseTerminalVariable(t *testing.T) {
-	p := newParser("foo")
-	node := p.terminal().(*ast.VariableNode)
-	assert.Equal(t, "foo", node.Name)
+	assert.Equal(t, "42", node.Term.(*ast.ValueNode).Value)
+	assert.Equal(t, token.NUMBER, node.Term.(*ast.ValueNode).Type)
 }
 
 func TestParseCast(t *testing.T) {
 	p := newParser("foo:string")
-	node := p.cast().(*ast.CastNode)
+	node := p.term().(*ast.CastNode)
 	assert.Equal(t, "string", node.Cast)
-	assert.Equal(t, "foo", node.Expr.(*ast.VariableNode).Name)
+	assert.Equal(t, "foo", node.Term.(*ast.VariableNode).Name)
 }
 
-func TestParseTerminalCall(t *testing.T) {
+func TestParseTermFuncCall(t *testing.T) {
 	p := newParser("foo()")
-	node := p.terminal().(*ast.FuncCallNode)
+	node := p.term().(*ast.FuncCallNode)
 	assert.Equal(t, "foo", node.Name)
 	assert.Equal(t, 0, len(node.Args))
 }
 
 func TestParseTerminalCallWithArgs(t *testing.T) {
 	p := newParser("foo(bar, 42, \"baz\")")
-	node := p.terminal().(*ast.FuncCallNode)
+	node := p.term().(*ast.FuncCallNode)
 	assert.Equal(t, "foo", node.Name)
 	assert.Equal(t, "bar", node.Args[0].(*ast.VariableNode).Name)
 	assert.Equal(t, token.NUMBER, node.Args[1].(*ast.ValueNode).Type)
 	assert.Equal(t, token.STRING, node.Args[2].(*ast.ValueNode).Type)
-}
-
-func TestParseTerminalCallWithArgsExprError(t *testing.T) {
-	p := newParser("foo(bar, 42 < ,")
-	assert.Panics(t, func() {
-		p.terminal()
-	})
-}
-
-func TestParseTerminalFuncCallArgsListError(t *testing.T) {
-	p := newParser("foo(bar 42")
-	assert.Panics(t, func() {
-		p.terminal()
-	})
 }
 
 func TestParseBraceStmtListEmpty(t *testing.T) {
@@ -182,7 +148,7 @@ func TestParseFuncDefOneParam(t *testing.T) {
 }
 
 func TestParseFuncDefManyParams(t *testing.T) {
-	p := newParser("func foo bar, baz {}")
+	p := newParser("func foo bar baz {}")
 	node := p.stmt().(*ast.FuncDefNode)
 	assert.Equal(t, "foo", node.Name)
 	assert.Equal(t, "bar", node.Args[0])
@@ -240,7 +206,7 @@ func TestParseReturnStmtError(t *testing.T) {
 func TestParseWhileStmt(t *testing.T) {
 	p := newParser("while foo = true {bar := 42}")
 	node := p.stmt().(*ast.WhileNode)
-	assert.Equal(t, token.EQUAL, node.Condition.(*ast.BinaryOpNode).Op)
+	assert.Equal(t, token.EQUAL, node.Condition.(*ast.BinOpNode).Op)
 	assert.Equal(t, "bar", node.Body[0].(*ast.AssignNode).Name)
 }
 
@@ -262,7 +228,7 @@ func TestParseAssignStmt(t *testing.T) {
 	p := newParser("foo := 42 + 73\n")
 	node := p.stmt().(*ast.AssignNode)
 	assert.Equal(t, "foo", node.Name)
-	assert.Equal(t, token.ADD, node.Expr.(*ast.BinaryOpNode).Op)
+	assert.Equal(t, token.ADD, node.Expr.(*ast.BinOpNode).Op)
 }
 
 func TestParseAssignSmtExprError(t *testing.T) {

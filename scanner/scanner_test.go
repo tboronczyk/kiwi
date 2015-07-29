@@ -142,7 +142,7 @@ func TestScanMultiLineComments(t *testing.T) {
 }
 
 func TestScanNumbers(t *testing.T) {
-	str := "123 0.123 0."
+	str := "123 0.123 1."
 	s := New(strings.NewReader(str))
 
 	tokens := []struct {
@@ -151,7 +151,7 @@ func TestScanNumbers(t *testing.T) {
 	}{
 		{token.NUMBER, "123"},
 		{token.NUMBER, "0.123"},
-		{token.NUMBER, "0"},
+		{token.NUMBER, "1."},
 	}
 
 	for _, expected := range tokens {

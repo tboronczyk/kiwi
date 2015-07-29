@@ -61,7 +61,6 @@ func (s *Scanner) Scan() (token.Token, string) {
 	case '*':
 		return token.MULTIPLY, "*"
 	case '/':
-		// line comment, multi-line comment, or division
 		ch = s.read()
 		if ch == '/' {
 			return s.scanLineComment()
@@ -74,7 +73,6 @@ func (s *Scanner) Scan() (token.Token, string) {
 	case '%':
 		return token.MODULO, "%"
 	case ':':
-		// assign or colon
 		ch = s.read()
 		if ch == '=' {
 			return token.ASSIGN, ":="
@@ -84,7 +82,6 @@ func (s *Scanner) Scan() (token.Token, string) {
 	case '=':
 		return token.EQUAL, "="
 	case '<':
-		// less than or less/equal
 		ch = s.read()
 		if ch == '=' {
 			return token.LESS_EQ, "<="
@@ -92,7 +89,6 @@ func (s *Scanner) Scan() (token.Token, string) {
 		s.unread()
 		return token.LESS, "<"
 	case '>':
-		// greater than or greater/equal
 		ch = s.read()
 		if ch == '=' {
 			return token.GREATER_EQ, ">="
@@ -114,7 +110,6 @@ func (s *Scanner) Scan() (token.Token, string) {
 		s.unread()
 		return token.UNKNOWN, "|"
 	case '~':
-		// not or non-equality
 		ch = s.read()
 		if ch == '=' {
 			return token.NOT_EQUAL, "~="
@@ -134,7 +129,6 @@ func (s *Scanner) Scan() (token.Token, string) {
 	case '"':
 		return s.scanString()
 	case '`':
-		// identifiers may be escaped
 		s.unread()
 		return s.scanIdent()
 	}
@@ -162,7 +156,7 @@ func (s *Scanner) skipWhitespace() {
 	}
 }
 
-// scanString consumes a string lexeme and returns its Token and value. Escape
+// scanString consumes a string lexeme and returns its token and value. Escape
 // sequences in the string are evaluated and replaced.
 func (s *Scanner) scanString() (token.Token, string) {
 	var buf bytes.Buffer
@@ -201,7 +195,7 @@ func (s *Scanner) scanString() (token.Token, string) {
 	return token.STRING, buf.String()
 }
 
-// scanIdent consumes an identifier lexeme and returns its Token and value. An
+// scanIdent consumes an identifier lexeme and returns its token and value. An
 // identifier will be recognized as a keyword if it matches the list of Kiwi
 // keywords and is not escaped.
 func (s *Scanner) scanIdent() (token.Token, string) {
@@ -242,9 +236,8 @@ func (s *Scanner) scanIdent() (token.Token, string) {
 	return token.IDENTIFIER, str
 }
 
-// scanNumber consumes a numeric lexeme and returns its Token and value. The
-// numeric value may be an integer or real number. When it's real, the decimal
-// part must have at least one digit.
+// scanNumber consumes a numeric lexeme and returns its token and value. The
+// numeric value may be an integer or real number.
 func (s *Scanner) scanNumber() (token.Token, string) {
 	var ch rune
 	var buf bytes.Buffer
@@ -259,15 +252,7 @@ func (s *Scanner) scanNumber() (token.Token, string) {
 	}
 
 	if ch == '.' {
-		ch = s.read()
-		if !unicode.IsDigit(ch) {
-			s.unread()
-			s.unread()
-			return token.NUMBER, buf.String()
-		}
-		buf.WriteRune('.')
 		buf.WriteRune(ch)
-
 		for {
 			ch = s.read()
 			if !unicode.IsDigit(ch) {
@@ -281,8 +266,9 @@ func (s *Scanner) scanNumber() (token.Token, string) {
 	return token.NUMBER, buf.String()
 }
 
-// scanLineComment consumes a full-line comment and returns its Token and
-// value. The line comment ends when either a newline character or EOF is read.
+// scanLineComment consumes a full-line comment and returns its token and
+// lexeme value. The line comment ends when either a newline character or EOF
+// is read.
 func (s *Scanner) scanLineComment() (token.Token, string) {
 	var buf bytes.Buffer
 	buf.WriteString("//")
@@ -296,8 +282,8 @@ func (s *Scanner) scanLineComment() (token.Token, string) {
 	return token.COMMENT, buf.String()
 }
 
-// scanMultiComment consumes a muti-line comment and returns its Token and
-// value. The nesting of multi-line comments is allowed.
+// scanMultiComment consumes a muti-line comment and returns its token and
+// lexeme value. Nested multi-line comments are accomodated.
 func (s *Scanner) scanMultiComment() (token.Token, string) {
 	var buf bytes.Buffer
 	buf.WriteString("/*")
