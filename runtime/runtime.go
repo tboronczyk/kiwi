@@ -57,7 +57,7 @@ func (r *Runtime) VisitAssignNode(n *ast.AssignNode) {
 }
 
 // VisitBinaryNode evaluates the binary operator expression node n.
-func (r *Runtime) VisitBinaryOpNode(n *ast.BinaryOpNode) {
+func (r *Runtime) VisitBinOpNode(n *ast.BinOpNode) {
 	n.Left.Accept(r)
 	left := r.stack.Pop().(valueEntry)
 	// short-circuit logic operators
@@ -205,59 +205,59 @@ func (r *Runtime) VisitBinaryOpNode(n *ast.BinaryOpNode) {
 
 // VisitCastNode evaluates the cast node n.
 func (r *Runtime) VisitCastNode(n *ast.CastNode) {
-	n.Expr.Accept(r)
-	expr := r.stack.Pop().(valueEntry)
+	n.Term.Accept(r)
+	term := r.stack.Pop().(valueEntry)
 	switch strings.ToUpper(n.Cast) {
 	case "STR":
-		switch expr.dtype {
+		switch term.dtype {
 		case STRING:
 			break
 		case NUMBER:
-			val := fmt.Sprintf("%f", expr.value.(float64))
+			val := fmt.Sprintf("%f", term.value.(float64))
 			val = strings.TrimRight(val, "0")
 			val = strings.TrimRight(val, ".")
-			expr.value = val
+			term.value = val
 			break
 		case BOOL:
-			expr.value = strconv.FormatBool(expr.value.(bool))
+			term.value = strconv.FormatBool(term.value.(bool))
 			break
 		}
-		expr.dtype = STRING
+		term.dtype = STRING
 		break
 	case "NUM":
-		switch expr.dtype {
+		switch term.dtype {
 		case STRING:
-			expr.value, _ = strconv.ParseFloat(expr.value.(string), 64)
+			term.value, _ = strconv.ParseFloat(term.value.(string), 64)
 			break
 		case NUMBER:
 			break
 		case BOOL:
 			val := 0.0
-			if expr.value.(bool) {
+			if term.value.(bool) {
 				val = 1.0
 			}
-			expr.value = val
+			term.value = val
 			break
 		}
-		expr.dtype = NUMBER
+		term.dtype = NUMBER
 		break
 	case "BOOL":
-		switch expr.dtype {
+		switch term.dtype {
 		case STRING:
-			value := strings.ToUpper(expr.value.(string)) != "FALSE" &&
-				strings.TrimSpace(expr.value.(string)) != ""
-			expr.value = value
+			value := strings.ToUpper(term.value.(string)) != "FALSE" &&
+				strings.TrimSpace(term.value.(string)) != ""
+			term.value = value
 			break
 		case NUMBER:
-			expr.value = expr.value.(float64) != 0.0
+			term.value = term.value.(float64) != 0.0
 			break
 		case BOOL:
 			break
 		}
-		expr.dtype = BOOL
+		term.dtype = BOOL
 		break
 	}
-	r.stack.Push(expr)
+	r.stack.Push(term)
 }
 
 // VisitFuncCallNode evaluates the function call node n.
@@ -334,26 +334,26 @@ func (r *Runtime) VisitReturnNode(n *ast.ReturnNode) {
 
 // VisitUnaryOpNode evaluates the unary operator expression node n.
 func (r *Runtime) VisitUnaryOpNode(n *ast.UnaryOpNode) {
-	n.Expr.Accept(r)
-	expr := r.stack.Pop().(valueEntry)
+	n.Term.Accept(r)
+	term := r.stack.Pop().(valueEntry)
 
-	switch expr.dtype {
+	switch term.dtype {
 	case NUMBER:
 		switch n.Op {
 		case token.ADD:
-			expr.value = math.Abs(expr.value.(float64))
-			r.stack.Push(expr)
+			term.value = math.Abs(term.value.(float64))
+			r.stack.Push(term)
 			return
 		case token.SUBTRACT:
-			expr.value = 0.0 - expr.value.(float64)
-			r.stack.Push(expr)
+			term.value = 0.0 - term.value.(float64)
+			r.stack.Push(term)
 			return
 		}
 	case BOOL:
 		switch n.Op {
 		case token.NOT:
-			expr.value = !expr.value.(bool)
-			r.stack.Push(expr)
+			term.value = !term.value.(bool)
+			r.stack.Push(term)
 			return
 		}
 	}

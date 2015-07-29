@@ -97,16 +97,15 @@ Prec. | Type          | Operators
 
     ; RFC5243 App. B defines ALPHA, CHAR, DIGIT, DQUOTE, and LF
 
-    expr            = term [expr-op expr]
-    expr-op         = mul-op / add-op / cmp-op / log-op
+    expr            = term [bin-op expr]
+    bin-op          = mul-op / add-op / cmp-op / log-op
     mul-op          = "*" / "/" / "%"
     add-op          = "+" / "-"
     cmp-op          = "=" / "~=" / ">" / ">=" / "<" / "<="
     log-op          = "&&" / "||"
-    term            = "(" expr ")" / unary-op expr / cast
+    term            = "(" expr ")" / unary-op term / boolean / number /
+                      string / ident / func-call / term [":" ident]
     unary-op        = "+" / "-" / "~"
-    cast            = terminal [":" ident]
-    terminal        = boolean / number / string / ident / func-call
     boolean         = "true" / "false"
     func-call       = ident paren-expr-list
     paren-expr-list = "(" [expr *("," expr)] ")"
@@ -117,10 +116,9 @@ Prec. | Type          | Operators
     else-clause     = "else" (brace-stmt-list / expr brace-stmt-list
                       else-clause)
     while-stmt      = "while" expr brace-stmt-list
-    func-def        = "func" [ident-list] brace-stmt-list
-    ident-list      = ident *("," ident)
+    func-def        = "func" ident *ident brace-stmt-list
     return-stmt     = "return" [expr] LF
     assign-stmt     = ident ":=" expr LF
     ident           = ALPHA *(ALPHA / DIGIT / "_")
-    number          = DIGIT ["." 1*DIGIT]
+    number          = DIGIT ["." *DIGIT]
     string          = DQUOTE *CHAR DQUOTE

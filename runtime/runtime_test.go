@@ -91,8 +91,8 @@ func TestEvalVariableNodeNoExist(t *testing.T) {
 func TestEvalUnaryOpNode(t *testing.T) {
 	nodeData := []struct {
 		op        token.Token
-		exprVal   string
-		exprType  token.Token
+		termVal   string
+		termType  token.Token
 		expctVal  interface{}
 		expctType DataType
 	}{
@@ -103,7 +103,7 @@ func TestEvalUnaryOpNode(t *testing.T) {
 	for _, d := range nodeData {
 		n := &ast.UnaryOpNode{
 			Op:   d.op,
-			Expr: &ast.ValueNode{Value: d.exprVal, Type: d.exprType},
+			Expr: &ast.ValueNode{Value: d.termVal, Type: d.termType},
 		}
 		r := New()
 		n.Accept(r)
@@ -127,8 +127,8 @@ func TestEvalUnaryOpInvalid(t *testing.T) {
 func TestCastNode(t *testing.T) {
 	nodeData := []struct {
 		c         string
-		exprVal   string
-		exprType  token.Token
+		termVal   string
+		termType  token.Token
 		expctVal  interface{}
 		expctType DataType
 	}{
@@ -148,7 +148,7 @@ func TestCastNode(t *testing.T) {
 	for _, d := range nodeData {
 		n := &ast.CastNode{
 			Cast: d.c,
-			Expr: &ast.ValueNode{Value: d.exprVal, Type: d.exprType},
+			Expr: &ast.ValueNode{Value: d.termVal, Type: d.termType},
 		}
 		r := New()
 		n.Accept(r)
@@ -159,7 +159,7 @@ func TestCastNode(t *testing.T) {
 	}
 }
 
-func TestEvalBinaryOpNode(t *testing.T) {
+func TestEvalBinOpNode(t *testing.T) {
 	nodeData := []struct {
 		op        token.Token
 		ex1Val    string
@@ -192,7 +192,7 @@ func TestEvalBinaryOpNode(t *testing.T) {
 		{token.OR, "true", token.BOOL, "false", token.BOOL, true, BOOL},
 	}
 	for _, d := range nodeData {
-		n := &ast.BinaryOpNode{
+		n := &ast.BinOpNode{
 			Op:    d.op,
 			Left:  &ast.ValueNode{Value: d.ex1Val, Type: d.ex1Type},
 			Right: &ast.ValueNode{Value: d.ex2Val, Type: d.ex2Type},
@@ -206,8 +206,8 @@ func TestEvalBinaryOpNode(t *testing.T) {
 	}
 }
 
-func TestEvalBinaryOpNodeMismatch(t *testing.T) {
-	n := &ast.BinaryOpNode{
+func TestEvalBinOpNodeMismatch(t *testing.T) {
+	n := &ast.BinOpNode{
 		Op:    token.EQUAL,
 		Left:  &ast.ValueNode{Value: "foo", Type: token.STRING},
 		Right: &ast.ValueNode{Value: "42", Type: token.NUMBER},
@@ -217,7 +217,7 @@ func TestEvalBinaryOpNodeMismatch(t *testing.T) {
 	})
 }
 
-func TestEvalBinaryOpNodeNotPermitted(t *testing.T) {
+func TestEvalBinOpNodeNotPermitted(t *testing.T) {
 	nodeData := []struct {
 		op     token.Token
 		exVal  string
@@ -228,7 +228,7 @@ func TestEvalBinaryOpNodeNotPermitted(t *testing.T) {
 		{token.ADD, "true", token.BOOL},
 	}
 	for _, d := range nodeData {
-		n := &ast.BinaryOpNode{
+		n := &ast.BinOpNode{
 			Op:    d.op,
 			Left:  &ast.ValueNode{Value: d.exVal, Type: d.exType},
 			Right: &ast.ValueNode{Value: d.exVal, Type: d.exType},
@@ -241,7 +241,7 @@ func TestEvalBinaryOpNodeNotPermitted(t *testing.T) {
 
 func TestEvalWhileNode(t *testing.T) {
 	n := &ast.WhileNode{
-		Condition: &ast.BinaryOpNode{
+		Condition: &ast.BinOpNode{
 			Op:    token.LESS,
 			Left:  &ast.VariableNode{Name: "foo"},
 			Right: &ast.ValueNode{Value: "10", Type: token.NUMBER},
@@ -249,7 +249,7 @@ func TestEvalWhileNode(t *testing.T) {
 		Body: []ast.Node{
 			&ast.AssignNode{
 				Name: "foo",
-				Expr: &ast.BinaryOpNode{
+				Expr: &ast.BinOpNode{
 					Op:   token.ADD,
 					Left: &ast.VariableNode{Name: "foo"},
 					Right: &ast.ValueNode{

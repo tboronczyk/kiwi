@@ -74,9 +74,9 @@ func (p AstPrinter) VisitValueNode(n *ValueNode) {
 func (p AstPrinter) VisitCastNode(n *CastNode) {
 	fmt.Println("CastNode")
 	fmt.Println(p.peek() + "├ Cast: " + n.Cast)
-	fmt.Print(p.peek() + "╰ Expr: ")
+	fmt.Print(p.peek() + "╰ Term: ")
 	p.push(p.peek() + "        ")
-	n.Expr.Accept(p)
+	n.Term.Accept(p)
 	p.pop()
 }
 
@@ -90,15 +90,15 @@ func (p AstPrinter) VisitVariableNode(n *VariableNode) {
 func (p AstPrinter) VisitUnaryOpNode(n *UnaryOpNode) {
 	fmt.Println("UnaryOpNode")
 	fmt.Println(p.peek() + "├ Op: " + n.Op.String())
-	fmt.Print(p.peek() + "╰ Expr: ")
+	fmt.Print(p.peek() + "╰ Term: ")
 	p.push(p.peek() + "        ")
-	n.Expr.Accept(p)
+	n.Term.Accept(p)
 	p.pop()
 }
 
-// VisitBinaryOpNode prints the binary operator expression node n.
-func (p AstPrinter) VisitBinaryOpNode(n *BinaryOpNode) {
-	fmt.Println("BinaryOpNode")
+// VisitBinOpNode prints the binary operator expression node n.
+func (p AstPrinter) VisitBinOpNode(n *BinOpNode) {
+	fmt.Println("BinOpNode")
 	fmt.Println(p.peek() + "├ Op: " + n.Op.String())
 	fmt.Print(p.peek() + "├ Left: ")
 	p.push(p.peek() + "│       ")
