@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tboronczyk/kiwi/token"
 	"github.com/tboronczyk/kiwi/util"
 )
 
@@ -33,6 +32,30 @@ func (p *AstPrinter) pop() string {
 	return p.stack.Pop().(string)
 }
 
+func (p AstPrinter) VisitAddNode(n *AddNode) {
+	fmt.Println("AddNode")
+	fmt.Print(p.peek() + "├ Left: ")
+	p.push(p.peek() + "│       ")
+	n.Left.Accept(p)
+	p.pop()
+	fmt.Print(p.peek() + "╰ Right: ")
+	p.push(p.peek() + "         ")
+	n.Right.Accept(p)
+	p.pop()
+}
+
+func (p AstPrinter) VisitAndNode(n *AndNode) {
+	fmt.Println("AndNode")
+	fmt.Print(p.peek() + "├ Left: ")
+	p.push(p.peek() + "│       ")
+	n.Left.Accept(p)
+	p.pop()
+	fmt.Print(p.peek() + "╰ Right: ")
+	p.push(p.peek() + "         ")
+	n.Right.Accept(p)
+	p.pop()
+}
+
 func (p AstPrinter) VisitAssignNode(n *AssignNode) {
 	fmt.Println("AssignNode")
 	fmt.Println(p.peek() + "├ Name: " + n.Name)
@@ -42,17 +65,10 @@ func (p AstPrinter) VisitAssignNode(n *AssignNode) {
 	p.pop()
 }
 
-func (p AstPrinter) VisitBinOpNode(n *BinOpNode) {
-	fmt.Println("BinOpNode")
-	fmt.Println(p.peek() + "├ Op: " + n.Op.String())
-	fmt.Print(p.peek() + "├ Left: ")
-	p.push(p.peek() + "│       ")
-	n.Left.Accept(p)
-	p.pop()
-	fmt.Print(p.peek() + "╰ Right: ")
-	p.push(p.peek() + "         ")
-	n.Right.Accept(p)
-	p.pop()
+func (p AstPrinter) VisitBoolNode(n *BoolNode) {
+	fmt.Println("BoolNode")
+	value := strconv.FormatBool(n.Value)
+	fmt.Println(p.peek() + "╰ Value: " + value)
 }
 
 func (p AstPrinter) VisitCastNode(n *CastNode) {
@@ -64,11 +80,35 @@ func (p AstPrinter) VisitCastNode(n *CastNode) {
 	p.pop()
 }
 
+func (p AstPrinter) VisitDivideNode(n *DivideNode) {
+	fmt.Println("DivideNode")
+	fmt.Print(p.peek() + "├ Left: ")
+	p.push(p.peek() + "│       ")
+	n.Left.Accept(p)
+	p.pop()
+	fmt.Print(p.peek() + "╰ Right: ")
+	p.push(p.peek() + "         ")
+	n.Right.Accept(p)
+	p.pop()
+}
+
+func (p AstPrinter) VisitEqualNode(n *EqualNode) {
+	fmt.Println("EqualNode")
+	fmt.Print(p.peek() + "├ Left: ")
+	p.push(p.peek() + "│       ")
+	n.Left.Accept(p)
+	p.pop()
+	fmt.Print(p.peek() + "╰ Right: ")
+	p.push(p.peek() + "         ")
+	n.Right.Accept(p)
+	p.pop()
+}
+
 func (p AstPrinter) VisitFuncCallNode(n *FuncCallNode) {
 	fmt.Println("FuncCallNode")
 	fmt.Println(p.peek() + "├ Name: " + n.Name)
 	fmt.Print(p.peek() + "╰ Args: ")
-	if n.Args == nil {
+	if n.Args == nil || len(n.Args) == 0 {
 		fmt.Println("0x0")
 		return
 	}
@@ -85,7 +125,7 @@ func (p AstPrinter) VisitFuncDefNode(n *FuncDefNode) {
 	fmt.Println("FuncDefNode")
 	fmt.Println(p.peek() + "├ Name: " + n.Name)
 	fmt.Print(p.peek() + "├ Args: ")
-	if n.Args == nil {
+	if n.Args == nil || len(n.Args) == 0 {
 		fmt.Println("0x0")
 	} else {
 		fmt.Println(n.Args[0])
@@ -96,7 +136,7 @@ func (p AstPrinter) VisitFuncDefNode(n *FuncDefNode) {
 		}
 	}
 	fmt.Print(p.peek() + "╰ Body: ")
-	if n.Body == nil {
+	if n.Body == nil || len(n.Body) == 0 {
 		fmt.Println("0x0")
 	} else {
 		p.push(p.peek() + "        ")
@@ -109,6 +149,30 @@ func (p AstPrinter) VisitFuncDefNode(n *FuncDefNode) {
 	}
 }
 
+func (p AstPrinter) VisitGreaterEqualNode(n *GreaterEqualNode) {
+	fmt.Println("GreaterEqualNode")
+	fmt.Print(p.peek() + "├ Left: ")
+	p.push(p.peek() + "│       ")
+	n.Left.Accept(p)
+	p.pop()
+	fmt.Print(p.peek() + "╰ Right: ")
+	p.push(p.peek() + "         ")
+	n.Right.Accept(p)
+	p.pop()
+}
+
+func (p AstPrinter) VisitGreaterNode(n *GreaterNode) {
+	fmt.Println("GreaterNode")
+	fmt.Print(p.peek() + "├ Left: ")
+	p.push(p.peek() + "│       ")
+	n.Left.Accept(p)
+	p.pop()
+	fmt.Print(p.peek() + "╰ Right: ")
+	p.push(p.peek() + "         ")
+	n.Right.Accept(p)
+	p.pop()
+}
+
 func (p AstPrinter) VisitIfNode(n *IfNode) {
 	fmt.Println("IfNode")
 	fmt.Print(p.peek() + "├ Cond: ")
@@ -116,7 +180,7 @@ func (p AstPrinter) VisitIfNode(n *IfNode) {
 	n.Cond.Accept(p)
 	p.pop()
 	fmt.Print(p.peek() + "├ Body: ")
-	if n.Body == nil {
+	if n.Body == nil || len(n.Body) == 0 {
 		fmt.Println("0x0")
 	} else {
 		p.push(p.peek() + "│       ")
@@ -139,10 +203,116 @@ func (p AstPrinter) VisitIfNode(n *IfNode) {
 	p.pop()
 }
 
+func (p AstPrinter) VisitLessEqualNode(n *LessEqualNode) {
+	fmt.Println("LessEqualNode")
+	fmt.Print(p.peek() + "├ Left: ")
+	p.push(p.peek() + "│       ")
+	n.Left.Accept(p)
+	p.pop()
+	fmt.Print(p.peek() + "╰ Right: ")
+	p.push(p.peek() + "         ")
+	n.Right.Accept(p)
+	p.pop()
+}
+
+func (p AstPrinter) VisitLessNode(n *LessNode) {
+	fmt.Println("LessNode")
+	fmt.Print(p.peek() + "├ Left: ")
+	p.push(p.peek() + "│       ")
+	n.Left.Accept(p)
+	p.pop()
+	fmt.Print(p.peek() + "╰ Right: ")
+	p.push(p.peek() + "         ")
+	n.Right.Accept(p)
+	p.pop()
+}
+
+func (p AstPrinter) VisitModuloNode(n *ModuloNode) {
+	fmt.Println("ModuloNode")
+	fmt.Print(p.peek() + "├ Left: ")
+	p.push(p.peek() + "│       ")
+	n.Left.Accept(p)
+	p.pop()
+	fmt.Print(p.peek() + "╰ Right: ")
+	p.push(p.peek() + "         ")
+	n.Right.Accept(p)
+	p.pop()
+}
+
+func (p AstPrinter) VisitMultiplyNode(n *MultiplyNode) {
+	fmt.Println("MultiplyNode")
+	fmt.Print(p.peek() + "├ Left: ")
+	p.push(p.peek() + "│       ")
+	n.Left.Accept(p)
+	p.pop()
+	fmt.Print(p.peek() + "╰ Right: ")
+	p.push(p.peek() + "         ")
+	n.Right.Accept(p)
+	p.pop()
+}
+
+func (p AstPrinter) VisitNegativeNode(n *NegativeNode) {
+	fmt.Println("NegativeNode")
+	fmt.Print(p.peek() + "╰ Term: ")
+	p.push(p.peek() + "        ")
+	n.Term.Accept(p)
+	p.pop()
+}
+
+func (p AstPrinter) VisitNotEqualNode(n *NotEqualNode) {
+	fmt.Println("NotEqualNode")
+	fmt.Print(p.peek() + "├ Left: ")
+	p.push(p.peek() + "│       ")
+	n.Left.Accept(p)
+	p.pop()
+	fmt.Print(p.peek() + "╰ Right: ")
+	p.push(p.peek() + "         ")
+	n.Right.Accept(p)
+	p.pop()
+}
+
+func (p AstPrinter) VisitNotNode(n *NotNode) {
+	fmt.Println("NotNode")
+	fmt.Print(p.peek() + "╰ Term: ")
+	p.push(p.peek() + "        ")
+	n.Term.Accept(p)
+	p.pop()
+}
+
+func (p AstPrinter) VisitNumberNode(n *NumberNode) {
+	fmt.Println("NumberNode")
+	// numbers are presented as integers if they are whole, as
+	// floats if they have a decimal
+	value := fmt.Sprintf("%f", n.Value)
+	value = strings.TrimRight(value, "0")
+	value = strings.TrimRight(value, ".")
+	fmt.Println(p.peek() + "╰ Value: " + value)
+}
+
+func (p AstPrinter) VisitOrNode(n *OrNode) {
+	fmt.Println("OrNode")
+	fmt.Print(p.peek() + "├ Left: ")
+	p.push(p.peek() + "│       ")
+	n.Left.Accept(p)
+	p.pop()
+	fmt.Print(p.peek() + "╰ Right: ")
+	p.push(p.peek() + "         ")
+	n.Right.Accept(p)
+	p.pop()
+}
+
+func (p AstPrinter) VisitPositiveNode(n *PositiveNode) {
+	fmt.Println("PositiveNode")
+	fmt.Print(p.peek() + "╰ Term: ")
+	p.push(p.peek() + "        ")
+	n.Term.Accept(p)
+	p.pop()
+}
+
 func (p AstPrinter) VisitProgramNode(n *ProgramNode) {
 	fmt.Println("ProgramNode")
 	fmt.Print(p.peek() + "╰ Stmts: ")
-	if n.Stmts == nil {
+	if n.Stmts == nil || len(n.Stmts) == 0 {
 		fmt.Println("0x0")
 	} else {
 		p.push(p.peek() + "         ")
@@ -165,44 +335,31 @@ func (p AstPrinter) VisitReturnNode(n *ReturnNode) {
 	p.pop()
 }
 
-func (p AstPrinter) VisitUnaryOpNode(n *UnaryOpNode) {
-	fmt.Println("UnaryOpNode")
-	fmt.Println(p.peek() + "├ Op: " + n.Op.String())
-	fmt.Print(p.peek() + "╰ Term: ")
-	p.push(p.peek() + "        ")
-	n.Term.Accept(p)
-	p.pop()
+func (p AstPrinter) VisitStringNode(n *StringNode) {
+	fmt.Println("StringNode")
+	// strings are presented in quotes with its special characters
+	// escaped
+	r := strings.NewReplacer(
+		"\\\\", "\\",
+		"\r", "\\r",
+		"\n", "\\n",
+		"\t", "\\t",
+		"\"", "\\\"",
+	)
+	value := "\"" + r.Replace(n.Value) + "\""
+	fmt.Println(p.peek() + "╰ Value: " + value)
 }
 
-func (p AstPrinter) VisitValueNode(n *ValueNode) {
-	value := ""
-	switch n.Type {
-	case token.STRING:
-		// strings are presented in quotes with its special characters
-		// escaped
-		r := strings.NewReplacer(
-			"\\\\", "\\",
-			"\r", "\\r",
-			"\n", "\\n",
-			"\t", "\\t",
-			"\"", "\\\"",
-		)
-		value = "\"" + r.Replace(n.Value) + "\""
-		break
-	case token.NUMBER:
-		// numbers are presented as integers if they are whole, as
-		// floats if they have a decimal
-		var f, _ = strconv.ParseFloat(n.Value, 64)
-		value = fmt.Sprintf("%f", f)
-		value = strings.TrimRight(value, "0")
-		value = strings.TrimRight(value, ".")
-		break
-	case token.BOOL:
-		value = strconv.FormatBool(strings.ToUpper(n.Value) == "TRUE")
-	}
-	fmt.Println("ValueNode")
-	fmt.Println(p.peek() + "├ Value: " + value)
-	fmt.Println(p.peek() + "╰ Type: " + n.Type.String())
+func (p AstPrinter) VisitSubtractNode(n *SubtractNode) {
+	fmt.Println("SubtractNode")
+	fmt.Print(p.peek() + "├ Left: ")
+	p.push(p.peek() + "│       ")
+	n.Left.Accept(p)
+	p.pop()
+	fmt.Print(p.peek() + "╰ Right: ")
+	p.push(p.peek() + "         ")
+	n.Right.Accept(p)
+	p.pop()
 }
 
 func (p AstPrinter) VisitVariableNode(n *VariableNode) {
@@ -217,7 +374,7 @@ func (p AstPrinter) VisitWhileNode(n *WhileNode) {
 	n.Cond.Accept(p)
 	p.pop()
 	fmt.Print(p.peek() + "╰ Body: ")
-	if n.Body == nil {
+	if n.Body == nil || len(n.Body) == 0 {
 		fmt.Println("0x0")
 		return
 	}
