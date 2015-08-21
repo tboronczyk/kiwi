@@ -5,7 +5,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tboronczyk/kiwi/ast"
+	"github.com/tboronczyk/kiwi/scope"
 	"github.com/tboronczyk/kiwi/token"
+	"github.com/tboronczyk/kiwi/types"
 )
 
 func TestEvalValueNode(t *testing.T) {
@@ -13,11 +15,11 @@ func TestEvalValueNode(t *testing.T) {
 		valVal    string
 		valType   token.Token
 		expctVal  interface{}
-		expctType DataType
+		expctType types.DataType
 	}{
-		{"42", token.NUMBER, 42.0, NUMBER},
-		{"foo", token.STRING, "foo", STRING},
-		{"true", token.BOOL, true, BOOL},
+		{"42", token.NUMBER, 42.0, types.NUMBER},
+		{"foo", token.STRING, "foo", types.STRING},
+		{"true", token.BOOL, true, types.BOOL},
 	}
 	for _, d := range nodeData {
 		n := &ast.ValueNode{
@@ -27,9 +29,9 @@ func TestEvalValueNode(t *testing.T) {
 		r := New()
 		n.Accept(r)
 
-		e := r.stack.Pop().(valueEntry)
-		assert.Equal(t, d.expctVal, e.value)
-		assert.Equal(t, d.expctType, e.dtype)
+		e := r.stack.Pop().(scope.Entry)
+		assert.Equal(t, d.expctVal, e.Value)
+		assert.Equal(t, d.expctType, e.DataType)
 	}
 }
 
@@ -48,9 +50,9 @@ func TestEvalAssignNode(t *testing.T) {
 	r := New()
 	n.Accept(r)
 
-	e, _ := r.varTable.Get("foo")
-	assert.Equal(t, "bar", e.(valueEntry).value)
-	assert.Equal(t, STRING, e.(valueEntry).dtype)
+	e, _ := r.curScope.GetVar("foo")
+	assert.Equal(t, "bar", e.Value)
+	assert.Equal(t, types.STRING, e.DataType)
 }
 
 func TestEvalAssignNodeBadType(t *testing.T) {
@@ -70,15 +72,15 @@ func TestEvalAssignNodeBadType(t *testing.T) {
 func TestEvalVariableNode(t *testing.T) {
 	n := &ast.VariableNode{Name: "foo"}
 	r := New()
-	r.varTable.Set("foo", valueEntry{
-		value: 42.0,
-		dtype: NUMBER,
+	r.curScope.SetVar("foo", scope.Entry{
+		Value:    42.0,
+		DataType: types.NUMBER,
 	})
 	n.Accept(r)
 
-	e, _ := r.varTable.Get("foo")
-	assert.Equal(t, 42.0, e.(valueEntry).value)
-	assert.Equal(t, NUMBER, e.(valueEntry).dtype)
+	e, _ := r.curScope.GetVar("foo")
+	assert.Equal(t, 42.0, e.Value)
+	assert.Equal(t, types.NUMBER, e.DataType)
 }
 
 func TestEvalVariableNodeNoExist(t *testing.T) {
@@ -94,30 +96,30 @@ func TestEvalUnaryOpNode(t *testing.T) {
 		termVal   string
 		termType  token.Token
 		expctVal  interface{}
-		expctType DataType
+		expctType types.DataType
 	}{
-		{token.NOT, "false", token.BOOL, true, BOOL},
-		{token.ADD, "-42", token.NUMBER, 42.0, NUMBER},
-		{token.SUBTRACT, "42", token.NUMBER, -42.0, NUMBER},
+		{token.NOT, "false", token.BOOL, true, types.BOOL},
+		{token.ADD, "-42", token.NUMBER, 42.0, types.NUMBER},
+		{token.SUBTRACT, "42", token.NUMBER, -42.0, types.NUMBER},
 	}
 	for _, d := range nodeData {
 		n := &ast.UnaryOpNode{
 			Op:   d.op,
-			Expr: &ast.ValueNode{Value: d.termVal, Type: d.termType},
+			Term: &ast.ValueNode{Value: d.termVal, Type: d.termType},
 		}
 		r := New()
 		n.Accept(r)
 
-		e := r.stack.Pop().(valueEntry)
-		assert.Equal(t, d.expctVal, e.value)
-		assert.Equal(t, d.expctType, e.dtype)
+		e := r.stack.Pop().(scope.Entry)
+		assert.Equal(t, d.expctVal, e.Value)
+		assert.Equal(t, d.expctType, e.DataType)
 	}
 }
 
 func TestEvalUnaryOpInvalid(t *testing.T) {
 	n := &ast.UnaryOpNode{
 		Op:   token.NOT,
-		Expr: &ast.ValueNode{Value: "foo", Type: token.STRING},
+		Term: &ast.ValueNode{Value: "foo", Type: token.STRING},
 	}
 	assert.Panics(t, func() {
 		n.Accept(New())
@@ -130,32 +132,32 @@ func TestCastNode(t *testing.T) {
 		termVal   string
 		termType  token.Token
 		expctVal  interface{}
-		expctType DataType
+		expctType types.DataType
 	}{
-		{"str", "foo", token.STRING, "foo", STRING},
-		{"str", "42", token.NUMBER, "42", STRING},
-		{"str", "true", token.BOOL, "true", STRING},
-		{"num", "foo", token.STRING, 0.0, NUMBER},
-		{"num", "42", token.NUMBER, 42.0, NUMBER},
-		{"num", "true", token.BOOL, 1.0, NUMBER},
-		{"bool", "foo", token.STRING, true, BOOL},
-		{"bool", "42", token.NUMBER, true, BOOL},
-		{"bool", "true", token.BOOL, true, BOOL},
-		{"bool", "", token.STRING, false, BOOL},
-		{"bool", "0", token.NUMBER, false, BOOL},
-		{"bool", "false", token.BOOL, false, BOOL},
+		{"str", "foo", token.STRING, "foo", types.STRING},
+		{"str", "42", token.NUMBER, "42", types.STRING},
+		{"str", "true", token.BOOL, "true", types.STRING},
+		{"num", "foo", token.STRING, 0.0, types.NUMBER},
+		{"num", "42", token.NUMBER, 42.0, types.NUMBER},
+		{"num", "true", token.BOOL, 1.0, types.NUMBER},
+		{"bool", "foo", token.STRING, true, types.BOOL},
+		{"bool", "42", token.NUMBER, true, types.BOOL},
+		{"bool", "true", token.BOOL, true, types.BOOL},
+		{"bool", "", token.STRING, false, types.BOOL},
+		{"bool", "0", token.NUMBER, false, types.BOOL},
+		{"bool", "false", token.BOOL, false, types.BOOL},
 	}
 	for _, d := range nodeData {
 		n := &ast.CastNode{
 			Cast: d.c,
-			Expr: &ast.ValueNode{Value: d.termVal, Type: d.termType},
+			Term: &ast.ValueNode{Value: d.termVal, Type: d.termType},
 		}
 		r := New()
 		n.Accept(r)
 
-		e := r.stack.Pop().(valueEntry)
-		assert.Equal(t, d.expctVal, e.value)
-		assert.Equal(t, d.expctType, e.dtype)
+		e := r.stack.Pop().(scope.Entry)
+		assert.Equal(t, d.expctVal, e.Value)
+		assert.Equal(t, d.expctType, e.DataType)
 	}
 }
 
@@ -167,29 +169,29 @@ func TestEvalBinOpNode(t *testing.T) {
 		ex2Val    string
 		ex2Type   token.Token
 		expctVal  interface{}
-		expctType DataType
+		expctType types.DataType
 	}{
-		{token.ADD, "11", token.NUMBER, "7", token.NUMBER, 18.0, NUMBER},
-		{token.SUBTRACT, "11", token.NUMBER, "7", token.NUMBER, 4.0, NUMBER},
-		{token.MULTIPLY, "11", token.NUMBER, "7", token.NUMBER, 77.0, NUMBER},
-		{token.DIVIDE, "11", token.NUMBER, "7", token.NUMBER, 11 / 7.0, NUMBER},
-		{token.MODULO, "11", token.NUMBER, "7", token.NUMBER, 4.0, NUMBER},
-		{token.EQUAL, "11", token.NUMBER, "7", token.NUMBER, false, BOOL},
-		{token.NOT_EQUAL, "11", token.NUMBER, "7", token.NUMBER, true, BOOL},
-		{token.LESS, "11", token.NUMBER, "7", token.NUMBER, false, BOOL},
-		{token.LESS_EQ, "11", token.NUMBER, "7", token.NUMBER, false, BOOL},
-		{token.GREATER, "11", token.NUMBER, "7", token.NUMBER, true, BOOL},
-		{token.GREATER_EQ, "11", token.NUMBER, "7", token.NUMBER, true, BOOL},
-		{token.ADD, "foo", token.STRING, "bar", token.STRING, "foobar", STRING},
-		{token.EQUAL, "foo", token.STRING, "bar", token.STRING, false, BOOL},
-		{token.NOT_EQUAL, "foo", token.STRING, "bar", token.STRING, true, BOOL},
-		{token.AND, "true", token.BOOL, "false", token.BOOL, false, BOOL},
-		{token.OR, "false", token.BOOL, "true", token.BOOL, true, BOOL},
-		{token.EQUAL, "true", token.BOOL, "false", token.BOOL, false, BOOL},
-		{token.NOT_EQUAL, "true", token.BOOL, "false", token.BOOL, true, BOOL},
+		{token.ADD, "11", token.NUMBER, "7", token.NUMBER, 18.0, types.NUMBER},
+		{token.SUBTRACT, "11", token.NUMBER, "7", token.NUMBER, 4.0, types.NUMBER},
+		{token.MULTIPLY, "11", token.NUMBER, "7", token.NUMBER, 77.0, types.NUMBER},
+		{token.DIVIDE, "11", token.NUMBER, "7", token.NUMBER, 11 / 7.0, types.NUMBER},
+		{token.MODULO, "11", token.NUMBER, "7", token.NUMBER, 4.0, types.NUMBER},
+		{token.EQUAL, "11", token.NUMBER, "7", token.NUMBER, false, types.BOOL},
+		{token.NOT_EQUAL, "11", token.NUMBER, "7", token.NUMBER, true, types.BOOL},
+		{token.LESS, "11", token.NUMBER, "7", token.NUMBER, false, types.BOOL},
+		{token.LESS_EQ, "11", token.NUMBER, "7", token.NUMBER, false, types.BOOL},
+		{token.GREATER, "11", token.NUMBER, "7", token.NUMBER, true, types.BOOL},
+		{token.GREATER_EQ, "11", token.NUMBER, "7", token.NUMBER, true, types.BOOL},
+		{token.ADD, "foo", token.STRING, "bar", token.STRING, "foobar", types.STRING},
+		{token.EQUAL, "foo", token.STRING, "bar", token.STRING, false, types.BOOL},
+		{token.NOT_EQUAL, "foo", token.STRING, "bar", token.STRING, true, types.BOOL},
+		{token.AND, "true", token.BOOL, "false", token.BOOL, false, types.BOOL},
+		{token.OR, "false", token.BOOL, "true", token.BOOL, true, types.BOOL},
+		{token.EQUAL, "true", token.BOOL, "false", token.BOOL, false, types.BOOL},
+		{token.NOT_EQUAL, "true", token.BOOL, "false", token.BOOL, true, types.BOOL},
 		// short circuit
-		{token.AND, "false", token.BOOL, "true", token.BOOL, false, BOOL},
-		{token.OR, "true", token.BOOL, "false", token.BOOL, true, BOOL},
+		{token.AND, "false", token.BOOL, "true", token.BOOL, false, types.BOOL},
+		{token.OR, "true", token.BOOL, "false", token.BOOL, true, types.BOOL},
 	}
 	for _, d := range nodeData {
 		n := &ast.BinOpNode{
@@ -200,9 +202,9 @@ func TestEvalBinOpNode(t *testing.T) {
 		r := New()
 		n.Accept(r)
 
-		e := r.stack.Pop().(valueEntry)
-		assert.Equal(t, d.expctVal, e.value)
-		assert.Equal(t, d.expctType, e.dtype)
+		e := r.stack.Pop().(scope.Entry)
+		assert.Equal(t, d.expctVal, e.Value)
+		assert.Equal(t, d.expctType, e.DataType)
 	}
 }
 
@@ -241,7 +243,7 @@ func TestEvalBinOpNodeNotPermitted(t *testing.T) {
 
 func TestEvalWhileNode(t *testing.T) {
 	n := &ast.WhileNode{
-		Condition: &ast.BinOpNode{
+		Cond: &ast.BinOpNode{
 			Op:    token.LESS,
 			Left:  &ast.VariableNode{Name: "foo"},
 			Right: &ast.ValueNode{Value: "10", Type: token.NUMBER},
@@ -261,17 +263,17 @@ func TestEvalWhileNode(t *testing.T) {
 		},
 	}
 	r := New()
-	r.varTable.Set("foo", valueEntry{value: 0.0, dtype: NUMBER})
+	r.curScope.SetVar("foo", scope.Entry{Value: 0.0, DataType: types.NUMBER})
 	n.Accept(r)
 
-	e, _ := r.varTable.Get("foo")
-	assert.Equal(t, 10.0, e.(valueEntry).value)
+	e, _ := r.curScope.GetVar("foo")
+	assert.Equal(t, 10.0, e.Value)
 }
 
 func TestEvalWhileNodeNonBool(t *testing.T) {
 	n := &ast.WhileNode{
-		Condition: &ast.ValueNode{Value: "foo", Type: token.STRING},
-		Body:      []ast.Node{},
+		Cond: &ast.ValueNode{Value: "foo", Type: token.STRING},
+		Body: []ast.Node{},
 	}
 	assert.Panics(t, func() {
 		n.Accept(New())
@@ -288,14 +290,14 @@ func TestEvalIfNode(t *testing.T) {
 	}
 	for _, d := range nodeData {
 		n := &ast.IfNode{
-			Condition: &ast.ValueNode{Value: d.cVal, Type: token.BOOL},
+			Cond: &ast.ValueNode{Value: d.cVal, Type: token.BOOL},
 			Body: []ast.Node{
 				&ast.ReturnNode{
 					Expr: &ast.ValueNode{Value: "false", Type: token.BOOL},
 				},
 			},
 			Else: &ast.IfNode{
-				Condition: &ast.ValueNode{Value: "true", Type: token.BOOL},
+				Cond: &ast.ValueNode{Value: "true", Type: token.BOOL},
 				Body: []ast.Node{
 					&ast.ReturnNode{
 						Expr: &ast.ValueNode{Value: "true", Type: token.BOOL},
@@ -305,44 +307,18 @@ func TestEvalIfNode(t *testing.T) {
 		}
 		r := New()
 		n.Accept(r)
-		e := r.stack.Pop().(valueEntry)
-		assert.Equal(t, d.exVal, e.value)
+		e := r.stack.Pop().(scope.Entry)
+		assert.Equal(t, d.exVal, e.Value)
 	}
 }
 
 func TestEvalIfNodeNonBool(t *testing.T) {
 	n := &ast.IfNode{
-		Condition: &ast.ValueNode{Value: "foo", Type: token.STRING},
-		Body:      []ast.Node{},
+		Cond: &ast.ValueNode{Value: "foo", Type: token.STRING},
+		Body: []ast.Node{},
 	}
 	assert.Panics(t, func() {
 		n.Accept(New())
-	})
-}
-
-func TestEvalFuncDefNode(t *testing.T) {
-	n := &ast.FuncDefNode{
-		Name: "foo",
-		Args: []string{},
-		Body: []ast.Node{},
-	}
-	r := New()
-	n.Accept(r)
-
-	e, _ := r.funcTable.Get("foo")
-	assert.Equal(t, "foo", e.(valueEntry).value.(*ast.FuncDefNode).Name)
-}
-
-func TestEvalFuncDefNodeExists(t *testing.T) {
-	r := New()
-	r.funcTable.Set("foo", &ast.FuncDefNode{})
-	n := &ast.FuncDefNode{
-		Name: "foo",
-		Args: []string{},
-		Body: []ast.Node{},
-	}
-	assert.Panics(t, func() {
-		n.Accept(r)
 	})
 }
 
@@ -356,8 +332,11 @@ func TestEvalFuncCallNode(t *testing.T) {
 				Expr: &ast.VariableNode{Name: "bar"},
 			},
 		},
+		Scope: r.curScope,
 	}
-	f.Accept(r)
+	r.curScope.SetFunc("foo", scope.Entry{
+		Value: f, DataType: types.FUNC,
+	})
 
 	n := &ast.FuncCallNode{
 		Name: "foo",
@@ -367,8 +346,8 @@ func TestEvalFuncCallNode(t *testing.T) {
 	}
 	n.Accept(r)
 
-	e := r.stack.Pop().(valueEntry)
-	assert.Equal(t, "bar", e.value)
+	e := r.stack.Pop().(scope.Entry)
+	assert.Equal(t, "bar", e.Value)
 }
 
 func TestEvalFuncCallNodeBuiltin(t *testing.T) {
@@ -396,9 +375,9 @@ func TestEvalFuncCallNodeNotDefined(t *testing.T) {
 
 func TestEvalFuncCallNodeBadCount(t *testing.T) {
 	r := New()
-	r.funcTable.Set("foo", valueEntry{
-		value: &ast.FuncDefNode{},
-		dtype: FUNC,
+	r.curScope.SetFunc("foo", scope.Entry{
+		Value:    &ast.FuncDefNode{Name: "foo", Scope: r.curScope},
+		DataType: types.FUNC,
 	})
 	n := &ast.FuncCallNode{
 		Name: "foo",
