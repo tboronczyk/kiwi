@@ -45,17 +45,16 @@ func main() {
 	p := parser.New(scanner.New(bufio.NewReader(in)))
 	r := runtime.New()
 	v := ast.NewAstPrinter()
-	for {
-		n, err := p.Parse()
-		if n == nil {
-			if err != nil {
-				fmt.Println(err)
-			}
-			return
+
+	n, err := p.Parse()
+	if n == nil {
+		if err != nil {
+			fmt.Println(err)
 		}
-		if *optAst {
-			n.Accept(v)
-		}
-		n.Accept(r)
+		return
 	}
+	if *optAst {
+		n.Accept(v)
+	}
+	n.Accept(r)
 }

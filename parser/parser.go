@@ -8,7 +8,9 @@ import (
 
 	"github.com/tboronczyk/kiwi/ast"
 	"github.com/tboronczyk/kiwi/scanner"
+	"github.com/tboronczyk/kiwi/scope"
 	"github.com/tboronczyk/kiwi/token"
+	"github.com/tboronczyk/kiwi/types"
 )
 
 // Parser produces ASTs from tokens.
@@ -19,11 +21,12 @@ type Parser struct {
 	prvValue string      // the previous lexeme value
 	braces   int         // pseudo-stack counter tracking brace nesting
 	scanner  *scanner.Scanner
+	scope    *scope.Scope
 }
 
 // New returns a new Parser instance that is initialized to read from s.
 func New(s *scanner.Scanner) *Parser {
-	p := &Parser{scanner: s}
+	p := &Parser{scanner: s, scope: scope.New()}
 	p.advance()
 	return p
 }
@@ -83,17 +86,20 @@ func (p *Parser) stmtEnd() {
 
 // Parse consumes the token stream and returns an AST of the production. err
 // is nil for successful parses.
-func (p *Parser) Parse() (node ast.Node, err error) {
+func (p *Parser) Parse() (prog *ast.ProgramNode, err error) {
 	defer func() {
 		if e := recover(); e != nil {
-			node = nil
 			err = errors.New(e.(string))
 		}
 	}()
-	if p.curToken == token.EOF {
-		return nil, nil
+
+	prog = &ast.ProgramNode{Scope: p.scope}
+	for {
+		if p.curToken == token.EOF {
+			return prog, nil
+		}
+		prog.Stmts = append(prog.Stmts, p.stmt())
 	}
-	return p.stmt(), nil
 }
 
 // expr = term [bin-op expr]
@@ -190,7 +196,7 @@ func (p *Parser) stmt() ast.Node {
 // if-stmt = "if" expr brace-stmt-list [else-clause]
 func (p *Parser) ifStmt() *ast.IfNode {
 	p.consume(token.IF)
-	node := &ast.IfNode{Condition: p.expr(), Body: p.braceStmtList()}
+	node := &ast.IfNode{Cond: p.expr(), Body: p.braceStmtList()}
 	if p.match(token.ELSE) {
 		node.Else = p.elseClause()
 	}
@@ -229,9 +235,9 @@ func (p *Parser) elseClause() *ast.IfNode {
 		// expression that evaluates true to make evaluation of the
 		// AST easier.
 		isFinal = true
-		node.Condition = &ast.ValueNode{Value: "TRUE", Type: token.BOOL}
+		node.Cond = &ast.ValueNode{Value: "TRUE", Type: token.BOOL}
 	} else {
-		node.Condition = p.expr()
+		node.Cond = p.expr()
 	}
 	node.Body = p.braceStmtList()
 	if !isFinal {
@@ -243,13 +249,20 @@ func (p *Parser) elseClause() *ast.IfNode {
 // while-stmt = "while" expr brace-stmt-list
 func (p *Parser) whileStmt() *ast.WhileNode {
 	p.consume(token.WHILE)
-	return &ast.WhileNode{Condition: p.expr(), Body: p.braceStmtList()}
+	return &ast.WhileNode{Cond: p.expr(), Body: p.braceStmtList()}
 }
 
 // func-def = "func" ident *ident brace-stmt-list
 func (p *Parser) funcDef() *ast.FuncDefNode {
 	p.consume(token.FUNC)
-	node := &ast.FuncDefNode{Name: p.ident()}
+
+	node := &ast.FuncDefNode{
+		Name: p.ident(),
+	}
+	p.scope.SetFunc(node.Name, scope.Entry{Value: node, DataType: types.FUNC})
+	node.Scope = scope.NewWithParent(p.scope)
+	p.scope = node.Scope
+
 	if !p.match(token.LBRACE) {
 		var list []string
 		for {
@@ -261,6 +274,8 @@ func (p *Parser) funcDef() *ast.FuncDefNode {
 		node.Args = list
 	}
 	node.Body = p.braceStmtList()
+
+	p.scope = node.Scope.Parent
 	return node
 }
 

@@ -23,7 +23,7 @@ func TestSkipComment(t *testing.T) {
 func TestParseNil(t *testing.T) {
 	p := newParser("")
 	result, _ := p.Parse()
-	assert.Nil(t, result)
+	assert.Equal(t, 0, len(result.Stmts))
 }
 
 func TestParseRecovery(t *testing.T) {
@@ -158,7 +158,7 @@ func TestParseFuncDefManyParams(t *testing.T) {
 func TestParseIfStmt(t *testing.T) {
 	p := newParser("if true {foo := 42}")
 	node := p.stmt().(*ast.IfNode)
-	assert.Equal(t, "TRUE", node.Condition.(*ast.ValueNode).Value)
+	assert.Equal(t, "TRUE", node.Cond.(*ast.ValueNode).Value)
 	assert.Equal(t, "foo", node.Body[0].(*ast.AssignNode).Name)
 }
 
@@ -179,9 +179,9 @@ func TestParseIfStmtBraceError(t *testing.T) {
 func TestParseIfStmtWithElse(t *testing.T) {
 	p := newParser("if false {} else false {} else {}")
 	node := p.stmt().(*ast.IfNode)
-	assert.Equal(t, "FALSE", node.Condition.(*ast.ValueNode).Value)
-	assert.Equal(t, "FALSE", node.Else.(*ast.IfNode).Condition.(*ast.ValueNode).Value)
-	assert.Equal(t, "TRUE", node.Else.(*ast.IfNode).Else.(*ast.IfNode).Condition.(*ast.ValueNode).Value)
+	assert.Equal(t, "FALSE", node.Cond.(*ast.ValueNode).Value)
+	assert.Equal(t, "FALSE", node.Else.(*ast.IfNode).Cond.(*ast.ValueNode).Value)
+	assert.Equal(t, "TRUE", node.Else.(*ast.IfNode).Else.(*ast.IfNode).Cond.(*ast.ValueNode).Value)
 }
 
 func TestParseReturnStmt(t *testing.T) {
@@ -206,7 +206,7 @@ func TestParseReturnStmtError(t *testing.T) {
 func TestParseWhileStmt(t *testing.T) {
 	p := newParser("while foo = true {bar := 42}")
 	node := p.stmt().(*ast.WhileNode)
-	assert.Equal(t, token.EQUAL, node.Condition.(*ast.BinOpNode).Op)
+	assert.Equal(t, token.EQUAL, node.Cond.(*ast.BinOpNode).Op)
 	assert.Equal(t, "bar", node.Body[0].(*ast.AssignNode).Name)
 }
 

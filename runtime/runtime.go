@@ -8,193 +8,202 @@ import (
 	"strings"
 
 	"github.com/tboronczyk/kiwi/ast"
-	"github.com/tboronczyk/kiwi/symtable"
+	"github.com/tboronczyk/kiwi/scope"
 	"github.com/tboronczyk/kiwi/token"
+	"github.com/tboronczyk/kiwi/types"
 	"github.com/tboronczyk/kiwi/util"
 )
 
 // Runtime provides an execution context for a program.
 type (
 	Runtime struct {
-		stack     util.Stack
-		varTable  *symtable.SymTable
-		funcTable *symtable.SymTable
+		stack      util.Stack
+		curScope   *scope.Scope
+		scopeStack util.Stack
 	}
 
-	valueEntry struct {
-		value interface{}
-		dtype DataType
-	}
-
-	params []valueEntry
+	params []scope.Entry
 )
 
 // New returns a new runtime instance.
 func New() *Runtime {
 	r := &Runtime{
-		stack:     util.NewStack(),
-		varTable:  symtable.New(),
-		funcTable: symtable.New(),
+		stack:      util.NewStack(),
+		curScope:   scope.New(),
+		scopeStack: util.NewStack(),
 	}
+
 	for n, f := range builtins {
-		r.funcTable.Set(n, valueEntry{dtype: BUILTIN, value: f})
+		r.curScope.SetFunc(n, scope.Entry{Value: f, DataType: types.BUILTIN})
 	}
 	return r
+}
+
+func (r *Runtime) VisitProgramNode(n *ast.ProgramNode) {
+	n.Scope.Parent = r.curScope
+	r.scopeStack.Push(r.curScope)
+	r.curScope = n.Scope
+
+	for _, stmt := range n.Stmts {
+		stmt.Accept(r)
+	}
+
+	r.curScope = r.scopeStack.Pop().(*scope.Scope)
 }
 
 // VisitAssignNode evaluates the assignment node n.
 func (r *Runtime) VisitAssignNode(n *ast.AssignNode) {
 	n.Expr.Accept(r)
-	v := r.stack.Pop().(valueEntry)
+	v := r.stack.Pop().(scope.Entry)
 	// preserve datatype if the variable is already set
-	e, ok := r.varTable.Get(n.Name)
+	e, ok := r.curScope.GetVar(n.Name)
 	if ok {
-		if e.(valueEntry).dtype != v.dtype {
+		if e.DataType != v.DataType {
 			panic("value type does not match variable type")
 		}
 	}
-	r.varTable.Set(n.Name, v)
+	r.curScope.SetVar(n.Name, v)
 }
 
 // VisitBinaryNode evaluates the binary operator expression node n.
 func (r *Runtime) VisitBinOpNode(n *ast.BinOpNode) {
 	n.Left.Accept(r)
-	left := r.stack.Pop().(valueEntry)
+	left := r.stack.Pop().(scope.Entry)
 	// short-circuit logic operators
-	if left.dtype == BOOL {
-		if n.Op == token.OR && left.value.(bool) {
-			r.stack.Push(valueEntry{value: true, dtype: BOOL})
+	if left.DataType == types.BOOL {
+		if n.Op == token.OR && left.Value.(bool) {
+			r.stack.Push(scope.Entry{Value: true, DataType: types.BOOL})
 			return
 		}
-		if n.Op == token.AND && !left.value.(bool) {
-			r.stack.Push(valueEntry{value: false, dtype: BOOL})
+		if n.Op == token.AND && !left.Value.(bool) {
+			r.stack.Push(scope.Entry{Value: false, DataType: types.BOOL})
 			return
 		}
 	}
 
 	n.Right.Accept(r)
-	right := r.stack.Pop().(valueEntry)
-	if left.dtype != right.dtype {
+	right := r.stack.Pop().(scope.Entry)
+	if left.DataType != right.DataType {
 		panic("mis-matched types")
 	}
 
-	switch left.dtype {
-	case NUMBER:
+	switch left.DataType {
+	case types.NUMBER:
 		switch n.Op {
 		case token.ADD:
-			r.stack.Push(valueEntry{
-				value: left.value.(float64) + right.value.(float64),
-				dtype: NUMBER,
+			r.stack.Push(scope.Entry{
+				Value:    left.Value.(float64) + right.Value.(float64),
+				DataType: types.NUMBER,
 			})
 			return
 		case token.SUBTRACT:
-			r.stack.Push(valueEntry{
-				value: left.value.(float64) - right.value.(float64),
-				dtype: NUMBER,
+			r.stack.Push(scope.Entry{
+				Value:    left.Value.(float64) - right.Value.(float64),
+				DataType: types.NUMBER,
 			})
 			return
 		case token.MULTIPLY:
-			r.stack.Push(valueEntry{
-				value: left.value.(float64) * right.value.(float64),
-				dtype: NUMBER,
+			r.stack.Push(scope.Entry{
+				Value:    left.Value.(float64) * right.Value.(float64),
+				DataType: types.NUMBER,
 			})
 			return
 		case token.DIVIDE:
-			r.stack.Push(valueEntry{
-				value: left.value.(float64) / right.value.(float64),
-				dtype: NUMBER,
+			r.stack.Push(scope.Entry{
+				Value:    left.Value.(float64) / right.Value.(float64),
+				DataType: types.NUMBER,
 			})
 			return
 		case token.MODULO:
-			r.stack.Push(valueEntry{
-				value: math.Mod(left.value.(float64), right.value.(float64)),
-				dtype: NUMBER,
+			r.stack.Push(scope.Entry{
+				Value:    math.Mod(left.Value.(float64), right.Value.(float64)),
+				DataType: types.NUMBER,
 			})
 			return
 		case token.EQUAL:
-			r.stack.Push(valueEntry{
-				value: left.value.(float64) == right.value.(float64),
-				dtype: BOOL,
+			r.stack.Push(scope.Entry{
+				Value:    left.Value.(float64) == right.Value.(float64),
+				DataType: types.BOOL,
 			})
 			return
 		case token.NOT_EQUAL:
-			r.stack.Push(valueEntry{
-				value: left.value.(float64) != right.value.(float64),
-				dtype: BOOL,
+			r.stack.Push(scope.Entry{
+				Value:    left.Value.(float64) != right.Value.(float64),
+				DataType: types.BOOL,
 			})
 			return
 		case token.LESS:
-			r.stack.Push(valueEntry{
-				value: left.value.(float64) < right.value.(float64),
-				dtype: BOOL,
+			r.stack.Push(scope.Entry{
+				Value:    left.Value.(float64) < right.Value.(float64),
+				DataType: types.BOOL,
 			})
 			return
 		case token.LESS_EQ:
-			r.stack.Push(valueEntry{
-				value: left.value.(float64) <= right.value.(float64),
-				dtype: BOOL,
+			r.stack.Push(scope.Entry{
+				Value:    left.Value.(float64) <= right.Value.(float64),
+				DataType: types.BOOL,
 			})
 			return
 		case token.GREATER:
-			r.stack.Push(valueEntry{
-				value: left.value.(float64) > right.value.(float64),
-				dtype: BOOL,
+			r.stack.Push(scope.Entry{
+				Value:    left.Value.(float64) > right.Value.(float64),
+				DataType: types.BOOL,
 			})
 			return
 		case token.GREATER_EQ:
-			r.stack.Push(valueEntry{
-				value: left.value.(float64) >= right.value.(float64),
-				dtype: BOOL,
+			r.stack.Push(scope.Entry{
+				Value:    left.Value.(float64) >= right.Value.(float64),
+				DataType: types.BOOL,
 			})
 			return
 		}
 		break
-	case STRING:
+	case types.STRING:
 		switch n.Op {
 		case token.ADD:
-			r.stack.Push(valueEntry{
-				value: left.value.(string) + right.value.(string),
-				dtype: STRING,
+			r.stack.Push(scope.Entry{
+				Value:    left.Value.(string) + right.Value.(string),
+				DataType: types.STRING,
 			})
 			return
 		case token.EQUAL:
-			r.stack.Push(valueEntry{
-				value: left.value.(string) == right.value.(string),
-				dtype: BOOL,
+			r.stack.Push(scope.Entry{
+				Value:    left.Value.(string) == right.Value.(string),
+				DataType: types.BOOL,
 			})
 			return
 		case token.NOT_EQUAL:
-			r.stack.Push(valueEntry{
-				value: left.value.(string) != right.value.(string),
-				dtype: BOOL,
+			r.stack.Push(scope.Entry{
+				Value:    left.Value.(string) != right.Value.(string),
+				DataType: types.BOOL,
 			})
 			return
 		}
 		break
-	case BOOL:
+	case types.BOOL:
 		switch n.Op {
 		case token.AND:
-			r.stack.Push(valueEntry{
-				value: left.value.(bool) && right.value.(bool),
-				dtype: BOOL,
+			r.stack.Push(scope.Entry{
+				Value:    left.Value.(bool) && right.Value.(bool),
+				DataType: types.BOOL,
 			})
 			return
 		case token.OR:
-			r.stack.Push(valueEntry{
-				value: left.value.(bool) || right.value.(bool),
-				dtype: BOOL,
+			r.stack.Push(scope.Entry{
+				Value:    left.Value.(bool) || right.Value.(bool),
+				DataType: types.BOOL,
 			})
 			return
 		case token.EQUAL:
-			r.stack.Push(valueEntry{
-				value: left.value.(bool) == right.value.(bool),
-				dtype: BOOL,
+			r.stack.Push(scope.Entry{
+				Value:    left.Value.(bool) == right.Value.(bool),
+				DataType: types.BOOL,
 			})
 			return
 		case token.NOT_EQUAL:
-			r.stack.Push(valueEntry{
-				value: left.value.(bool) != right.value.(bool),
-				dtype: BOOL,
+			r.stack.Push(scope.Entry{
+				Value:    left.Value.(bool) != right.Value.(bool),
+				DataType: types.BOOL,
 			})
 			return
 		}
@@ -206,55 +215,55 @@ func (r *Runtime) VisitBinOpNode(n *ast.BinOpNode) {
 // VisitCastNode evaluates the cast node n.
 func (r *Runtime) VisitCastNode(n *ast.CastNode) {
 	n.Term.Accept(r)
-	term := r.stack.Pop().(valueEntry)
+	term := r.stack.Pop().(scope.Entry)
 	switch strings.ToUpper(n.Cast) {
 	case "STR":
-		switch term.dtype {
-		case STRING:
+		switch term.DataType {
+		case types.STRING:
 			break
-		case NUMBER:
-			val := fmt.Sprintf("%f", term.value.(float64))
+		case types.NUMBER:
+			val := fmt.Sprintf("%f", term.Value.(float64))
 			val = strings.TrimRight(val, "0")
 			val = strings.TrimRight(val, ".")
-			term.value = val
+			term.Value = val
 			break
-		case BOOL:
-			term.value = strconv.FormatBool(term.value.(bool))
+		case types.BOOL:
+			term.Value = strconv.FormatBool(term.Value.(bool))
 			break
 		}
-		term.dtype = STRING
+		term.DataType = types.STRING
 		break
 	case "NUM":
-		switch term.dtype {
-		case STRING:
-			term.value, _ = strconv.ParseFloat(term.value.(string), 64)
+		switch term.DataType {
+		case types.STRING:
+			term.Value, _ = strconv.ParseFloat(term.Value.(string), 64)
 			break
-		case NUMBER:
+		case types.NUMBER:
 			break
-		case BOOL:
+		case types.BOOL:
 			val := 0.0
-			if term.value.(bool) {
+			if term.Value.(bool) {
 				val = 1.0
 			}
-			term.value = val
+			term.Value = val
 			break
 		}
-		term.dtype = NUMBER
+		term.DataType = types.NUMBER
 		break
 	case "BOOL":
-		switch term.dtype {
-		case STRING:
-			value := strings.ToUpper(term.value.(string)) != "FALSE" &&
-				strings.TrimSpace(term.value.(string)) != ""
-			term.value = value
+		switch term.DataType {
+		case types.STRING:
+			value := strings.ToUpper(term.Value.(string)) != "FALSE" &&
+				strings.TrimSpace(term.Value.(string)) != ""
+			term.Value = value
 			break
-		case NUMBER:
-			term.value = term.value.(float64) != 0.0
+		case types.NUMBER:
+			term.Value = term.Value.(float64) != 0.0
 			break
-		case BOOL:
+		case types.BOOL:
 			break
 		}
-		term.dtype = BOOL
+		term.DataType = types.BOOL
 		break
 	}
 	r.stack.Push(term)
@@ -263,7 +272,7 @@ func (r *Runtime) VisitCastNode(n *ast.CastNode) {
 // VisitFuncCallNode evaluates the function call node n.
 func (r *Runtime) VisitFuncCallNode(n *ast.FuncCallNode) {
 
-	e, ok := r.funcTable.Get(n.Name)
+	e, ok := r.curScope.GetFunc(n.Name)
 	if !ok {
 		panic("Function not defined")
 	}
@@ -271,51 +280,46 @@ func (r *Runtime) VisitFuncCallNode(n *ast.FuncCallNode) {
 	var p params
 	for _, arg := range n.Args {
 		arg.Accept(r)
-		p = append(p, r.stack.Pop().(valueEntry))
+		p = append(p, r.stack.Pop().(scope.Entry))
 	}
 
-	if e.(valueEntry).dtype == BUILTIN {
+	if e.DataType == types.BUILTIN {
 		builtins[n.Name](&r.stack, p)
 		return
 	}
 
-	f := e.(valueEntry).value.(*ast.FuncDefNode)
+	f := e.Value.(*ast.FuncDefNode)
 	if len(n.Args) != len(f.Args) {
 		panic("wrong number of arguments in function call")
 	}
 
-	r.varTable = symtable.NewScope(r.varTable)
+	r.scopeStack.Push(r.curScope)
+	r.curScope = scope.CleanClone(f.Scope)
 	for i, arg := range f.Args {
-		r.varTable.Set(arg, p[i])
+		r.curScope.SetVar(arg, p[i])
 	}
-	r.funcTable = symtable.NewScope(r.funcTable)
 	for _, stmt := range f.Body {
 		stmt.Accept(r)
 		if r.stack.Size() > 0 {
 			break
 		}
 	}
-	r.varTable = r.varTable.Parent()
-	r.funcTable = r.funcTable.Parent()
+	r.curScope = r.scopeStack.Pop().(*scope.Scope)
 }
 
 // VisitFuncDefNode evaluates the function definition node n.
 func (r *Runtime) VisitFuncDefNode(n *ast.FuncDefNode) {
-	_, ok := r.funcTable.Get(n.Name)
-	if ok {
-		panic("function is already defined")
-	}
-	r.funcTable.Set(n.Name, valueEntry{dtype: FUNC, value: n})
+	// nothing to do
 }
 
 // VisitIfNode evaluates the if construct node n.
 func (r *Runtime) VisitIfNode(n *ast.IfNode) {
-	n.Condition.Accept(r)
-	cond := r.stack.Pop().(valueEntry)
-	if cond.dtype != BOOL {
+	n.Cond.Accept(r)
+	cond := r.stack.Pop().(scope.Entry)
+	if cond.DataType != types.BOOL {
 		panic("non-bool expression used as condition")
 	}
-	if cond.value.(bool) {
+	if cond.Value.(bool) {
 		for _, stmt := range n.Body {
 			stmt.Accept(r)
 			if r.stack.Size() > 0 {
@@ -335,24 +339,24 @@ func (r *Runtime) VisitReturnNode(n *ast.ReturnNode) {
 // VisitUnaryOpNode evaluates the unary operator expression node n.
 func (r *Runtime) VisitUnaryOpNode(n *ast.UnaryOpNode) {
 	n.Term.Accept(r)
-	term := r.stack.Pop().(valueEntry)
+	term := r.stack.Pop().(scope.Entry)
 
-	switch term.dtype {
-	case NUMBER:
+	switch term.DataType {
+	case types.NUMBER:
 		switch n.Op {
 		case token.ADD:
-			term.value = math.Abs(term.value.(float64))
+			term.Value = math.Abs(term.Value.(float64))
 			r.stack.Push(term)
 			return
 		case token.SUBTRACT:
-			term.value = 0.0 - term.value.(float64)
+			term.Value = 0.0 - term.Value.(float64)
 			r.stack.Push(term)
 			return
 		}
-	case BOOL:
+	case types.BOOL:
 		switch n.Op {
 		case token.NOT:
-			term.value = !term.value.(bool)
+			term.Value = !term.Value.(bool)
 			r.stack.Push(term)
 			return
 		}
@@ -365,21 +369,21 @@ func (r *Runtime) VisitValueNode(n *ast.ValueNode) {
 	switch n.Type {
 	case token.NUMBER:
 		value, _ := strconv.ParseFloat(n.Value, 64)
-		r.stack.Push(valueEntry{
-			value: value,
-			dtype: NUMBER,
+		r.stack.Push(scope.Entry{
+			Value:    value,
+			DataType: types.NUMBER,
 		})
 		break
 	case token.BOOL:
-		r.stack.Push(valueEntry{
-			value: strings.ToUpper(n.Value) == "TRUE",
-			dtype: BOOL,
+		r.stack.Push(scope.Entry{
+			Value:    strings.ToUpper(n.Value) == "TRUE",
+			DataType: types.BOOL,
 		})
 		break
 	case token.STRING:
-		r.stack.Push(valueEntry{
-			value: n.Value,
-			dtype: STRING,
+		r.stack.Push(scope.Entry{
+			Value:    n.Value,
+			DataType: types.STRING,
 		})
 		break
 	default:
@@ -389,7 +393,7 @@ func (r *Runtime) VisitValueNode(n *ast.ValueNode) {
 
 // VisitVariableNode evaluates the variable expression node n.
 func (r *Runtime) VisitVariableNode(n *ast.VariableNode) {
-	expr, ok := r.varTable.Get(n.Name)
+	expr, ok := r.curScope.GetVar(n.Name)
 	if !ok {
 		panic("variable is not defined")
 	}
@@ -399,12 +403,12 @@ func (r *Runtime) VisitVariableNode(n *ast.VariableNode) {
 // VisitWhileNode evaluates the while construct node n.
 func (r *Runtime) VisitWhileNode(n *ast.WhileNode) {
 	for {
-		n.Condition.Accept(r)
-		cond := r.stack.Pop().(valueEntry)
-		if cond.dtype != BOOL {
+		n.Cond.Accept(r)
+		cond := r.stack.Pop().(scope.Entry)
+		if cond.DataType != types.BOOL {
 			panic("non-bool expression used as condition")
 		}
-		if !cond.value.(bool) {
+		if !cond.Value.(bool) {
 			return
 		}
 		for _, stmt := range n.Body {

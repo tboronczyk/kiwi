@@ -139,6 +139,44 @@ func TestPrintAssignNode(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestPrintProgramNode(t *testing.T) {
+	expected := "ProgramNode\n" +
+		"╰ Stmts: AssignNode\n" +
+		"         ├ Name: foo\n" +
+		"         ╰ Expr: VariableNode\n" +
+		"                 ╰ Name: bar\n" +
+		"         AssignNode\n" +
+		"         ├ Name: baz\n" +
+		"         ╰ Expr: VariableNode\n" +
+		"                 ╰ Name: quux\n"
+	actual := capture(func() {
+		n := &ProgramNode{
+			Stmts: []Node{
+				&AssignNode{
+					Name: "foo",
+					Expr: &VariableNode{Name: "bar"},
+				},
+				&AssignNode{
+					Name: "baz",
+					Expr: &VariableNode{Name: "quux"},
+				},
+			},
+		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintProgramNodeEmpty(t *testing.T) {
+	expected := "ProgramNode\n" +
+		"╰ Stmts: 0x0\n"
+	actual := capture(func() {
+		n := &ProgramNode{}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
 func TestPrintFuncDefNodeNoArgsOrBody(t *testing.T) {
 	expected := "FuncDefNode\n" +
 		"├ Name: foo\n" +
@@ -213,12 +251,12 @@ func TestPrintFuncCallNode(t *testing.T) {
 
 func TestPrintIfNodeNoBody(t *testing.T) {
 	expected := "IfNode\n" +
-		"├ Condition: VariableNode\n" +
-		"│            ╰ Name: foo\n" +
+		"├ Cond: VariableNode\n" +
+		"│       ╰ Name: foo\n" +
 		"├ Body: 0x0\n" +
 		"╰ Else: 0x0\n"
 	actual := capture(func() {
-		n := &IfNode{Condition: &VariableNode{Name: "foo"}}
+		n := &IfNode{Cond: &VariableNode{Name: "foo"}}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
@@ -226,8 +264,8 @@ func TestPrintIfNodeNoBody(t *testing.T) {
 
 func TestPrintIfNode(t *testing.T) {
 	expected := "IfNode\n" +
-		"├ Condition: VariableNode\n" +
-		"│            ╰ Name: foo\n" +
+		"├ Cond: VariableNode\n" +
+		"│       ╰ Name: foo\n" +
 		"├ Body: AssignNode\n" +
 		"│       ├ Name: bar\n" +
 		"│       ╰ Expr: VariableNode\n" +
@@ -237,14 +275,14 @@ func TestPrintIfNode(t *testing.T) {
 		"│       ╰ Expr: VariableNode\n" +
 		"│               ╰ Name: norf\n" +
 		"╰ Else: IfNode\n" +
-		"        ├ Condition: ValueNode\n" +
-		"        │            ├ Value: true\n" +
-		"        │            ╰ Type: BOOL\n" +
+		"        ├ Cond: ValueNode\n" +
+		"        │       ├ Value: true\n" +
+		"        │       ╰ Type: BOOL\n" +
 		"        ├ Body: 0x0\n" +
 		"        ╰ Else: 0x0\n"
 	actual := capture(func() {
 		n := &IfNode{
-			Condition: &VariableNode{Name: "foo"},
+			Cond: &VariableNode{Name: "foo"},
 			Body: []Node{
 				&AssignNode{
 					Name: "bar",
@@ -256,7 +294,7 @@ func TestPrintIfNode(t *testing.T) {
 				},
 			},
 			Else: &IfNode{
-				Condition: &ValueNode{
+				Cond: &ValueNode{
 					Value: "true",
 					Type:  token.BOOL,
 				},
@@ -280,11 +318,11 @@ func TestPrintReturnNode(t *testing.T) {
 
 func TestPrintWhileNodeNoBody(t *testing.T) {
 	expected := "WhileNode\n" +
-		"├ Condition: VariableNode\n" +
-		"│            ╰ Name: foo\n" +
+		"├ Cond: VariableNode\n" +
+		"│       ╰ Name: foo\n" +
 		"╰ Body: 0x0\n"
 	actual := capture(func() {
-		n := &WhileNode{Condition: &VariableNode{Name: "foo"}}
+		n := &WhileNode{Cond: &VariableNode{Name: "foo"}}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
@@ -292,8 +330,8 @@ func TestPrintWhileNodeNoBody(t *testing.T) {
 
 func TestPrintWhileNode(t *testing.T) {
 	expected := "WhileNode\n" +
-		"├ Condition: VariableNode\n" +
-		"│            ╰ Name: foo\n" +
+		"├ Cond: VariableNode\n" +
+		"│       ╰ Name: foo\n" +
 		"╰ Body: AssignNode\n" +
 		"        ├ Name: bar\n" +
 		"        ╰ Expr: VariableNode\n" +
@@ -304,7 +342,7 @@ func TestPrintWhileNode(t *testing.T) {
 		"                ╰ Name: norf\n"
 	actual := capture(func() {
 		n := &WhileNode{
-			Condition: &VariableNode{Name: "foo"},
+			Cond: &VariableNode{Name: "foo"},
 			Body: []Node{
 				&AssignNode{
 					Name: "bar",

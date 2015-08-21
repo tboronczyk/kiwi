@@ -1,133 +1,122 @@
 package ast
 
 import (
+	"github.com/tboronczyk/kiwi/scope"
 	"github.com/tboronczyk/kiwi/token"
 )
 
-// Node is the basic type for all AST nodes. The visitor pattern is used for
-// node access.
-type Node interface {
-	Accept(NodeVisitor)
-}
+type (
+	Node interface {
+		Accept(Visitor)
+	}
 
-// CastNode represents a cast expression as an AST node.
-type CastNode struct {
-	Cast string
-	Term Node
-}
+	AssignNode struct {
+		Name string
+		Expr Node
+	}
 
-// Accept visits the CastNode node using v.
-func (n *CastNode) Accept(v NodeVisitor) {
-	v.VisitCastNode(n)
-}
+	BinOpNode struct {
+		Op    token.Token
+		Left  Node
+		Right Node
+	}
 
-// ValueNode represents a value expression as an AST node.
-type ValueNode struct {
-	Value string
-	Type  token.Token
-}
+	CastNode struct {
+		Cast string
+		Term Node
+	}
 
-// Accept visits the value expression node using v.
-func (n *ValueNode) Accept(v NodeVisitor) {
-	v.VisitValueNode(n)
-}
+	FuncCallNode struct {
+		Name string
+		Args []Node
+	}
 
-// VariableNode represents a variable expression as an AST node.
-type VariableNode struct {
-	Name string
-}
+	FuncDefNode struct {
+		*scope.Scope
+		Name string
+		Args []string
+		Body []Node
+	}
 
-// Accept visits the variable expression node using v.
-func (n *VariableNode) Accept(v NodeVisitor) {
-	v.VisitVariableNode(n)
-}
+	IfNode struct {
+		Cond Node
+		Body []Node
+		Else Node
+	}
 
-// UnaryOpNode represents a unary operator expression as an AST node.
-type UnaryOpNode struct {
-	Op   token.Token
-	Term Node
-}
+	ProgramNode struct {
+		*scope.Scope
+		Stmts []Node
+	}
 
-// Accept visits the unary operator expression node using v.
-func (n *UnaryOpNode) Accept(v NodeVisitor) {
-	v.VisitUnaryOpNode(n)
-}
+	ReturnNode struct {
+		Expr Node
+	}
 
-// BinOpNode represents a binary operator expression as an AST node.
-type BinOpNode struct {
-	Op    token.Token
-	Left  Node
-	Right Node
-}
+	UnaryOpNode struct {
+		Op   token.Token
+		Term Node
+	}
 
-// Accept visits the binary operator expression node using v.
-func (n *BinOpNode) Accept(v NodeVisitor) {
-	v.VisitBinOpNode(n)
-}
+	ValueNode struct {
+		Value string
+		Type  token.Token
+	}
 
-// FuncCallNode represents a function call as an AST node.
-type FuncCallNode struct {
-	Name string
-	Args []Node
-}
+	VariableNode struct {
+		Name string
+	}
 
-// Accept visits the function call node using v.
-func (n *FuncCallNode) Accept(v NodeVisitor) {
-	v.VisitFuncCallNode(n)
-}
+	WhileNode struct {
+		Cond Node
+		Body []Node
+	}
+)
 
-// AssignNode represents an assignment operation as an AST.
-type AssignNode struct {
-	Name string
-	Expr Node
-}
-
-// Accept visits the assignment node using v.
-func (n *AssignNode) Accept(v NodeVisitor) {
+func (n *AssignNode) Accept(v Visitor) {
 	v.VisitAssignNode(n)
 }
 
-// FuncDefNode represents the defining of a function as an AST node.
-type FuncDefNode struct {
-	Name string
-	Args []string
-	Body []Node
+func (n *BinOpNode) Accept(v Visitor) {
+	v.VisitBinOpNode(n)
 }
 
-// Accept visits the function definition node using v.
-func (n *FuncDefNode) Accept(v NodeVisitor) {
+func (n *CastNode) Accept(v Visitor) {
+	v.VisitCastNode(n)
+}
+
+func (n *FuncCallNode) Accept(v Visitor) {
+	v.VisitFuncCallNode(n)
+}
+
+func (n *FuncDefNode) Accept(v Visitor) {
 	v.VisitFuncDefNode(n)
 }
 
-// IfNode represents an if construct as an AST node.
-type IfNode struct {
-	Condition Node
-	Body      []Node
-	Else      Node
-}
-
-// Accept visits the if construct node using v.
-func (n *IfNode) Accept(v NodeVisitor) {
+func (n *IfNode) Accept(v Visitor) {
 	v.VisitIfNode(n)
 }
 
-// ReturnNode represents a return statement as an AST node.
-type ReturnNode struct {
-	Expr Node
+func (n *ProgramNode) Accept(v Visitor) {
+	v.VisitProgramNode(n)
 }
 
-// Accept visits the return statement node using v.
-func (n *ReturnNode) Accept(v NodeVisitor) {
+func (n *ReturnNode) Accept(v Visitor) {
 	v.VisitReturnNode(n)
 }
 
-// WhileNode represents a while construct as an AST node.
-type WhileNode struct {
-	Condition Node
-	Body      []Node
+func (n *UnaryOpNode) Accept(v Visitor) {
+	v.VisitUnaryOpNode(n)
 }
 
-// Accept visits the while construct node using v.
-func (n *WhileNode) Accept(v NodeVisitor) {
+func (n *ValueNode) Accept(v Visitor) {
+	v.VisitValueNode(n)
+}
+
+func (n *VariableNode) Accept(v Visitor) {
+	v.VisitVariableNode(n)
+}
+
+func (n *WhileNode) Accept(v Visitor) {
 	v.VisitWhileNode(n)
 }

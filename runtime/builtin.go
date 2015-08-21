@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/tboronczyk/kiwi/scope"
+	"github.com/tboronczyk/kiwi/types"
 	"github.com/tboronczyk/kiwi/util"
 )
 
@@ -16,16 +18,16 @@ var builtins = map[string]func(*util.Stack, params){
 
 	// strlen - returns the length of a string
 	"strlen": func(s *util.Stack, p params) {
-		s.Push(valueEntry{
-			value: len(p[0].value.(string)),
-			dtype: NUMBER,
+		s.Push(scope.Entry{
+			Value:    len(p[0].Value.(string)),
+			DataType: types.NUMBER,
 		})
 
 	},
 	// write - prints a value
 	"write": func(s *util.Stack, p params) {
 		for i, _ := range p {
-			fmt.Print(p[i].value)
+			fmt.Print(p[i].Value)
 		}
 	},
 	// read - read a string
@@ -34,9 +36,9 @@ var builtins = map[string]func(*util.Stack, params){
 		if err != nil {
 			panic(err)
 		}
-		s.Push(valueEntry{
-			value: strings.TrimRight(str, "\n"),
-			dtype: STRING,
+		s.Push(scope.Entry{
+			Value:    strings.TrimRight(str, "\n"),
+			DataType: types.STRING,
 		})
 	},
 }
