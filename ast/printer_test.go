@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tboronczyk/kiwi/token"
 )
 
 func capture(f func()) string {
@@ -32,50 +31,31 @@ func capture(f func()) string {
 	return <-out
 }
 
-func TestPrintValueNodeNumber(t *testing.T) {
-	expected := "ValueNode\n" +
-		"├ Value: 1\n" +
-		"╰ Type: NUMBER\n"
+func TestPrintBoolNode(t *testing.T) {
+	expected := "BoolNode\n" +
+		"╰ Value: true\n"
 	actual := capture(func() {
-		n := &ValueNode{Value: "1.0", Type: token.NUMBER}
+		n := &BoolNode{Value: true}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestPrintValueNodeString(t *testing.T) {
-	expected := "ValueNode\n" +
-		"├ Value: \"foo\"\n" +
-		"╰ Type: STRING\n"
+func TestPrintNumberNode(t *testing.T) {
+	expected := "NumberNode\n" +
+		"╰ Value: 42\n"
 	actual := capture(func() {
-		n := &ValueNode{Value: "foo", Type: token.STRING}
+		n := &NumberNode{Value: 42.0}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestPrintValueNodeBool(t *testing.T) {
-	expected := "ValueNode\n" +
-		"├ Value: true\n" +
-		"╰ Type: BOOL\n"
+func TestPrintStringNode(t *testing.T) {
+	expected := "StringNode\n" +
+		"╰ Value: \"foo\"\n"
 	actual := capture(func() {
-		n := &ValueNode{Value: "True", Type: token.BOOL}
-		n.Accept(NewAstPrinter())
-	})
-	assert.Equal(t, expected, actual)
-}
-
-func TestPrintCast(t *testing.T) {
-	expected := "CastNode\n" +
-		"├ Cast: string\n" +
-		"╰ Term: ValueNode\n" +
-		"        ├ Value: \"foo\"\n" +
-		"        ╰ Type: STRING\n"
-	actual := capture(func() {
-		n := &CastNode{
-			Cast: "string",
-			Term: &ValueNode{Value: "foo", Type: token.STRING},
-		}
+		n := &StringNode{Value: "foo"}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
@@ -91,33 +71,32 @@ func TestPrintVariableNode(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestPrintUnaryOpNode(t *testing.T) {
-	expected := "UnaryOpNode\n" +
-		"├ Op: -\n" +
-		"╰ Term: VariableNode\n" +
-		"        ╰ Name: foo\n"
+func TestPrintAddNode(t *testing.T) {
+	expected := "AddNode\n" +
+		"├ Left: NumberNode\n" +
+		"│       ╰ Value: 42\n" +
+		"╰ Right: NumberNode\n" +
+		"         ╰ Value: 73\n"
 	actual := capture(func() {
-		n := &UnaryOpNode{
-			Op:   token.SUBTRACT,
-			Term: &VariableNode{Name: "foo"},
+		n := &AddNode{
+			Left:  &NumberNode{Value: 42},
+			Right: &NumberNode{Value: 73},
 		}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestPrintBinOpNode(t *testing.T) {
-	expected := "BinOpNode\n" +
-		"├ Op: +\n" +
-		"├ Left: VariableNode\n" +
-		"│       ╰ Name: foo\n" +
-		"╰ Right: VariableNode\n" +
-		"         ╰ Name: bar\n"
+func TestPrintAndNode(t *testing.T) {
+	expected := "AndNode\n" +
+		"├ Left: BoolNode\n" +
+		"│       ╰ Value: true\n" +
+		"╰ Right: BoolNode\n" +
+		"         ╰ Value: false\n"
 	actual := capture(func() {
-		n := &BinOpNode{
-			Op:    token.ADD,
-			Left:  &VariableNode{Name: "foo"},
-			Right: &VariableNode{Name: "bar"},
+		n := &AndNode{
+			Left:  &BoolNode{Value: true},
+			Right: &BoolNode{Value: false},
 		}
 		n.Accept(NewAstPrinter())
 	})
@@ -127,12 +106,309 @@ func TestPrintBinOpNode(t *testing.T) {
 func TestPrintAssignNode(t *testing.T) {
 	expected := "AssignNode\n" +
 		"├ Name: foo\n" +
-		"╰ Expr: VariableNode\n" +
-		"        ╰ Name: bar\n"
+		"╰ Expr: StringNode\n" +
+		"        ╰ Value: \"bar\"\n"
 	actual := capture(func() {
 		n := &AssignNode{
 			Name: "foo",
-			Expr: &VariableNode{Name: "bar"},
+			Expr: &StringNode{Value: "bar"},
+		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintCast(t *testing.T) {
+	expected := "CastNode\n" +
+		"├ Cast: number\n" +
+		"╰ Term: StringNode\n" +
+		"        ╰ Value: \"42\"\n"
+	actual := capture(func() {
+		n := &CastNode{
+			Cast: "number",
+			Term: &StringNode{Value: "42"},
+		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintDivideNode(t *testing.T) {
+	expected := "DivideNode\n" +
+		"├ Left: NumberNode\n" +
+		"│       ╰ Value: 42\n" +
+		"╰ Right: NumberNode\n" +
+		"         ╰ Value: 21\n"
+	actual := capture(func() {
+		n := &DivideNode{
+			Left:  &NumberNode{Value: 42},
+			Right: &NumberNode{Value: 21},
+		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintEqualNode(t *testing.T) {
+	expected := "EqualNode\n" +
+		"├ Left: StringNode\n" +
+		"│       ╰ Value: \"foo\"\n" +
+		"╰ Right: StringNode\n" +
+		"         ╰ Value: \"bar\"\n"
+	actual := capture(func() {
+		n := &EqualNode{
+			Left:  &StringNode{Value: "foo"},
+			Right: &StringNode{Value: "bar"},
+		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintFuncCallNode(t *testing.T) {
+	expected := "FuncCallNode\n" +
+		"├ Name: foo\n" +
+		"╰ Args: BoolNode\n" +
+		"        ╰ Value: true\n" +
+		"        NumberNode\n" +
+		"        ╰ Value: 42\n"
+	actual := capture(func() {
+		n := &FuncCallNode{
+			Name: "foo",
+			Args: []Node{
+				&BoolNode{Value: true},
+				&NumberNode{Value: 42},
+			},
+		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintFuncCallNodeNoArgs(t *testing.T) {
+	expected := "FuncCallNode\n" +
+		"├ Name: foo\n" +
+		"╰ Args: 0x0\n"
+	actual := capture(func() {
+		n := &FuncCallNode{Name: "foo"}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintGreaterEqualNode(t *testing.T) {
+	expected := "GreaterEqualNode\n" +
+		"├ Left: NumberNode\n" +
+		"│       ╰ Value: 1984\n" +
+		"╰ Right: NumberNode\n" +
+		"         ╰ Value: 1776\n"
+	actual := capture(func() {
+		n := &GreaterEqualNode{
+			Left:  &NumberNode{Value: 1984},
+			Right: &NumberNode{Value: 1776},
+		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintGreaterNode(t *testing.T) {
+	expected := "GreaterNode\n" +
+		"├ Left: NumberNode\n" +
+		"│       ╰ Value: 1984\n" +
+		"╰ Right: NumberNode\n" +
+		"         ╰ Value: 1776\n"
+	actual := capture(func() {
+		n := &GreaterNode{
+			Left:  &NumberNode{Value: 1984},
+			Right: &NumberNode{Value: 1776},
+		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintIfNode(t *testing.T) {
+	expected := "IfNode\n" +
+		"├ Cond: BoolNode\n" +
+		"│       ╰ Value: true\n" +
+		"├ Body: AssignNode\n" +
+		"│       ├ Name: foo\n" +
+		"│       ╰ Expr: NumberNode\n" +
+		"│               ╰ Value: 42\n" +
+		"│       AssignNode\n" +
+		"│       ├ Name: bar\n" +
+		"│       ╰ Expr: StringNode\n" +
+		"│               ╰ Value: \"baz\"\n" +
+		"╰ Else: IfNode\n" +
+		"        ├ Cond: BoolNode\n" +
+		"        │       ╰ Value: true\n" +
+		"        ├ Body: 0x0\n" +
+		"        ╰ Else: 0x0\n"
+	actual := capture(func() {
+		n := &IfNode{
+			Cond: &BoolNode{Value: true},
+			Body: []Node{
+				&AssignNode{
+					Name: "foo",
+					Expr: &NumberNode{Value: 42},
+				},
+				&AssignNode{
+					Name: "bar",
+					Expr: &StringNode{Value: "baz"},
+				},
+			},
+			Else: &IfNode{
+				Cond: &BoolNode{Value: true},
+			},
+		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintIfNodeNoBody(t *testing.T) {
+	expected := "IfNode\n" +
+		"├ Cond: BoolNode\n" +
+		"│       ╰ Value: true\n" +
+		"├ Body: 0x0\n" +
+		"╰ Else: 0x0\n"
+	actual := capture(func() {
+		n := &IfNode{Cond: &BoolNode{Value: true}}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintLessEqualNode(t *testing.T) {
+	expected := "LessEqualNode\n" +
+		"├ Left: NumberNode\n" +
+		"│       ╰ Value: 1776\n" +
+		"╰ Right: NumberNode\n" +
+		"         ╰ Value: 1984\n"
+	actual := capture(func() {
+		n := &LessEqualNode{
+			Left:  &NumberNode{Value: 1776},
+			Right: &NumberNode{Value: 1984},
+		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintLessNode(t *testing.T) {
+	expected := "LessNode\n" +
+		"├ Left: NumberNode\n" +
+		"│       ╰ Value: 1776\n" +
+		"╰ Right: NumberNode\n" +
+		"         ╰ Value: 1984\n"
+	actual := capture(func() {
+		n := &LessNode{
+			Left:  &NumberNode{Value: 1776},
+			Right: &NumberNode{Value: 1984},
+		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintModuloNode(t *testing.T) {
+	expected := "ModuloNode\n" +
+		"├ Left: NumberNode\n" +
+		"│       ╰ Value: 11\n" +
+		"╰ Right: NumberNode\n" +
+		"         ╰ Value: 7\n"
+	actual := capture(func() {
+		n := &ModuloNode{
+			Left:  &NumberNode{Value: 11},
+			Right: &NumberNode{Value: 7},
+		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintMultiplyNode(t *testing.T) {
+	expected := "MultiplyNode\n" +
+		"├ Left: NumberNode\n" +
+		"│       ╰ Value: 21\n" +
+		"╰ Right: NumberNode\n" +
+		"         ╰ Value: 2\n"
+	actual := capture(func() {
+		n := &MultiplyNode{
+			Left:  &NumberNode{Value: 21},
+			Right: &NumberNode{Value: 2},
+		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintNegativeNode(t *testing.T) {
+	expected := "NegativeNode\n" +
+		"╰ Term: NumberNode\n" +
+		"        ╰ Value: 42\n"
+	actual := capture(func() {
+		n := &NegativeNode{
+			Term: &NumberNode{Value: 42},
+		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintNotEqualNode(t *testing.T) {
+	expected := "NotEqualNode\n" +
+		"├ Left: StringNode\n" +
+		"│       ╰ Value: \"foo\"\n" +
+		"╰ Right: StringNode\n" +
+		"         ╰ Value: \"bar\"\n"
+	actual := capture(func() {
+		n := &NotEqualNode{
+			Left:  &StringNode{Value: "foo"},
+			Right: &StringNode{Value: "bar"},
+		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintNotNode(t *testing.T) {
+	expected := "NotNode\n" +
+		"╰ Term: BoolNode\n" +
+		"        ╰ Value: false\n"
+	actual := capture(func() {
+		n := &NotNode{
+			Term: &BoolNode{Value: false},
+		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintOrNode(t *testing.T) {
+	expected := "OrNode\n" +
+		"├ Left: BoolNode\n" +
+		"│       ╰ Value: true\n" +
+		"╰ Right: BoolNode\n" +
+		"         ╰ Value: false\n"
+	actual := capture(func() {
+		n := &OrNode{
+			Left:  &BoolNode{Value: true},
+			Right: &BoolNode{Value: false},
+		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintPositiveNode(t *testing.T) {
+	expected := "PositiveNode\n" +
+		"╰ Term: NumberNode\n" +
+		"        ╰ Value: 42\n"
+	actual := capture(func() {
+		n := &PositiveNode{
+			Term: &NumberNode{Value: 42},
 		}
 		n.Accept(NewAstPrinter())
 	})
@@ -167,7 +443,7 @@ func TestPrintProgramNode(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestPrintProgramNodeEmpty(t *testing.T) {
+func TestPrintProgramNodeNoStmts(t *testing.T) {
 	expected := "ProgramNode\n" +
 		"╰ Stmts: 0x0\n"
 	actual := capture(func() {
@@ -177,152 +453,28 @@ func TestPrintProgramNodeEmpty(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestPrintFuncDefNodeNoArgsOrBody(t *testing.T) {
-	expected := "FuncDefNode\n" +
-		"├ Name: foo\n" +
-		"├ Args: 0x0\n" +
-		"╰ Body: 0x0\n"
-	actual := capture(func() {
-		n := &FuncDefNode{Name: "foo"}
-		n.Accept(NewAstPrinter())
-	})
-	assert.Equal(t, expected, actual)
-}
-
-func TestPrintFuncDefNode(t *testing.T) {
-	expected := "FuncDefNode\n" +
-		"├ Name: foo\n" +
-		"├ Args: bar\n" +
-		"│       baz\n" +
-		"╰ Body: AssignNode\n" +
-		"        ├ Name: bar\n" +
-		"        ╰ Expr: VariableNode\n" +
-		"                ╰ Name: baz\n" +
-		"        ReturnNode\n" +
-		"        ╰ Expr: VariableNode\n" +
-		"                ╰ Name: baz\n"
-	actual := capture(func() {
-		n := &FuncDefNode{
-			Name: "foo",
-			Args: []string{"bar", "baz"},
-			Body: []Node{
-				&AssignNode{
-					Name: "bar",
-					Expr: &VariableNode{Name: "baz"},
-				},
-				&ReturnNode{Expr: &VariableNode{Name: "baz"}},
-			},
-		}
-		n.Accept(NewAstPrinter())
-	})
-	assert.Equal(t, expected, actual)
-}
-
-func TestPrintFuncCallNodeNoArgs(t *testing.T) {
-	expected := "FuncCallNode\n" +
-		"├ Name: foo\n" +
-		"╰ Args: 0x0\n"
-	actual := capture(func() {
-		n := &FuncCallNode{Name: "foo"}
-		n.Accept(NewAstPrinter())
-	})
-	assert.Equal(t, expected, actual)
-}
-
-func TestPrintFuncCallNode(t *testing.T) {
-	expected := "FuncCallNode\n" +
-		"├ Name: foo\n" +
-		"╰ Args: VariableNode\n" +
-		"        ╰ Name: foo\n" +
-		"        VariableNode\n" +
-		"        ╰ Name: bar\n"
-	actual := capture(func() {
-		n := &FuncCallNode{
-			Name: "foo",
-			Args: []Node{
-				&VariableNode{Name: "foo"},
-				&VariableNode{Name: "bar"},
-			},
-		}
-		n.Accept(NewAstPrinter())
-	})
-	assert.Equal(t, expected, actual)
-}
-
-func TestPrintIfNodeNoBody(t *testing.T) {
-	expected := "IfNode\n" +
-		"├ Cond: VariableNode\n" +
-		"│       ╰ Name: foo\n" +
-		"├ Body: 0x0\n" +
-		"╰ Else: 0x0\n"
-	actual := capture(func() {
-		n := &IfNode{Cond: &VariableNode{Name: "foo"}}
-		n.Accept(NewAstPrinter())
-	})
-	assert.Equal(t, expected, actual)
-}
-
-func TestPrintIfNode(t *testing.T) {
-	expected := "IfNode\n" +
-		"├ Cond: VariableNode\n" +
-		"│       ╰ Name: foo\n" +
-		"├ Body: AssignNode\n" +
-		"│       ├ Name: bar\n" +
-		"│       ╰ Expr: VariableNode\n" +
-		"│               ╰ Name: baz\n" +
-		"│       AssignNode\n" +
-		"│       ├ Name: quux\n" +
-		"│       ╰ Expr: VariableNode\n" +
-		"│               ╰ Name: norf\n" +
-		"╰ Else: IfNode\n" +
-		"        ├ Cond: ValueNode\n" +
-		"        │       ├ Value: true\n" +
-		"        │       ╰ Type: BOOL\n" +
-		"        ├ Body: 0x0\n" +
-		"        ╰ Else: 0x0\n"
-	actual := capture(func() {
-		n := &IfNode{
-			Cond: &VariableNode{Name: "foo"},
-			Body: []Node{
-				&AssignNode{
-					Name: "bar",
-					Expr: &VariableNode{Name: "baz"},
-				},
-				&AssignNode{
-					Name: "quux",
-					Expr: &VariableNode{Name: "norf"},
-				},
-			},
-			Else: &IfNode{
-				Cond: &ValueNode{
-					Value: "true",
-					Type:  token.BOOL,
-				},
-			},
-		}
-		n.Accept(NewAstPrinter())
-	})
-	assert.Equal(t, expected, actual)
-}
-
 func TestPrintReturnNode(t *testing.T) {
 	expected := "ReturnNode\n" +
-		"╰ Expr: VariableNode\n" +
-		"        ╰ Name: foo\n"
+		"╰ Expr: BoolNode\n" +
+		"        ╰ Value: true\n"
 	actual := capture(func() {
-		n := &ReturnNode{Expr: &VariableNode{Name: "foo"}}
+		n := &ReturnNode{Expr: &BoolNode{Value: true}}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
 }
 
-func TestPrintWhileNodeNoBody(t *testing.T) {
-	expected := "WhileNode\n" +
-		"├ Cond: VariableNode\n" +
-		"│       ╰ Name: foo\n" +
-		"╰ Body: 0x0\n"
+func TestPrintSubtractNode(t *testing.T) {
+	expected := "SubtractNode\n" +
+		"├ Left: NumberNode\n" +
+		"│       ╰ Value: 73\n" +
+		"╰ Right: NumberNode\n" +
+		"         ╰ Value: 42\n"
 	actual := capture(func() {
-		n := &WhileNode{Cond: &VariableNode{Name: "foo"}}
+		n := &SubtractNode{
+			Left:  &NumberNode{Value: 73},
+			Right: &NumberNode{Value: 42},
+		}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)
@@ -330,30 +482,42 @@ func TestPrintWhileNodeNoBody(t *testing.T) {
 
 func TestPrintWhileNode(t *testing.T) {
 	expected := "WhileNode\n" +
-		"├ Cond: VariableNode\n" +
-		"│       ╰ Name: foo\n" +
+		"├ Cond: BoolNode\n" +
+		"│       ╰ Value: true\n" +
 		"╰ Body: AssignNode\n" +
-		"        ├ Name: bar\n" +
-		"        ╰ Expr: VariableNode\n" +
-		"                ╰ Name: baz\n" +
+		"        ├ Name: foo\n" +
+		"        ╰ Expr: NumberNode\n" +
+		"                ╰ Value: 42\n" +
 		"        AssignNode\n" +
-		"        ├ Name: quux\n" +
-		"        ╰ Expr: VariableNode\n" +
-		"                ╰ Name: norf\n"
+		"        ├ Name: bar\n" +
+		"        ╰ Expr: StringNode\n" +
+		"                ╰ Value: \"baz\"\n"
 	actual := capture(func() {
 		n := &WhileNode{
-			Cond: &VariableNode{Name: "foo"},
+			Cond: &BoolNode{Value: true},
 			Body: []Node{
 				&AssignNode{
-					Name: "bar",
-					Expr: &VariableNode{Name: "baz"},
+					Name: "foo",
+					Expr: &NumberNode{Value: 42},
 				},
 				&AssignNode{
-					Name: "quux",
-					Expr: &VariableNode{Name: "norf"},
+					Name: "bar",
+					Expr: &StringNode{Value: "baz"},
 				},
 			},
 		}
+		n.Accept(NewAstPrinter())
+	})
+	assert.Equal(t, expected, actual)
+}
+
+func TestPrintWhileNodeNoBody(t *testing.T) {
+	expected := "WhileNode\n" +
+		"├ Cond: BoolNode\n" +
+		"│       ╰ Value: true\n" +
+		"╰ Body: 0x0\n"
+	actual := capture(func() {
+		n := &WhileNode{Cond: &BoolNode{Value: true}}
 		n.Accept(NewAstPrinter())
 	})
 	assert.Equal(t, expected, actual)

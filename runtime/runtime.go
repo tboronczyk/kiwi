@@ -9,12 +9,10 @@ import (
 
 	"github.com/tboronczyk/kiwi/ast"
 	"github.com/tboronczyk/kiwi/scope"
-	"github.com/tboronczyk/kiwi/token"
 	"github.com/tboronczyk/kiwi/types"
 	"github.com/tboronczyk/kiwi/util"
 )
 
-// Runtime provides an execution context for a program.
 type (
 	Runtime struct {
 		stack      util.Stack
@@ -25,7 +23,6 @@ type (
 	params []scope.Entry
 )
 
-// New returns a new runtime instance.
 func New() *Runtime {
 	r := &Runtime{
 		stack:      util.NewStack(),
@@ -39,22 +36,59 @@ func New() *Runtime {
 	return r
 }
 
-func (r *Runtime) VisitProgramNode(n *ast.ProgramNode) {
-	n.Scope.Parent = r.curScope
-	r.scopeStack.Push(r.curScope)
-	r.curScope = n.Scope
+func (r *Runtime) VisitAddNode(n *ast.AddNode) {
+	n.Left.Accept(r)
+	left := r.stack.Pop().(scope.Entry)
 
-	for _, stmt := range n.Stmts {
-		stmt.Accept(r)
+	n.Right.Accept(r)
+	right := r.stack.Pop().(scope.Entry)
+
+	if left.DataType == types.NUMBER && right.DataType == types.NUMBER {
+		r.stack.Push(scope.Entry{
+			Value:    left.Value.(float64) + right.Value.(float64),
+			DataType: types.NUMBER,
+		})
+		return
 	}
-
-	r.curScope = r.scopeStack.Pop().(*scope.Scope)
+	if left.DataType == types.STRING && right.DataType == types.STRING {
+		r.stack.Push(scope.Entry{
+			Value:    left.Value.(string) + right.Value.(string),
+			DataType: types.STRING,
+		})
+		return
+	}
+	panic("operation not permitted with type")
 }
 
-// VisitAssignNode evaluates the assignment node n.
+func (r *Runtime) VisitAndNode(n *ast.AndNode) {
+	n.Left.Accept(r)
+	left := r.stack.Pop().(scope.Entry)
+	// short-circuit if false
+	if left.DataType == types.BOOL && !left.Value.(bool) {
+		r.stack.Push(scope.Entry{
+			Value:    false,
+			DataType: types.BOOL,
+		})
+		return
+	}
+
+	n.Right.Accept(r)
+	right := r.stack.Pop().(scope.Entry)
+
+	if left.DataType == types.BOOL && right.DataType == types.BOOL {
+		r.stack.Push(scope.Entry{
+			Value:    left.Value.(bool) == right.Value.(bool),
+			DataType: types.BOOL,
+		})
+		return
+	}
+	panic("operation not permitted with type")
+}
+
 func (r *Runtime) VisitAssignNode(n *ast.AssignNode) {
 	n.Expr.Accept(r)
 	v := r.stack.Pop().(scope.Entry)
+
 	// preserve datatype if the variable is already set
 	e, ok := r.curScope.GetVar(n.Name)
 	if ok {
@@ -65,213 +99,104 @@ func (r *Runtime) VisitAssignNode(n *ast.AssignNode) {
 	r.curScope.SetVar(n.Name, v)
 }
 
-// VisitBinaryNode evaluates the binary operator expression node n.
-func (r *Runtime) VisitBinOpNode(n *ast.BinOpNode) {
-	n.Left.Accept(r)
-	left := r.stack.Pop().(scope.Entry)
-	// short-circuit logic operators
-	if left.DataType == types.BOOL {
-		if n.Op == token.OR && left.Value.(bool) {
-			r.stack.Push(scope.Entry{Value: true, DataType: types.BOOL})
-			return
-		}
-		if n.Op == token.AND && !left.Value.(bool) {
-			r.stack.Push(scope.Entry{Value: false, DataType: types.BOOL})
-			return
-		}
-	}
-
-	n.Right.Accept(r)
-	right := r.stack.Pop().(scope.Entry)
-	if left.DataType != right.DataType {
-		panic("mis-matched types")
-	}
-
-	switch left.DataType {
-	case types.NUMBER:
-		switch n.Op {
-		case token.ADD:
-			r.stack.Push(scope.Entry{
-				Value:    left.Value.(float64) + right.Value.(float64),
-				DataType: types.NUMBER,
-			})
-			return
-		case token.SUBTRACT:
-			r.stack.Push(scope.Entry{
-				Value:    left.Value.(float64) - right.Value.(float64),
-				DataType: types.NUMBER,
-			})
-			return
-		case token.MULTIPLY:
-			r.stack.Push(scope.Entry{
-				Value:    left.Value.(float64) * right.Value.(float64),
-				DataType: types.NUMBER,
-			})
-			return
-		case token.DIVIDE:
-			r.stack.Push(scope.Entry{
-				Value:    left.Value.(float64) / right.Value.(float64),
-				DataType: types.NUMBER,
-			})
-			return
-		case token.MODULO:
-			r.stack.Push(scope.Entry{
-				Value:    math.Mod(left.Value.(float64), right.Value.(float64)),
-				DataType: types.NUMBER,
-			})
-			return
-		case token.EQUAL:
-			r.stack.Push(scope.Entry{
-				Value:    left.Value.(float64) == right.Value.(float64),
-				DataType: types.BOOL,
-			})
-			return
-		case token.NOT_EQUAL:
-			r.stack.Push(scope.Entry{
-				Value:    left.Value.(float64) != right.Value.(float64),
-				DataType: types.BOOL,
-			})
-			return
-		case token.LESS:
-			r.stack.Push(scope.Entry{
-				Value:    left.Value.(float64) < right.Value.(float64),
-				DataType: types.BOOL,
-			})
-			return
-		case token.LESS_EQ:
-			r.stack.Push(scope.Entry{
-				Value:    left.Value.(float64) <= right.Value.(float64),
-				DataType: types.BOOL,
-			})
-			return
-		case token.GREATER:
-			r.stack.Push(scope.Entry{
-				Value:    left.Value.(float64) > right.Value.(float64),
-				DataType: types.BOOL,
-			})
-			return
-		case token.GREATER_EQ:
-			r.stack.Push(scope.Entry{
-				Value:    left.Value.(float64) >= right.Value.(float64),
-				DataType: types.BOOL,
-			})
-			return
-		}
-		break
-	case types.STRING:
-		switch n.Op {
-		case token.ADD:
-			r.stack.Push(scope.Entry{
-				Value:    left.Value.(string) + right.Value.(string),
-				DataType: types.STRING,
-			})
-			return
-		case token.EQUAL:
-			r.stack.Push(scope.Entry{
-				Value:    left.Value.(string) == right.Value.(string),
-				DataType: types.BOOL,
-			})
-			return
-		case token.NOT_EQUAL:
-			r.stack.Push(scope.Entry{
-				Value:    left.Value.(string) != right.Value.(string),
-				DataType: types.BOOL,
-			})
-			return
-		}
-		break
-	case types.BOOL:
-		switch n.Op {
-		case token.AND:
-			r.stack.Push(scope.Entry{
-				Value:    left.Value.(bool) && right.Value.(bool),
-				DataType: types.BOOL,
-			})
-			return
-		case token.OR:
-			r.stack.Push(scope.Entry{
-				Value:    left.Value.(bool) || right.Value.(bool),
-				DataType: types.BOOL,
-			})
-			return
-		case token.EQUAL:
-			r.stack.Push(scope.Entry{
-				Value:    left.Value.(bool) == right.Value.(bool),
-				DataType: types.BOOL,
-			})
-			return
-		case token.NOT_EQUAL:
-			r.stack.Push(scope.Entry{
-				Value:    left.Value.(bool) != right.Value.(bool),
-				DataType: types.BOOL,
-			})
-			return
-		}
-		break
-	}
-	panic("operation not permitted on type")
+func (r *Runtime) VisitBoolNode(n *ast.BoolNode) {
+	r.stack.Push(scope.Entry{
+		Value:    n.Value,
+		DataType: types.BOOL,
+	})
 }
 
-// VisitCastNode evaluates the cast node n.
 func (r *Runtime) VisitCastNode(n *ast.CastNode) {
 	n.Term.Accept(r)
-	term := r.stack.Pop().(scope.Entry)
+	e := r.stack.Pop().(scope.Entry)
 	switch strings.ToUpper(n.Cast) {
 	case "STR":
-		switch term.DataType {
+		switch e.DataType {
 		case types.STRING:
 			break
 		case types.NUMBER:
-			val := fmt.Sprintf("%f", term.Value.(float64))
+			val := fmt.Sprintf("%f", e.Value.(float64))
 			val = strings.TrimRight(val, "0")
 			val = strings.TrimRight(val, ".")
-			term.Value = val
+			e.Value = val
 			break
 		case types.BOOL:
-			term.Value = strconv.FormatBool(term.Value.(bool))
+			e.Value = strconv.FormatBool(e.Value.(bool))
 			break
 		}
-		term.DataType = types.STRING
+		e.DataType = types.STRING
 		break
 	case "NUM":
-		switch term.DataType {
+		switch e.DataType {
 		case types.STRING:
-			term.Value, _ = strconv.ParseFloat(term.Value.(string), 64)
+			e.Value, _ = strconv.ParseFloat(e.Value.(string), 64)
 			break
 		case types.NUMBER:
 			break
 		case types.BOOL:
 			val := 0.0
-			if term.Value.(bool) {
+			if e.Value.(bool) {
 				val = 1.0
 			}
-			term.Value = val
+			e.Value = val
 			break
 		}
-		term.DataType = types.NUMBER
+		e.DataType = types.NUMBER
 		break
 	case "BOOL":
-		switch term.DataType {
+		switch e.DataType {
 		case types.STRING:
-			value := strings.ToUpper(term.Value.(string)) != "FALSE" &&
-				strings.TrimSpace(term.Value.(string)) != ""
-			term.Value = value
+			value := strings.ToUpper(e.Value.(string)) != "FALSE" &&
+				strings.TrimSpace(e.Value.(string)) != ""
+			e.Value = value
 			break
 		case types.NUMBER:
-			term.Value = term.Value.(float64) != 0.0
+			e.Value = e.Value.(float64) != 0.0
 			break
 		case types.BOOL:
 			break
 		}
-		term.DataType = types.BOOL
+		e.DataType = types.BOOL
 		break
 	}
-	r.stack.Push(term)
+	r.stack.Push(e)
 }
 
-// VisitFuncCallNode evaluates the function call node n.
-func (r *Runtime) VisitFuncCallNode(n *ast.FuncCallNode) {
+func (r *Runtime) VisitDivideNode(n *ast.DivideNode) {
+	n.Left.Accept(r)
+	left := r.stack.Pop().(scope.Entry)
 
+	n.Right.Accept(r)
+	right := r.stack.Pop().(scope.Entry)
+
+	if left.DataType == types.NUMBER && right.DataType == types.NUMBER {
+		r.stack.Push(scope.Entry{
+			Value:    left.Value.(float64) / right.Value.(float64),
+			DataType: types.NUMBER,
+		})
+		return
+	}
+	panic("operation not permitted with type")
+}
+
+func (r *Runtime) VisitEqualNode(n *ast.EqualNode) {
+	n.Left.Accept(r)
+	left := r.stack.Pop().(scope.Entry)
+
+	n.Right.Accept(r)
+	right := r.stack.Pop().(scope.Entry)
+
+	if left.DataType == right.DataType {
+		r.stack.Push(scope.Entry{
+			Value:    left.Value == right.Value,
+			DataType: types.BOOL,
+		})
+		return
+	}
+	panic("operation not permitted with type")
+}
+
+func (r *Runtime) VisitFuncCallNode(n *ast.FuncCallNode) {
 	e, ok := r.curScope.GetFunc(n.Name)
 	if !ok {
 		panic("Function not defined")
@@ -307,12 +232,44 @@ func (r *Runtime) VisitFuncCallNode(n *ast.FuncCallNode) {
 	r.curScope = r.scopeStack.Pop().(*scope.Scope)
 }
 
-// VisitFuncDefNode evaluates the function definition node n.
 func (r *Runtime) VisitFuncDefNode(n *ast.FuncDefNode) {
 	// nothing to do
 }
 
-// VisitIfNode evaluates the if construct node n.
+func (r *Runtime) VisitGreaterEqualNode(n *ast.GreaterEqualNode) {
+	n.Left.Accept(r)
+	left := r.stack.Pop().(scope.Entry)
+
+	n.Right.Accept(r)
+	right := r.stack.Pop().(scope.Entry)
+
+	if left.DataType == types.NUMBER && right.DataType == types.NUMBER {
+		r.stack.Push(scope.Entry{
+			Value:    left.Value.(float64) >= right.Value.(float64),
+			DataType: types.BOOL,
+		})
+		return
+	}
+	panic("operation not permitted with type")
+}
+
+func (r *Runtime) VisitGreaterNode(n *ast.GreaterNode) {
+	n.Left.Accept(r)
+	left := r.stack.Pop().(scope.Entry)
+
+	n.Right.Accept(r)
+	right := r.stack.Pop().(scope.Entry)
+
+	if left.DataType == types.NUMBER && right.DataType == types.NUMBER {
+		r.stack.Push(scope.Entry{
+			Value:    left.Value.(float64) > right.Value.(float64),
+			DataType: types.BOOL,
+		})
+		return
+	}
+	panic("operation not permitted with type")
+}
+
 func (r *Runtime) VisitIfNode(n *ast.IfNode) {
 	n.Cond.Accept(r)
 	cond := r.stack.Pop().(scope.Entry)
@@ -331,67 +288,205 @@ func (r *Runtime) VisitIfNode(n *ast.IfNode) {
 	}
 }
 
-// VisitReturnNode evaluates the reutnr statment node n.
+func (r *Runtime) VisitLessEqualNode(n *ast.LessEqualNode) {
+	n.Left.Accept(r)
+	left := r.stack.Pop().(scope.Entry)
+
+	n.Right.Accept(r)
+	right := r.stack.Pop().(scope.Entry)
+
+	if left.DataType == types.NUMBER && right.DataType == types.NUMBER {
+		r.stack.Push(scope.Entry{
+			Value:    left.Value.(float64) <= right.Value.(float64),
+			DataType: types.BOOL,
+		})
+		return
+	}
+	panic("operation not permitted with type")
+}
+
+func (r *Runtime) VisitLessNode(n *ast.LessNode) {
+	n.Left.Accept(r)
+	left := r.stack.Pop().(scope.Entry)
+
+	n.Right.Accept(r)
+	right := r.stack.Pop().(scope.Entry)
+
+	if left.DataType == types.NUMBER && right.DataType == types.NUMBER {
+		r.stack.Push(scope.Entry{
+			Value:    left.Value.(float64) < right.Value.(float64),
+			DataType: types.BOOL,
+		})
+		return
+	}
+	panic("operation not permitted with type")
+}
+
+func (r *Runtime) VisitModuloNode(n *ast.ModuloNode) {
+	n.Left.Accept(r)
+	left := r.stack.Pop().(scope.Entry)
+
+	n.Right.Accept(r)
+	right := r.stack.Pop().(scope.Entry)
+
+	if left.DataType == types.NUMBER && right.DataType == types.NUMBER {
+		r.stack.Push(scope.Entry{
+			Value:    math.Mod(left.Value.(float64), right.Value.(float64)),
+			DataType: types.NUMBER,
+		})
+		return
+	}
+	panic("operation not permitted with type")
+}
+
+func (r *Runtime) VisitMultiplyNode(n *ast.MultiplyNode) {
+	n.Left.Accept(r)
+	left := r.stack.Pop().(scope.Entry)
+
+	n.Right.Accept(r)
+	right := r.stack.Pop().(scope.Entry)
+
+	if left.DataType == types.NUMBER && right.DataType == types.NUMBER {
+		r.stack.Push(scope.Entry{
+			Value:    left.Value.(float64) * right.Value.(float64),
+			DataType: types.NUMBER,
+		})
+		return
+	}
+	panic("operation not permitted with type")
+}
+
+func (r *Runtime) VisitNegativeNode(n *ast.NegativeNode) {
+	n.Term.Accept(r)
+	e := r.stack.Pop().(scope.Entry)
+
+	if e.DataType == types.NUMBER {
+		r.stack.Push(scope.Entry{
+			Value:    -e.Value.(float64),
+			DataType: types.NUMBER,
+		})
+		return
+	}
+	panic("operation not permitted with type")
+}
+
+func (r *Runtime) VisitNotEqualNode(n *ast.NotEqualNode) {
+	n.Left.Accept(r)
+	left := r.stack.Pop().(scope.Entry)
+
+	n.Right.Accept(r)
+	right := r.stack.Pop().(scope.Entry)
+
+	if left.DataType == right.DataType {
+		r.stack.Push(scope.Entry{
+			Value:    left.Value != right.Value,
+			DataType: types.BOOL,
+		})
+		return
+	}
+	panic("operation not permitted with type")
+}
+
+func (r *Runtime) VisitNotNode(n *ast.NotNode) {
+	n.Term.Accept(r)
+	e := r.stack.Pop().(scope.Entry)
+
+	if e.DataType == types.BOOL {
+		r.stack.Push(scope.Entry{
+			Value:    !e.Value.(bool),
+			DataType: types.BOOL,
+		})
+		return
+	}
+	panic("operation not permitted with type")
+}
+
+func (r *Runtime) VisitNumberNode(n *ast.NumberNode) {
+	r.stack.Push(scope.Entry{
+		Value:    n.Value,
+		DataType: types.NUMBER,
+	})
+}
+
+func (r *Runtime) VisitOrNode(n *ast.OrNode) {
+	n.Left.Accept(r)
+	left := r.stack.Pop().(scope.Entry)
+	// short-circuit if true
+	if left.DataType == types.BOOL && left.Value.(bool) {
+		r.stack.Push(scope.Entry{
+			Value:    true,
+			DataType: types.BOOL,
+		})
+		return
+	}
+
+	n.Right.Accept(r)
+	right := r.stack.Pop().(scope.Entry)
+
+	if left.DataType == types.BOOL && right.DataType == types.BOOL {
+		r.stack.Push(scope.Entry{
+			Value:    left.Value.(bool) || right.Value.(bool),
+			DataType: types.BOOL,
+		})
+		return
+	}
+	panic("operation not permitted with type")
+}
+
+func (r *Runtime) VisitPositiveNode(n *ast.PositiveNode) {
+	n.Term.Accept(r)
+	e := r.stack.Pop().(scope.Entry)
+
+	if e.DataType == types.NUMBER {
+		r.stack.Push(scope.Entry{
+			Value:    math.Abs(e.Value.(float64)),
+			DataType: types.NUMBER,
+		})
+		return
+	}
+	panic("operation not permitted with type")
+}
+
+func (r *Runtime) VisitProgramNode(n *ast.ProgramNode) {
+	n.Scope.Parent = r.curScope
+	r.scopeStack.Push(r.curScope)
+	r.curScope = n.Scope
+
+	for _, stmt := range n.Stmts {
+		stmt.Accept(r)
+	}
+
+	r.curScope = r.scopeStack.Pop().(*scope.Scope)
+}
+
 func (r *Runtime) VisitReturnNode(n *ast.ReturnNode) {
 	n.Expr.Accept(r)
 }
 
-// VisitUnaryOpNode evaluates the unary operator expression node n.
-func (r *Runtime) VisitUnaryOpNode(n *ast.UnaryOpNode) {
-	n.Term.Accept(r)
-	term := r.stack.Pop().(scope.Entry)
-
-	switch term.DataType {
-	case types.NUMBER:
-		switch n.Op {
-		case token.ADD:
-			term.Value = math.Abs(term.Value.(float64))
-			r.stack.Push(term)
-			return
-		case token.SUBTRACT:
-			term.Value = 0.0 - term.Value.(float64)
-			r.stack.Push(term)
-			return
-		}
-	case types.BOOL:
-		switch n.Op {
-		case token.NOT:
-			term.Value = !term.Value.(bool)
-			r.stack.Push(term)
-			return
-		}
-	}
-	panic("invalid cast")
+func (r *Runtime) VisitStringNode(n *ast.StringNode) {
+	r.stack.Push(scope.Entry{
+		Value:    n.Value,
+		DataType: types.STRING,
+	})
 }
 
-// VisitValueNode evaluates the value expression node n.
-func (r *Runtime) VisitValueNode(n *ast.ValueNode) {
-	switch n.Type {
-	case token.NUMBER:
-		value, _ := strconv.ParseFloat(n.Value, 64)
+func (r *Runtime) VisitSubtractNode(n *ast.SubtractNode) {
+	n.Left.Accept(r)
+	left := r.stack.Pop().(scope.Entry)
+
+	n.Right.Accept(r)
+	right := r.stack.Pop().(scope.Entry)
+
+	if left.DataType == types.NUMBER && right.DataType == types.NUMBER {
 		r.stack.Push(scope.Entry{
-			Value:    value,
+			Value:    left.Value.(float64) - right.Value.(float64),
 			DataType: types.NUMBER,
 		})
-		break
-	case token.BOOL:
-		r.stack.Push(scope.Entry{
-			Value:    strings.ToUpper(n.Value) == "TRUE",
-			DataType: types.BOOL,
-		})
-		break
-	case token.STRING:
-		r.stack.Push(scope.Entry{
-			Value:    n.Value,
-			DataType: types.STRING,
-		})
-		break
-	default:
-		panic("literal is of unknown type")
+		return
 	}
+	panic("operation not permitted with type")
 }
 
-// VisitVariableNode evaluates the variable expression node n.
 func (r *Runtime) VisitVariableNode(n *ast.VariableNode) {
 	expr, ok := r.curScope.GetVar(n.Name)
 	if !ok {
@@ -400,7 +495,6 @@ func (r *Runtime) VisitVariableNode(n *ast.VariableNode) {
 	r.stack.Push(expr)
 }
 
-// VisitWhileNode evaluates the while construct node n.
 func (r *Runtime) VisitWhileNode(n *ast.WhileNode) {
 	for {
 		n.Cond.Accept(r)

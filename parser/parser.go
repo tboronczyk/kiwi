@@ -5,6 +5,8 @@ package parser
 
 import (
 	"errors"
+	"strconv"
+	"strings"
 
 	"github.com/tboronczyk/kiwi/ast"
 	"github.com/tboronczyk/kiwi/scanner"
@@ -102,59 +104,127 @@ func (p *Parser) Parse() (prog *ast.ProgramNode, err error) {
 	}
 }
 
-// expr = term [bin-op expr]
+// expr = cmp-expr [log-op expr]
 func (p *Parser) expr() ast.Node {
-	term := p.term()
-	if !p.curToken.IsBinOp() {
-		return term
+	node := p.cmpExpr()
+	switch p.curToken {
+	case token.AND:
+		p.advance()
+		return &ast.AndNode{Left: node, Right: p.expr()}
+	case token.OR:
+		p.advance()
+		return &ast.OrNode{Left: node, Right: p.expr()}
 	}
-
-	op := p.curToken
-	p.advance()
-	expr := p.expr()
-
-	node := &ast.BinOpNode{Op: op, Left: term}
-	switch expr.(type) {
-	case *ast.BinOpNode:
-		if token.Precedence(op) > token.Precedence(expr.(*ast.BinOpNode).Op) {
-			// adjust tree for higher precedence of expr's op
-			node.Right = expr.(*ast.BinOpNode).Left
-			expr.(*ast.BinOpNode).Left = node
-			return expr
-		}
-	}
-	node.Right = expr
 	return node
 }
 
-// term = "(" expr ")" / unary-op term / boolean / number / string / ident /
-//        func-call / term [":" ident]
-func (p *Parser) term() ast.Node {
-	var node ast.Node
-	if p.match(token.LPAREN) {
+// cmp-expr = add-expr [cmp-op cmp-expr]
+func (p *Parser) cmpExpr() ast.Node {
+	node := p.addExpr()
+	switch p.curToken {
+	case token.EQUAL:
 		p.advance()
-		node = p.expr()
-		p.consume(token.RPAREN)
-	} else if p.curToken.IsUnaryOp() {
-		op := p.curToken
+		return &ast.EqualNode{Left: node, Right: p.cmpExpr()}
+	case token.NOT_EQUAL:
 		p.advance()
-		node = &ast.UnaryOpNode{Op: op, Term: p.term()}
-	} else if p.match(token.BOOL, token.NUMBER, token.STRING) {
-		node = &ast.ValueNode{Value: p.curValue, Type: p.curToken}
+		return &ast.NotEqualNode{Left: node, Right: p.cmpExpr()}
+	case token.GREATER:
 		p.advance()
-	} else {
-		name := p.ident()
-		if p.match(token.LPAREN) {
-			node = &ast.FuncCallNode{Name: name, Args: p.parenExprList()}
-		} else {
-			node = &ast.VariableNode{Name: name}
-		}
-	}
-	if p.match(token.COLON) {
+		return &ast.GreaterNode{Left: node, Right: p.cmpExpr()}
+	case token.GREATER_EQ:
 		p.advance()
-		node = &ast.CastNode{Cast: p.ident(), Term: node}
+		return &ast.GreaterEqualNode{Left: node, Right: p.cmpExpr()}
+	case token.LESS:
+		p.advance()
+		return &ast.LessNode{Left: node, Right: p.cmpExpr()}
+	case token.LESS_EQ:
+		p.advance()
+		return &ast.LessEqualNode{Left: node, Right: p.cmpExpr()}
 	}
 	return node
+}
+
+// add-expr = mul-expr [add-op add-expr]
+func (p *Parser) addExpr() ast.Node {
+	node := p.mulExpr()
+	switch p.curToken {
+	case token.ADD:
+		p.advance()
+		return &ast.AddNode{Left: node, Right: p.addExpr()}
+	case token.SUBTRACT:
+		p.advance()
+		return &ast.SubtractNode{Left: node, Right: p.addExpr()}
+	}
+	return node
+}
+
+// mul-expr = cast-expr [mul-op mul-expr]
+func (p *Parser) mulExpr() ast.Node {
+	node := p.castExpr()
+	switch p.curToken {
+	case token.MULTIPLY:
+		p.advance()
+		return &ast.MultiplyNode{Left: node, Right: p.mulExpr()}
+	case token.DIVIDE:
+		p.advance()
+		return &ast.DivideNode{Left: node, Right: p.mulExpr()}
+	case token.MODULO:
+		p.advance()
+		return &ast.ModuloNode{Left: node, Right: p.mulExpr()}
+	}
+	return node
+}
+
+// cast-expr = term [":" ident]
+func (p *Parser) castExpr() ast.Node {
+	node := p.term()
+	if p.curToken == token.COLON {
+		p.advance()
+		return &ast.CastNode{Cast: p.ident(), Term: node}
+	}
+	return node
+}
+
+// term = "(" expr ")" / ("+" / "-" / "~") term / boolean / number / string /
+//        func-call / ident
+func (p *Parser) term() ast.Node {
+	switch p.curToken {
+	case token.LPAREN:
+		p.advance()
+		node := p.expr()
+		p.consume(token.RPAREN)
+		return node
+	case token.ADD:
+		p.advance()
+		return &ast.PositiveNode{Term: p.term()}
+	case token.SUBTRACT:
+		p.advance()
+		return &ast.NegativeNode{Term: p.term()}
+	case token.NOT:
+		p.advance()
+		return &ast.NotNode{Term: p.term()}
+	case token.BOOL:
+		node := &ast.BoolNode{Value: strings.ToLower(p.curValue) == "true"}
+		p.advance()
+		return node
+	case token.NUMBER:
+		val, _ := strconv.ParseFloat(p.curValue, 64)
+		node := &ast.NumberNode{Value: val}
+		p.advance()
+		return node
+	case token.STRING:
+		node := &ast.StringNode{Value: p.curValue}
+		p.advance()
+		return node
+	case token.IDENTIFIER:
+		name := p.ident()
+		if p.match(token.LPAREN) {
+			return &ast.FuncCallNode{Name: name, Args: p.parenExprList()}
+		}
+		return &ast.VariableNode{Name: name}
+	}
+
+	panic("whoops?")
 }
 
 // paren-expr-list = "(" [expr *("," expr)] ")"
@@ -235,7 +305,7 @@ func (p *Parser) elseClause() *ast.IfNode {
 		// expression that evaluates true to make evaluation of the
 		// AST easier.
 		isFinal = true
-		node.Cond = &ast.ValueNode{Value: "TRUE", Type: token.BOOL}
+		node.Cond = &ast.BoolNode{Value: true}
 	} else {
 		node.Cond = p.expr()
 	}

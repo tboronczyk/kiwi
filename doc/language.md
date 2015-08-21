@@ -97,14 +97,22 @@ Prec. | Type          | Operators
 
     ; RFC5243 App. B defines ALPHA, CHAR, DIGIT, DQUOTE, and LF
 
-    expr            = term [bin-op expr]
-    bin-op          = mul-op / add-op / cmp-op / log-op
+    ; expr          = term [":" ident] [bin-op expr]
+    ; bin-op        = mul-op / add-op / cmp-op / log-op
+
+    expr            = cmp-expr [log-op expr]
+    cmp-expr        = add-expr [cmp-op cmp-expr]
+    add-expr        = mul-expr [add-op add-expr]
+    mul-expr        = cast-expr [mul-op mul-expr]
+    cast-expr       = term [":" ident]
+
     mul-op          = "*" / "/" / "%"
     add-op          = "+" / "-"
     cmp-op          = "=" / "~=" / ">" / ">=" / "<" / "<="
     log-op          = "&&" / "||"
+
     term            = "(" expr ")" / unary-op term / boolean / number /
-                      string / ident / func-call / term [":" ident]
+                      string / ident / func-call
     unary-op        = "+" / "-" / "~"
     boolean         = "true" / "false"
     func-call       = ident paren-expr-list
