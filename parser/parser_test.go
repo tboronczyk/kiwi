@@ -156,8 +156,7 @@ func TestParseIfStmtWithElse(t *testing.T) {
 	p := newParser("if false {} else false {} else {}")
 	node := p.stmt().(*ast.IfNode)
 	assert.Equal(t, false, node.Cond.(*ast.BoolNode).Value)
-	assert.Equal(t, false, node.Else.(*ast.IfNode).Cond.(*ast.BoolNode).Value)
-	assert.Equal(t, true, node.Else.(*ast.IfNode).Else.(*ast.IfNode).Cond.(*ast.BoolNode).Value)
+	assert.Equal(t, false, node.Else[0].(*ast.IfNode).Cond.(*ast.BoolNode).Value)
 }
 
 func TestParseReturnStmt(t *testing.T) {
