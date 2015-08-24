@@ -284,7 +284,12 @@ func (r *Runtime) VisitIfNode(n *ast.IfNode) {
 			}
 		}
 	} else if n.Else != nil {
-		n.Else.Accept(r)
+		for _, stmt := range n.Else {
+			stmt.Accept(r)
+			if r.stack.Size() > 0 {
+				break
+			}
+		}
 	}
 }
 

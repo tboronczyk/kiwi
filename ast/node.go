@@ -68,7 +68,7 @@ type (
 	IfNode struct {
 		Cond Node
 		Body []Node
-		Else Node
+		Else []Node
 	}
 
 	LessEqualNode struct {

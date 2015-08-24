@@ -268,7 +268,12 @@ func (p *Parser) ifStmt() *ast.IfNode {
 	p.consume(token.IF)
 	node := &ast.IfNode{Cond: p.expr(), Body: p.braceStmtList()}
 	if p.match(token.ELSE) {
-		node.Else = p.elseClause()
+		p.advance()
+		if p.match(token.LBRACE) {
+			node.Else = p.braceStmtList()
+		} else {
+			node.Else = append(node.Else, p.elseClause())
+		}
 	}
 	return node
 }
@@ -297,21 +302,14 @@ func (p *Parser) braceStmtList() []ast.Node {
 // Note: an else with an expression becomes an if-stmt within a default else
 // clause.
 func (p *Parser) elseClause() *ast.IfNode {
-	p.consume(token.ELSE)
-	node := &ast.IfNode{}
-	isFinal := false
-	if p.match(token.LBRACE) {
-		// a final clause without an expression defaults to an
-		// expression that evaluates true to make evaluation of the
-		// AST easier.
-		isFinal = true
-		node.Cond = &ast.BoolNode{Value: true}
-	} else {
-		node.Cond = p.expr()
-	}
-	node.Body = p.braceStmtList()
-	if !isFinal {
-		node.Else = p.elseClause()
+	node := &ast.IfNode{Cond: p.expr(), Body: p.braceStmtList()}
+	if p.match(token.ELSE) {
+		p.advance()
+		if p.match(token.LBRACE) {
+			node.Else = p.braceStmtList()
+		} else {
+			node.Else = append(node.Else, p.elseClause())
+		}
 	}
 	return node
 }

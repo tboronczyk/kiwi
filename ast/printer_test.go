@@ -236,15 +236,10 @@ func TestPrintIfNode(t *testing.T) {
 		"│       ├ Name: foo\n" +
 		"│       ╰ Expr: NumberNode\n" +
 		"│               ╰ Value: 42\n" +
-		"│       AssignNode\n" +
-		"│       ├ Name: bar\n" +
-		"│       ╰ Expr: StringNode\n" +
-		"│               ╰ Value: \"baz\"\n" +
-		"╰ Else: IfNode\n" +
-		"        ├ Cond: BoolNode\n" +
-		"        │       ╰ Value: true\n" +
-		"        ├ Body: 0x0\n" +
-		"        ╰ Else: 0x0\n"
+		"╰ Else: AssignNode\n" +
+		"        ├ Name: bar\n" +
+		"        ╰ Expr: StringNode\n" +
+		"                ╰ Value: \"baz\"\n"
 	actual := capture(func() {
 		n := &IfNode{
 			Cond: &BoolNode{Value: true},
@@ -253,13 +248,12 @@ func TestPrintIfNode(t *testing.T) {
 					Name: "foo",
 					Expr: &NumberNode{Value: 42},
 				},
+			},
+			Else: []Node{
 				&AssignNode{
 					Name: "bar",
 					Expr: &StringNode{Value: "baz"},
 				},
-			},
-			Else: &IfNode{
-				Cond: &BoolNode{Value: true},
 			},
 		}
 		n.Accept(NewAstPrinter())
@@ -267,7 +261,7 @@ func TestPrintIfNode(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestPrintIfNodeNoBody(t *testing.T) {
+func TestPrintIfNodeNoBodies(t *testing.T) {
 	expected := "IfNode\n" +
 		"├ Cond: BoolNode\n" +
 		"│       ╰ Value: true\n" +

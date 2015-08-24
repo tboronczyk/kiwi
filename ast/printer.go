@@ -194,13 +194,19 @@ func (p AstPrinter) VisitIfNode(n *IfNode) {
 		p.pop()
 	}
 	fmt.Print(p.peek() + "╰ Else: ")
-	if n.Else == nil {
+	if n.Else == nil || len(n.Else) == 0 {
 		fmt.Println("0x0")
-		return
+	} else {
+		p.push(p.peek() + "        ")
+		n.Else[0].Accept(p)
+		if len(n.Else) > 1 {
+			for _, stmt := range n.Else[1:] {
+				fmt.Print(p.peek())
+				stmt.Accept(p)
+			}
+		}
+		p.pop()
 	}
-	p.push(p.peek() + "        ")
-	n.Else.Accept(p)
-	p.pop()
 }
 
 func (p AstPrinter) VisitLessEqualNode(n *LessEqualNode) {
