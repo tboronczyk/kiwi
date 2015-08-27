@@ -1,6 +1,3 @@
-// Package parser provides the implementation of a parser that constructs an
-// abstract syntax tree from a stream of tokens to represent a Kiwi program in
-// memory.
 package parser
 
 import (
@@ -15,25 +12,31 @@ import (
 	"github.com/tboronczyk/kiwi/types"
 )
 
-// Parser produces ASTs from tokens.
 type Parser struct {
-	curToken token.Token // the current token
-	prvToken token.Token // the previous token
-	curValue string      // the current lexeme value
-	prvValue string      // the previous lexeme value
-	braces   int         // pseudo-stack counter tracking brace nesting
+	curToken token.Token
+	curValue string
 	scanner  *scanner.Scanner
 	scope    *scope.Scope
 }
 
-// New returns a new Parser instance that is initialized to read from s.
 func New(s *scanner.Scanner) *Parser {
 	p := &Parser{scanner: s, scope: scope.New()}
 	p.advance()
 	return p
 }
 
-// match returns a bool to indicate whether the current token matches one of
+// advance retrieves the next token/value pair from the scanner. COMMENT tokens
+// are skipped as whitespace.
+func (p *Parser) advance() {
+	for {
+		p.curToken, p.curValue = p.scanner.Scan()
+		if p.curToken != token.COMMENT {
+			return
+		}
+	}
+}
+
+// match returns bool indicating whether the current token matches one of the
 // specified tokens.
 func (p Parser) match(tokens ...token.Token) bool {
 	for _, t := range tokens {
@@ -44,50 +47,17 @@ func (p Parser) match(tokens ...token.Token) bool {
 	return false
 }
 
-// advance retrieves the next token/value pair from the scanner, keeping track
-// of the previous pair. NOTE: COMMENT tokens are always passed over. Multiple
-// NEWLINE tokens are consolidated. A NEWLINE will never appear as the current
-// pair (only previous). This allows the parser to treat arbirary newlines as
-// whitespace and still be aware of their presense when they have semantic
-// meaning.
-func (p *Parser) advance() {
-	p.prvToken, p.prvValue = p.curToken, p.curValue
-	for {
-		p.curToken, p.curValue = p.scanner.Scan()
-		if p.curToken != token.COMMENT && p.curToken != token.NEWLINE {
-			return
-		}
-		if p.curToken == token.NEWLINE {
-			p.prvToken, p.prvValue = p.curToken, p.curValue
-		}
-	}
-}
-
-// newline returns a bool to indicate whether the previous token was NEWLINE.
-func (p Parser) newline() bool {
-	return p.prvToken == token.NEWLINE
-}
-
-// consume advances the parser to the next token/value pair if the current token
-// matches t, otherwise it will panic.
+// consume advances to the next token/value pair when the current token matches
+// one in t, otherwise it panics.
 func (p *Parser) consume(t token.Token) {
 	if !p.match(t) {
-		panic("unexpected " + p.curToken.String())
+		panic("unexpected lexeme " + p.curToken.String())
 	}
 	p.advance()
 }
 
-// stmtEnd may be called by a statement-parsing method to ensure a statement
-// is terminated by a NEWLINE when it isn't the last statement in a block
-// (the terminating NEWLINE is optional for final statements in blocks).
-func (p *Parser) stmtEnd() {
-	if !(p.newline() || (p.curToken == token.RBRACE && p.braces > 0)) {
-		panic("unexpected " + p.curToken.String())
-	}
-}
-
-// Parse consumes the token stream and returns an AST of the production. err
-// is nil for successful parses.
+// Parse consumes the token stream and returns the parsed program as an AST
+// (ProgramNode). err is nil for a successful parse.
 func (p *Parser) Parse() (prog *ast.ProgramNode, err error) {
 	defer func() {
 		if e := recover(); e != nil {
@@ -247,7 +217,7 @@ func (p *Parser) parenExprList() []ast.Node {
 
 // stmt = if-stmt / while-stmt / func-def / return-stmt / assign-stmt /
 //        func-call
-func (p *Parser) stmt() ast.Node {
+func (p *Parser) stmt() (node ast.Node) {
 	switch p.curToken {
 	case token.IF:
 		return p.ifStmt()
@@ -260,7 +230,7 @@ func (p *Parser) stmt() ast.Node {
 	case token.IDENTIFIER:
 		return p.assignStmtOrFuncCall()
 	}
-	panic("unexpected " + p.curToken.String())
+	panic("unexpected lexeme " + p.curToken.String())
 }
 
 // if-stmt = "if" expr brace-stmt-list [else-clause]
@@ -279,22 +249,15 @@ func (p *Parser) ifStmt() *ast.IfNode {
 }
 
 // brace-stmt-list = "{" *stmt "}"
-func (p *Parser) braceStmtList() []ast.Node {
-	defer func() {
-		p.consume(token.RBRACE)
-		p.braces--
-	}()
-
+func (p *Parser) braceStmtList() (list []ast.Node) {
 	p.consume(token.LBRACE)
-	p.braces++
-
-	var list []ast.Node
 	for {
 		if !(p.curToken.IsStmtKeyword() || p.match(token.IDENTIFIER)) {
 			break
 		}
 		list = append(list, p.stmt())
 	}
+	p.consume(token.RBRACE)
 	return list
 }
 
@@ -347,21 +310,20 @@ func (p *Parser) funcDef() *ast.FuncDefNode {
 	return node
 }
 
-// return-stmt = "return" [expr] LF
+// return-stmt = "return" [expr]
 func (p *Parser) returnStmt() *ast.ReturnNode {
-	defer p.stmtEnd()
 	p.consume(token.RETURN)
 	node := &ast.ReturnNode{}
-	if !p.newline() {
+	if p.match(token.LPAREN, token.ADD, token.SUBTRACT, token.NOT,
+		token.BOOL, token.NUMBER, token.STRING, token.IDENTIFIER) {
 		node.Expr = p.expr()
 	}
 	return node
 }
 
-// assign-stmt = ident ":=" expr LF
+// assign-stmt = ident ":=" expr
 // func-call   = ident paren-expr-list
 func (p *Parser) assignStmtOrFuncCall() ast.Node {
-	defer p.stmtEnd()
 	name := p.ident()
 	if p.match(token.ASSIGN) {
 		p.advance()

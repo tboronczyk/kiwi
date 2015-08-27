@@ -95,7 +95,7 @@ Prec. | Type          | Operators
 
 ## ABNF Grammar
 
-    ; RFC5243 App. B defines ALPHA, CHAR, DIGIT, DQUOTE, and LF
+    ; RFC5243 App. B defines ALPHA, CHAR, DIGIT, and DQUOTE
 
     ; expr          = term [":" ident] [bin-op expr]
     ; bin-op        = mul-op / add-op / cmp-op / log-op
@@ -125,8 +125,8 @@ Prec. | Type          | Operators
                       else-clause)
     while-stmt      = "while" expr brace-stmt-list
     func-def        = "func" ident *ident brace-stmt-list
-    return-stmt     = "return" [expr] LF
-    assign-stmt     = ident ":=" expr LF
+    return-stmt     = "return" [expr]
+    assign-stmt     = ident ":=" expr
     ident           = ALPHA *(ALPHA / DIGIT / "_")
     number          = DIGIT ["." *DIGIT]
     string          = DQUOTE *CHAR DQUOTE

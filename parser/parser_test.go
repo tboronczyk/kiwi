@@ -86,7 +86,7 @@ func TestParseBraceStmtListEmpty(t *testing.T) {
 }
 
 func TestParseBraceStmtList(t *testing.T) {
-	p := newParser("{foo := 42\nbar := 73}")
+	p := newParser("{foo := 42 bar := 73}")
 	node := p.braceStmtList()
 	assert.Equal(t, "foo", node[0].(*ast.AssignNode).Name)
 	assert.Equal(t, 42.0, node[0].(*ast.AssignNode).Expr.(*ast.NumberNode).Value)
@@ -166,16 +166,9 @@ func TestParseReturnStmt(t *testing.T) {
 }
 
 func TestParseReturnStmtNoExpr(t *testing.T) {
-	p := newParser("return\n")
+	p := newParser("return }")
 	node := p.stmt()
 	assert.Nil(t, node.(*ast.ReturnNode).Expr)
-}
-
-func TestParseReturnStmtError(t *testing.T) {
-	p := newParser("return }")
-	assert.Panics(t, func() {
-		p.stmt()
-	})
 }
 
 func TestParseWhileStmt(t *testing.T) {
@@ -220,11 +213,4 @@ func TestParseFuncCall(t *testing.T) {
 	node := p.stmt().(*ast.FuncCallNode)
 	assert.Equal(t, "foo", node.Name)
 	assert.Equal(t, 0, len(node.Args))
-}
-
-func TestParseStmtTerminationError(t *testing.T) {
-	p := newParser("foo := 42")
-	assert.Panics(t, func() {
-		p.stmt()
-	})
 }
