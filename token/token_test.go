@@ -10,7 +10,6 @@ func TestTokenToString(t *testing.T) {
 	tokens := []struct{ actual, expected string }{
 		{UNKNOWN.String(), "UNKNOWN"},
 		{EOF.String(), "EOF"},
-		{NEWLINE.String(), "NEWLINE"},
 		{ADD.String(), "+"},
 		{SUBTRACT.String(), "-"},
 		{MULTIPLY.String(), "*"},

@@ -11,7 +11,6 @@ type Token uint
 const (
 	UNKNOWN Token = iota
 	EOF
-	NEWLINE
 
 	addop_start
 	// addition-level operators
@@ -73,7 +72,6 @@ const (
 var tokens = []string{
 	UNKNOWN:    "UNKNOWN",
 	EOF:        "EOF",
-	NEWLINE:    "NEWLINE",
 	ADD:        "+",
 	SUBTRACT:   "-",
 	MULTIPLY:   "*",
