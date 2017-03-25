@@ -1,7 +1,5 @@
 # Kiwi Programming Langauge
 
-© 2012, 2015 Timothy Boronczyk
-
 This is the README file for the Kiwi Programming Language distribution.
 
 Kiwi is my on-going “forever project” to implement a programming language. Not
