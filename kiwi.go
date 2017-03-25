@@ -55,6 +55,7 @@ func main() {
 	}
 	if *optAst {
 		n.Accept(v)
+	} else {
+		n.Accept(r)
 	}
-	n.Accept(r)
 }
