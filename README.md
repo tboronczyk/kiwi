@@ -1,6 +1,6 @@
 # Kiwi Programming Langauge
 
-[![Build Status](https://travis-ci.org/tboronczyk/kiwi.svg?branch=master)](https://travis-ci.org/tboronczyk/kiwi)
+[![Build Status](https://travis-ci.org/tboronczyk/kiwi.svg?branch=master)](https://travis-ci.org/tboronczyk/kiwi) [![codebeat badge](https://codebeat.co/badges/dfc8c4c2-2bea-4f90-9b9d-2c9c8522f0c5)](https://codebeat.co/projects/github-com-tboronczyk-kiwi-master)
 
 This is the README file for the Kiwi Programming Language distribution.
 
