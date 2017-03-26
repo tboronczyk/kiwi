@@ -1,5 +1,7 @@
 # Kiwi Programming Langauge
 
+[![Build Status](https://travis-ci.org/tboronczyk/kiwi.svg?branch=master)](https://travis-ci.org/tboronczyk/kiwi)
+
 This is the README file for the Kiwi Programming Language distribution.
 
 Kiwi is my on-going “forever project” to implement a programming language. Not
