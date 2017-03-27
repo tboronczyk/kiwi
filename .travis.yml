@@ -1,3 +1,10 @@
 language: go
-install: go get github.com/stretchr/testify
-script: go test -v ./...
+
+install:
+  - go get github.com/stretchr/testify
+
+script:
+  - ./.test.sh
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
