@@ -1,108 +1,105 @@
-// Package token defines the token types used to represent Kiwi lexemes.
-package token
+package main
 
-import (
-	"strconv"
-)
+import "strconv"
 
-// Token is a member in the lexical types set.
+// Token represents the token types used to represent Kiwi lexemes.
 type Token uint
 
 const (
-	UNKNOWN Token = iota
-	EOF
+	T_UNKNOWN Token = iota
+	T_EOF
 
 	addop_start
 	// addition-level operators
-	ADD
-	SUBTRACT
+	T_ADD
+	T_SUBTRACT
 	addop_end
 
 	mulop_start
 	// multiplication-level operators
-	MULTIPLY
-	DIVIDE
-	MODULO
+	T_MULTIPLY
+	T_DIVIDE
+	T_MODULO
 	mulop_end
 
 	cmpop_start
 	// comparision operators
-	EQUAL
-	NOT_EQUAL
-	GREATER
-	GREATER_EQ
-	LESS
-	LESS_EQ
+	T_EQUAL
+	T_NOT_EQUAL
+	T_GREATER
+	T_GREATER_EQ
+	T_LESS
+	T_LESS_EQ
 	cmpop_end
 
 	logop_start
 	// logic operators
-	AND
-	OR
-	NOT
+	T_AND
+	T_OR
+	T_NOT
 	logop_end
 
 	stmtkwd_start
 	// statement keywords
-	IF
-	FUNC
-	RETURN
-	WHILE
+	T_IF
+	T_FUNC
+	T_RETURN
+	T_WHILE
 	stmtkwd_end
 
 	lit_start
 	// literal values
-	BOOL
-	IDENTIFIER
-	NUMBER
-	STRING
+	T_BOOL
+	T_IDENTIFIER
+	T_NUMBER
+	T_STRING
 	lit_end
 
-	ASSIGN
-	LBRACE
-	RBRACE
-	COLON
-	COMMA
-	COMMENT
-	ELSE
-	LPAREN
-	RPAREN
+	T_ASSIGN
+	T_LBRACE
+	T_RBRACE
+	T_COLON
+	T_COMMA
+	T_COMMENT
+	T_ELSE
+	T_LPAREN
+	T_RPAREN
 )
 
 var tokens = []string{
-	UNKNOWN:    "UNKNOWN",
-	EOF:        "EOF",
-	ADD:        "+",
-	SUBTRACT:   "-",
-	MULTIPLY:   "*",
-	DIVIDE:     "/",
-	MODULO:     "%",
-	EQUAL:      "=",
-	NOT_EQUAL:  "~=",
-	GREATER:    ">",
-	GREATER_EQ: ">=",
-	LESS:       "<",
-	LESS_EQ:    "<=",
-	AND:        "&&",
-	OR:         "||",
-	NOT:        "~",
-	IF:         "if",
-	FUNC:       "func",
-	RETURN:     "return",
-	WHILE:      "while",
-	BOOL:       "BOOL",
-	IDENTIFIER: "IDENTIFIER",
-	NUMBER:     "NUMBER",
-	STRING:     "STRING",
-	ASSIGN:     ":=",
-	LBRACE:     "{",
-	RBRACE:     "}",
-	COLON:      ":",
-	COMMA:      ",",
-	COMMENT:    "COMMENT",
-	ELSE:       "else",
-	LPAREN:     "(",
-	RPAREN:     ")",
+	T_UNKNOWN:    "UNKNOWN",
+	T_EOF:        "EOF",
+	T_ADD:        "+",
+	T_SUBTRACT:   "-",
+	T_MULTIPLY:   "*",
+	T_DIVIDE:     "/",
+	T_MODULO:     "%",
+	T_EQUAL:      "=",
+	T_NOT_EQUAL:  "~=",
+	T_GREATER:    ">",
+	T_GREATER_EQ: ">=",
+	T_LESS:       "<",
+	T_LESS_EQ:    "<=",
+	T_AND:        "&&",
+	T_OR:         "||",
+	T_NOT:        "~",
+	T_IF:         "if",
+	T_FUNC:       "func",
+	T_RETURN:     "return",
+	T_WHILE:      "while",
+	T_BOOL:       "BOOL",
+	T_IDENTIFIER: "IDENTIFIER",
+	T_NUMBER:     "NUMBER",
+	T_STRING:     "STRING",
+	T_ASSIGN:     ":=",
+	T_LBRACE:     "{",
+	T_RBRACE:     "}",
+	T_COLON:      ":",
+	T_COMMA:      ",",
+	T_COMMENT:    "COMMENT",
+	T_ELSE:       "else",
+	T_LPAREN:     "(",
+	T_RPAREN:     ")",
 }
 
 // String returns the string representation of a token.
@@ -122,15 +119,17 @@ func (t Token) String() string {
 func Precedence(t Token) int {
 	if t.IsLogOp() {
 		return 1
-	} else if t.IsCmpOp() {
-		return 2
-	} else if t.IsAddOp() {
-		return 3
-	} else if t.IsMulOp() {
-		return 4
-	} else {
-		return 0
 	}
+	if t.IsCmpOp() {
+		return 2
+	}
+	if t.IsAddOp() {
+		return 3
+	}
+	if t.IsMulOp() {
+		return 4
+	}
+	return 0
 }
 
 // IsAddOp returns bool to indicate whether the token represents an
@@ -161,13 +160,13 @@ func (t Token) IsLogOp() bool {
 // binary operator.
 func (t Token) IsBinOp() bool {
 	return (t.IsAddOp() || t.IsMulOp() || t.IsCmpOp() || t.IsLogOp()) &&
-		t != NOT
+		t != T_NOT
 }
 
 // IsUnaryOp returns bool to indicate whether the token represents a
 // right-binding operator.
 func (t Token) IsUnaryOp() bool {
-	return t.IsAddOp() || t == NOT
+	return t.IsAddOp() || t == T_NOT
 }
 
 // IsStmtKeyword returns bool to indicate whether the token represents a keyword

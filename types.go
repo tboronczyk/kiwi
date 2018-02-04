@@ -1,8 +1,6 @@
-package types
+package main
 
-import (
-	"strconv"
-)
+import "strconv"
 
 // DataType represents the data type of an expression or runtime value.
 type DataType uint8

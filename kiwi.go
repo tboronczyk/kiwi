@@ -7,11 +7,6 @@ import (
 	"io"
 	"log"
 	"os"
-
-	"github.com/tboronczyk/kiwi/ast"
-	"github.com/tboronczyk/kiwi/parser"
-	"github.com/tboronczyk/kiwi/runtime"
-	"github.com/tboronczyk/kiwi/scanner"
 )
 
 var optAst = flag.Bool("ast", false, "Print parsed abstract syntax tree")
@@ -42,9 +37,9 @@ func main() {
 		panic("junk arguments")
 	}
 
-	p := parser.New(scanner.New(bufio.NewReader(in)))
-	r := runtime.New()
-	v := ast.NewAstPrinter()
+	p := NewParser(NewScanner(bufio.NewReader(in)))
+	r := NewRuntime()
+	v := NewAstPrinter()
 
 	n, err := p.Parse()
 	if n == nil {

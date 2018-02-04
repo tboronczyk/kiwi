@@ -1,16 +1,14 @@
-package parser
+package main
 
 import (
 	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tboronczyk/kiwi/ast"
-	"github.com/tboronczyk/kiwi/scanner"
 )
 
 func newParser(s string) *Parser {
-	return New(scanner.New(bytes.NewReader([]byte(s))))
+	return NewParser(NewScanner(bytes.NewReader([]byte(s))))
 }
 
 func TestParser(t *testing.T) {
@@ -49,37 +47,37 @@ func TestParser(t *testing.T) {
 
 	t.Run("Parse parenthesized term", func(t *testing.T) {
 		p := newParser("(42)")
-		node := p.term().(*ast.NumberNode)
+		node := p.term().(*AstNumberNode)
 		assert.Equal(t, 42.0, node.Value)
 	})
 
 	t.Run("Parse signed term", func(t *testing.T) {
 		p := newParser("-42")
-		node := p.term().(*ast.NegativeNode)
-		assert.Equal(t, 42.0, node.Term.(*ast.NumberNode).Value)
+		node := p.term().(*AstNegativeNode)
+		assert.Equal(t, 42.0, node.Term.(*AstNumberNode).Value)
 	})
 
 	t.Run("Parse cast", func(t *testing.T) {
 		p := newParser("foo:string")
-		node := p.castExpr().(*ast.CastNode)
+		node := p.castExpr().(*AstCastNode)
 		assert.Equal(t, "string", node.Cast)
-		assert.Equal(t, "foo", node.Term.(*ast.VariableNode).Name)
+		assert.Equal(t, "foo", node.Term.(*AstVariableNode).Name)
 	})
 
 	t.Run("Parse func call term", func(t *testing.T) {
 		p := newParser("foo()")
-		node := p.term().(*ast.FuncCallNode)
+		node := p.term().(*AstFuncCallNode)
 		assert.Equal(t, "foo", node.Name)
 		assert.Equal(t, 0, len(node.Args))
 	})
 
 	t.Run("Parse term func call with args", func(t *testing.T) {
 		p := newParser("foo(bar, 42, \"baz\")")
-		node := p.term().(*ast.FuncCallNode)
+		node := p.term().(*AstFuncCallNode)
 		assert.Equal(t, "foo", node.Name)
-		assert.Equal(t, "bar", node.Args[0].(*ast.VariableNode).Name)
-		assert.Equal(t, 42.0, node.Args[1].(*ast.NumberNode).Value)
-		assert.Equal(t, "baz", node.Args[2].(*ast.StringNode).Value)
+		assert.Equal(t, "bar", node.Args[0].(*AstVariableNode).Name)
+		assert.Equal(t, 42.0, node.Args[1].(*AstNumberNode).Value)
+		assert.Equal(t, "baz", node.Args[2].(*AstStringNode).Value)
 	})
 
 	t.Run("Parse empty braced statement list", func(t *testing.T) {
@@ -91,10 +89,10 @@ func TestParser(t *testing.T) {
 	t.Run("Parse braced statement list", func(t *testing.T) {
 		p := newParser("{foo := 42 bar := 73}")
 		node := p.braceStmtList()
-		assert.Equal(t, "foo", node[0].(*ast.AssignNode).Name)
-		assert.Equal(t, 42.0, node[0].(*ast.AssignNode).Expr.(*ast.NumberNode).Value)
-		assert.Equal(t, "bar", node[1].(*ast.AssignNode).Name)
-		assert.Equal(t, 73.0, node[1].(*ast.AssignNode).Expr.(*ast.NumberNode).Value)
+		assert.Equal(t, "foo", node[0].(*AstAssignNode).Name)
+		assert.Equal(t, 42.0, node[0].(*AstAssignNode).Expr.(*AstNumberNode).Value)
+		assert.Equal(t, "bar", node[1].(*AstAssignNode).Name)
+		assert.Equal(t, 73.0, node[1].(*AstAssignNode).Expr.(*AstNumberNode).Value)
 	})
 
 	t.Run("Parse braced statement list with statement error", func(t *testing.T) {
@@ -113,7 +111,7 @@ func TestParser(t *testing.T) {
 
 	t.Run("Parse function def", func(t *testing.T) {
 		p := newParser("func foo {}")
-		node := p.stmt().(*ast.FuncDefNode)
+		node := p.stmt().(*AstFuncDefNode)
 		assert.Equal(t, "foo", node.Name)
 		assert.Equal(t, 0, len(node.Args))
 		assert.Equal(t, 0, len(node.Body))
@@ -121,14 +119,14 @@ func TestParser(t *testing.T) {
 
 	t.Run("Parse function def with one parameter", func(t *testing.T) {
 		p := newParser("func foo bar {}")
-		node := p.stmt().(*ast.FuncDefNode)
+		node := p.stmt().(*AstFuncDefNode)
 		assert.Equal(t, "foo", node.Name)
 		assert.Equal(t, "bar", node.Args[0])
 	})
 
 	t.Run("Parse function def with many parameters", func(t *testing.T) {
 		p := newParser("func foo bar baz {}")
-		node := p.stmt().(*ast.FuncDefNode)
+		node := p.stmt().(*AstFuncDefNode)
 		assert.Equal(t, "foo", node.Name)
 		assert.Equal(t, "bar", node.Args[0])
 		assert.Equal(t, "baz", node.Args[1])
@@ -136,9 +134,9 @@ func TestParser(t *testing.T) {
 
 	t.Run("Parse if statement", func(t *testing.T) {
 		p := newParser("if true {foo := 42}")
-		node := p.stmt().(*ast.IfNode)
-		assert.Equal(t, true, node.Cond.(*ast.BoolNode).Value)
-		assert.Equal(t, "foo", node.Body[0].(*ast.AssignNode).Name)
+		node := p.stmt().(*AstIfNode)
+		assert.Equal(t, true, node.Cond.(*AstBoolNode).Value)
+		assert.Equal(t, "foo", node.Body[0].(*AstAssignNode).Name)
 	})
 
 	t.Run("Parse if statement with expression error", func(t *testing.T) {
@@ -157,29 +155,29 @@ func TestParser(t *testing.T) {
 
 	t.Run("Parse if statement with else", func(t *testing.T) {
 		p := newParser("if false {} else false {} else {}")
-		node := p.stmt().(*ast.IfNode)
-		assert.Equal(t, false, node.Cond.(*ast.BoolNode).Value)
-		assert.Equal(t, false, node.Else[0].(*ast.IfNode).Cond.(*ast.BoolNode).Value)
+		node := p.stmt().(*AstIfNode)
+		assert.Equal(t, false, node.Cond.(*AstBoolNode).Value)
+		assert.Equal(t, false, node.Else[0].(*AstIfNode).Cond.(*AstBoolNode).Value)
 	})
 
 	t.Run("Parse return statement", func(t *testing.T) {
 		p := newParser("return 42\n")
-		node := p.stmt().(*ast.ReturnNode)
-		assert.Equal(t, 42.0, node.Expr.(*ast.NumberNode).Value)
+		node := p.stmt().(*AstReturnNode)
+		assert.Equal(t, 42.0, node.Expr.(*AstNumberNode).Value)
 	})
 
 	t.Run("Parse return statement without expression", func(t *testing.T) {
 		p := newParser("return }")
 		node := p.stmt()
-		assert.Nil(t, node.(*ast.ReturnNode).Expr)
+		assert.Nil(t, node.(*AstReturnNode).Expr)
 	})
 
 	t.Run("Parse while statement", func(t *testing.T) {
 		p := newParser("while foo = true {bar := 42}")
-		node := p.stmt().(*ast.WhileNode)
-		assert.Equal(t, "foo", node.Cond.(*ast.EqualNode).Left.(*ast.VariableNode).Name)
-		assert.Equal(t, true, node.Cond.(*ast.EqualNode).Right.(*ast.BoolNode).Value)
-		assert.Equal(t, "bar", node.Body[0].(*ast.AssignNode).Name)
+		node := p.stmt().(*AstWhileNode)
+		assert.Equal(t, "foo", node.Cond.(*AstEqualNode).Left.(*AstVariableNode).Name)
+		assert.Equal(t, true, node.Cond.(*AstEqualNode).Right.(*AstBoolNode).Value)
+		assert.Equal(t, "bar", node.Body[0].(*AstAssignNode).Name)
 	})
 
 	t.Run("Parse while statement with expression error", func(t *testing.T) {
@@ -198,10 +196,10 @@ func TestParser(t *testing.T) {
 
 	t.Run("Parse assignment statement", func(t *testing.T) {
 		p := newParser("foo := 42 + 73\n")
-		node := p.stmt().(*ast.AssignNode)
+		node := p.stmt().(*AstAssignNode)
 		assert.Equal(t, "foo", node.Name)
-		assert.Equal(t, 42.0, node.Expr.(*ast.AddNode).Left.(*ast.NumberNode).Value)
-		assert.Equal(t, 73.0, node.Expr.(*ast.AddNode).Right.(*ast.NumberNode).Value)
+		assert.Equal(t, 42.0, node.Expr.(*AstAddNode).Left.(*AstNumberNode).Value)
+		assert.Equal(t, 73.0, node.Expr.(*AstAddNode).Right.(*AstNumberNode).Value)
 	})
 
 	t.Run("Parse assignment statement with expression error", func(t *testing.T) {
@@ -213,7 +211,7 @@ func TestParser(t *testing.T) {
 
 	t.Run("Parse function call", func(t *testing.T) {
 		p := newParser("foo()\n")
-		node := p.stmt().(*ast.FuncCallNode)
+		node := p.stmt().(*AstFuncCallNode)
 		assert.Equal(t, "foo", node.Name)
 		assert.Equal(t, 0, len(node.Args))
 	})

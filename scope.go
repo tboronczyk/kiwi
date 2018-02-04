@@ -1,13 +1,9 @@
-package scope
-
-import (
-	"github.com/tboronczyk/kiwi/types"
-)
+package main
 
 type (
 	Entry struct {
 		Value interface{}
-		types.DataType
+		DataType
 	}
 
 	table map[string]Entry
@@ -19,7 +15,7 @@ type (
 	}
 )
 
-func New() *Scope {
+func NewScope() *Scope {
 	s := &Scope{
 		vars:  make(table, 0),
 		funcs: make(table, 0),
@@ -27,14 +23,14 @@ func New() *Scope {
 	return s
 }
 
-func NewWithParent(p *Scope) *Scope {
-	s := New()
+func NewScopeWithParent(p *Scope) *Scope {
+	s := NewScope()
 	s.Parent = p
 	return s
 }
 
-func CleanClone(s *Scope) *Scope {
-	s2 := New()
+func NewScopeClone(s *Scope) *Scope {
+	s2 := NewScope()
 	s2.funcs = s.funcs
 	s2.Parent = s.Parent
 	return s2

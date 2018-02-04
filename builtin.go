@@ -1,44 +1,40 @@
-package runtime
+package main
 
 import (
 	"bufio"
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/tboronczyk/kiwi/scope"
-	"github.com/tboronczyk/kiwi/types"
-	"github.com/tboronczyk/kiwi/util"
 )
 
 var rdStdin = bufio.NewReader(os.Stdin)
 
 // built-in functions, [name]func{implementation}
-var builtins = map[string]func(*util.Stack, params){
+var builtins = map[string]func(*Stack, params){
 
 	// strlen - returns the length of a string
-	"strlen": func(s *util.Stack, p params) {
-		s.Push(scope.Entry{
+	"strlen": func(s *Stack, p params) {
+		s.Push(Entry{
 			Value:    len(p[0].Value.(string)),
-			DataType: types.NUMBER,
+			DataType: NUMBER,
 		})
 
 	},
 	// write - prints a value
-	"write": func(s *util.Stack, p params) {
+	"write": func(s *Stack, p params) {
 		for i, _ := range p {
 			fmt.Print(p[i].Value)
 		}
 	},
 	// read - read a string
-	"read": func(s *util.Stack, p params) {
+	"read": func(s *Stack, p params) {
 		str, err := rdStdin.ReadString('\n')
 		if err != nil {
 			panic(err)
 		}
-		s.Push(scope.Entry{
+		s.Push(Entry{
 			Value:    strings.TrimRight(str, "\n"),
-			DataType: types.STRING,
+			DataType: STRING,
 		})
 	},
 }

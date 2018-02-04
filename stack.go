@@ -1,4 +1,4 @@
-package util
+package main
 
 // Stack is a standard stack data structure.
 type Stack []interface{}
