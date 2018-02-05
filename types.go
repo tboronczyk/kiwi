@@ -3,34 +3,34 @@ package main
 import "strconv"
 
 // DataType represents the data type of an expression or runtime value.
-type DataType uint8
+type DataType uint
 
 const (
-	UNKNOWN DataType = iota
-	BUILTIN
-	BOOL
-	FUNC
-	NUMBER
-	STRING
+	TypUnknown DataType = iota
+	TypBuiltin
+	TypBool
+	TypFunc
+	TypNumber
+	TypString
 )
 
-var dtypes = []string{
-	UNKNOWN: "UNKNOWN",
-	BUILTIN: "BUILTIN",
-	BOOL:    "BOOL",
-	FUNC:    "FUNC",
-	NUMBER:  "NUMBER",
-	STRING:  "STRING",
+var types = []string{
+	TypUnknown: "Unknown",
+	TypBuiltin: "Builtin",
+	TypBool:    "Bool",
+	TypFunc:    "Func",
+	TypNumber:  "Number",
+	TypString:  "String",
 }
 
 // String returns the string representation of a type.
-func (t DataType) String() string {
+func (dt DataType) String() string {
 	str := ""
-	if t >= 0 && t < DataType(len(dtypes)) {
-		str = dtypes[t]
+	if dt >= 0 && dt < DataType(len(types)) {
+		str = types[dt]
 	}
 	if str == "" {
-		str = "DataType(" + strconv.Itoa(int(t)) + ")"
+		str = "DataType(" + strconv.Itoa(int(dt)) + ")"
 	}
 	return str
 }

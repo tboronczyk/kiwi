@@ -11,7 +11,7 @@ func TestScope(t *testing.T) {
 
 	t.Run("Test variable scope", func(t *testing.T) {
 		s := NewScope()
-		s.SetVar("foo", Entry{Value: 42, DataType: NUMBER})
+		s.SetVar("foo", ScopeEntry{TypNumber, 42})
 		entry, ok := s.GetVar("foo")
 		assert.Equal(t, 42, entry.Value)
 		assert.True(t, ok)
@@ -23,7 +23,7 @@ func TestScope(t *testing.T) {
 
 	t.Run("Test function scope", func(t *testing.T) {
 		s := NewScope()
-		s.SetFunc("foo", Entry{Value: 42, DataType: NUMBER})
+		s.SetFunc("foo", ScopeEntry{TypNumber, 42})
 		entry, ok := s.GetFunc("foo")
 		assert.Equal(t, 42, entry.Value)
 		assert.True(t, ok)

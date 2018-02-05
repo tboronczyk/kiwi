@@ -14,7 +14,10 @@ type Parser struct {
 }
 
 func NewParser(s *Scanner) *Parser {
-	p := &Parser{scanner: s, scope: NewScope()}
+	p := &Parser{
+		scanner: s,
+		scope:   NewScope(),
+	}
 	p.advance()
 	return p
 }
@@ -24,7 +27,7 @@ func NewParser(s *Scanner) *Parser {
 func (p *Parser) advance() {
 	for {
 		p.curToken, p.curValue = p.scanner.Scan()
-		if p.curToken != T_COMMENT {
+		if p.curToken != TkComment {
 			return
 		}
 	}
@@ -61,7 +64,7 @@ func (p *Parser) Parse() (prog *AstProgramNode, err error) {
 
 	prog = &AstProgramNode{Scope: p.scope}
 	for {
-		if p.curToken == T_EOF {
+		if p.curToken == TkEof {
 			return prog, nil
 		}
 		prog.Stmts = append(prog.Stmts, p.stmt())
@@ -72,10 +75,10 @@ func (p *Parser) Parse() (prog *AstProgramNode, err error) {
 func (p *Parser) expr() AstNode {
 	node := p.cmpExpr()
 	switch p.curToken {
-	case T_AND:
+	case TkAnd:
 		p.advance()
 		return &AstAndNode{Left: node, Right: p.expr()}
-	case T_OR:
+	case TkOr:
 		p.advance()
 		return &AstOrNode{Left: node, Right: p.expr()}
 	}
@@ -85,23 +88,24 @@ func (p *Parser) expr() AstNode {
 // cmp-expr = add-expr [cmp-op cmp-expr]
 func (p *Parser) cmpExpr() AstNode {
 	node := p.addExpr()
+
 	switch p.curToken {
-	case T_EQUAL:
+	case TkEqual:
 		p.advance()
 		return &AstEqualNode{Left: node, Right: p.cmpExpr()}
-	case T_NOT_EQUAL:
+	case TkNotEqual:
 		p.advance()
 		return &AstNotEqualNode{Left: node, Right: p.cmpExpr()}
-	case T_GREATER:
+	case TkGreater:
 		p.advance()
 		return &AstGreaterNode{Left: node, Right: p.cmpExpr()}
-	case T_GREATER_EQ:
+	case TkGreaterEq:
 		p.advance()
 		return &AstGreaterEqualNode{Left: node, Right: p.cmpExpr()}
-	case T_LESS:
+	case TkLess:
 		p.advance()
 		return &AstLessNode{Left: node, Right: p.cmpExpr()}
-	case T_LESS_EQ:
+	case TkLessEq:
 		p.advance()
 		return &AstLessEqualNode{Left: node, Right: p.cmpExpr()}
 	}
@@ -112,10 +116,10 @@ func (p *Parser) cmpExpr() AstNode {
 func (p *Parser) addExpr() AstNode {
 	node := p.mulExpr()
 	switch p.curToken {
-	case T_ADD:
+	case TkAdd:
 		p.advance()
 		return &AstAddNode{Left: node, Right: p.addExpr()}
-	case T_SUBTRACT:
+	case TkSubtract:
 		p.advance()
 		return &AstSubtractNode{Left: node, Right: p.addExpr()}
 	}
@@ -126,13 +130,13 @@ func (p *Parser) addExpr() AstNode {
 func (p *Parser) mulExpr() AstNode {
 	node := p.castExpr()
 	switch p.curToken {
-	case T_MULTIPLY:
+	case TkMultiply:
 		p.advance()
 		return &AstMultiplyNode{Left: node, Right: p.mulExpr()}
-	case T_DIVIDE:
+	case TkDivide:
 		p.advance()
 		return &AstDivideNode{Left: node, Right: p.mulExpr()}
-	case T_MODULO:
+	case TkModulo:
 		p.advance()
 		return &AstModuloNode{Left: node, Right: p.mulExpr()}
 	}
@@ -142,7 +146,7 @@ func (p *Parser) mulExpr() AstNode {
 // cast-expr = term [":" ident]
 func (p *Parser) castExpr() AstNode {
 	node := p.term()
-	if p.curToken == T_COLON {
+	if p.curToken == TkColon {
 		p.advance()
 		return &AstCastNode{Cast: p.ident(), Term: node}
 	}
@@ -153,36 +157,36 @@ func (p *Parser) castExpr() AstNode {
 //        func-call / ident
 func (p *Parser) term() AstNode {
 	switch p.curToken {
-	case T_LPAREN:
+	case TkLParen:
 		p.advance()
 		node := p.expr()
-		p.consume(T_RPAREN)
+		p.consume(TkRParent)
 		return node
-	case T_ADD:
+	case TkAdd:
 		p.advance()
-		return &AstPositiveNode{Term: p.term()}
-	case T_SUBTRACT:
+		return &AstPositiveNode{p.term()}
+	case TkSubtract:
 		p.advance()
-		return &AstNegativeNode{Term: p.term()}
-	case T_NOT:
+		return &AstNegativeNode{p.term()}
+	case TkIf:
 		p.advance()
-		return &AstNotNode{Term: p.term()}
-	case T_BOOL:
-		node := &AstBoolNode{Value: strings.ToLower(p.curValue) == "true"}
+		return &AstNotNode{p.term()}
+	case TkBool:
+		node := &AstBoolNode{strings.ToLower(p.curValue) == "true"}
 		p.advance()
 		return node
-	case T_NUMBER:
+	case TkNumber:
 		val, _ := strconv.ParseFloat(p.curValue, 64)
-		node := &AstNumberNode{Value: val}
+		node := &AstNumberNode{val}
 		p.advance()
 		return node
-	case T_STRING:
-		node := &AstStringNode{Value: p.curValue}
+	case TkString:
+		node := &AstStringNode{p.curValue}
 		p.advance()
 		return node
-	case T_IDENTIFIER:
+	case TkIdentifier:
 		name := p.ident()
-		if p.match(T_LPAREN) {
+		if p.match(TkLParen) {
 			return &AstFuncCallNode{Name: name, Args: p.parenExprList()}
 		}
 		return &AstVariableNode{Name: name}
@@ -193,16 +197,16 @@ func (p *Parser) term() AstNode {
 
 // paren-expr-list = "(" [expr *("," expr)] ")"
 func (p *Parser) parenExprList() []AstNode {
-	defer p.consume(T_RPAREN)
-	p.consume(T_LPAREN)
+	defer p.consume(TkRParent)
+	p.consume(TkLParen)
 
 	var list []AstNode
-	if p.match(T_RPAREN) {
+	if p.match(TkRParent) {
 		return list
 	}
 	for {
 		list = append(list, p.expr())
-		if !p.match(T_COMMA) {
+		if !p.match(TkComma) {
 			return list
 		}
 		p.advance()
@@ -213,15 +217,15 @@ func (p *Parser) parenExprList() []AstNode {
 //        func-call
 func (p *Parser) stmt() (node AstNode) {
 	switch p.curToken {
-	case T_IF:
+	case TkIf:
 		return p.ifStmt()
-	case T_WHILE:
+	case TkWhile:
 		return p.whileStmt()
-	case T_FUNC:
+	case TkFunc:
 		return p.funcDef()
-	case T_RETURN:
+	case TkReturn:
 		return p.returnStmt()
-	case T_IDENTIFIER:
+	case TkIdentifier:
 		return p.assignStmtOrFuncCall()
 	}
 	panic("unexpected lexeme " + p.curToken.String())
@@ -229,11 +233,11 @@ func (p *Parser) stmt() (node AstNode) {
 
 // if-stmt = "if" expr brace-stmt-list [else-clause]
 func (p *Parser) ifStmt() *AstIfNode {
-	p.consume(T_IF)
+	p.consume(TkIf)
 	node := &AstIfNode{Cond: p.expr(), Body: p.braceStmtList()}
-	if p.match(T_ELSE) {
+	if p.match(TkElse) {
 		p.advance()
-		if p.match(T_LBRACE) {
+		if p.match(TkLBrace) {
 			node.Else = p.braceStmtList()
 		} else {
 			node.Else = append(node.Else, p.elseClause())
@@ -244,14 +248,14 @@ func (p *Parser) ifStmt() *AstIfNode {
 
 // brace-stmt-list = "{" *stmt "}"
 func (p *Parser) braceStmtList() (list []AstNode) {
-	p.consume(T_LBRACE)
+	p.consume(TkLBrace)
 	for {
-		if !(p.curToken.IsStmtKeyword() || p.match(T_IDENTIFIER)) {
+		if !(p.curToken.IsStmtKeyword() || p.match(TkIdentifier)) {
 			break
 		}
 		list = append(list, p.stmt())
 	}
-	p.consume(T_RBRACE)
+	p.consume(TkRBrace)
 	return list
 }
 
@@ -260,9 +264,9 @@ func (p *Parser) braceStmtList() (list []AstNode) {
 // clause.
 func (p *Parser) elseClause() *AstIfNode {
 	node := &AstIfNode{Cond: p.expr(), Body: p.braceStmtList()}
-	if p.match(T_ELSE) {
+	if p.match(TkElse) {
 		p.advance()
-		if p.match(T_LBRACE) {
+		if p.match(TkLBrace) {
 			node.Else = p.braceStmtList()
 		} else {
 			node.Else = append(node.Else, p.elseClause())
@@ -273,43 +277,40 @@ func (p *Parser) elseClause() *AstIfNode {
 
 // while-stmt = "while" expr brace-stmt-list
 func (p *Parser) whileStmt() *AstWhileNode {
-	p.consume(T_WHILE)
+	p.consume(TkWhile)
 	return &AstWhileNode{Cond: p.expr(), Body: p.braceStmtList()}
 }
 
 // func-def = "func" ident *ident brace-stmt-list
 func (p *Parser) funcDef() *AstFuncDefNode {
-	p.consume(T_FUNC)
+	p.consume(TkFunc)
 
 	node := &AstFuncDefNode{
 		Name: p.ident(),
 	}
-	p.scope.SetFunc(node.Name, Entry{Value: node, DataType: FUNC})
+	p.scope.SetFunc(node.Name, ScopeEntry{TypFunc, node})
 	node.Scope = NewScopeWithParent(p.scope)
 	p.scope = node.Scope
 
-	if !p.match(T_LBRACE) {
+	if !p.match(TkLBrace) {
 		var list []string
-		for {
+		for p.match(TkIdentifier) {
 			list = append(list, p.ident())
-			if !p.match(T_IDENTIFIER) {
-				break
-			}
 		}
 		node.Args = list
 	}
 	node.Body = p.braceStmtList()
 
-	p.scope = node.Scope.Parent
+	p.scope = node.Scope.parent
 	return node
 }
 
 // return-stmt = "return" [expr]
 func (p *Parser) returnStmt() *AstReturnNode {
-	p.consume(T_RETURN)
+	p.consume(TkReturn)
 	node := &AstReturnNode{}
-	if p.match(T_LPAREN, T_ADD, T_SUBTRACT, T_NOT, T_BOOL, T_NUMBER, T_STRING,
-		T_IDENTIFIER) {
+	if p.match(TkLParen, TkAdd, TkSubtract, TkIf, TkBool, TkNumber, TkString,
+		TkIdentifier) {
 		node.Expr = p.expr()
 	}
 	return node
@@ -319,11 +320,11 @@ func (p *Parser) returnStmt() *AstReturnNode {
 // func-call   = ident paren-expr-list
 func (p *Parser) assignStmtOrFuncCall() AstNode {
 	name := p.ident()
-	if p.match(T_ASSIGN) {
+	if p.match(TkAssign) {
 		p.advance()
 		return &AstAssignNode{Name: name, Expr: p.expr()}
 	}
-	if p.match(T_LPAREN) {
+	if p.match(TkLParen) {
 		return &AstFuncCallNode{Name: name, Args: p.parenExprList()}
 	}
 	panic("unexpected " + p.curToken.String())
@@ -331,6 +332,6 @@ func (p *Parser) assignStmtOrFuncCall() AstNode {
 
 // identifier returns the lexeme value of the current identifier.
 func (p *Parser) ident() string {
-	defer p.consume(T_IDENTIFIER)
+	defer p.consume(TkIdentifier)
 	return p.curValue
 }

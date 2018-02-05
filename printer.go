@@ -13,7 +13,7 @@ type AstPrinter struct {
 }
 
 func NewAstPrinter() AstPrinter {
-	p := AstPrinter{stack: Stack{}}
+	p := AstPrinter{Stack{}}
 	p.push("")
 	return p
 }

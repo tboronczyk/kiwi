@@ -1,60 +1,60 @@
 package main
 
 type (
-	Entry struct {
-		Value interface{}
-		DataType
+	Scope struct {
+		parent *Scope
+		vars   ScopeTable
+		funcs  ScopeTable
 	}
 
-	table map[string]Entry
+	ScopeTable map[string]ScopeEntry
 
-	Scope struct {
-		Parent *Scope
-		vars   table
-		funcs  table
+	ScopeEntry struct {
+		DataType
+		Value interface{}
 	}
 )
 
 func NewScope() *Scope {
 	s := &Scope{
-		vars:  make(table, 0),
-		funcs: make(table, 0),
+		vars:  make(ScopeTable, 0),
+		funcs: make(ScopeTable, 0),
 	}
 	return s
 }
 
 func NewScopeWithParent(p *Scope) *Scope {
 	s := NewScope()
-	s.Parent = p
+	s.parent = p
 	return s
 }
 
 func NewScopeClone(s *Scope) *Scope {
 	s2 := NewScope()
 	s2.funcs = s.funcs
-	s2.Parent = s.Parent
+	s2.parent = s.parent
 	return s2
 }
 
-func (s *Scope) SetVar(k string, e Entry) {
-	s.vars[k] = e
+func (s *Scope) SetVar(key string, entry ScopeEntry) {
+	s.vars[key] = entry
 }
 
-func (s *Scope) GetVar(k string) (e Entry, ok bool) {
-	e, ok = s.vars[k]
-	return
+func (s *Scope) GetVar(key string) (ScopeEntry, bool) {
+	entry, ok := s.vars[key]
+	return entry, ok
 }
 
-func (s *Scope) SetFunc(k string, e Entry) {
-	s.funcs[k] = e
+func (s *Scope) SetFunc(key string, entry ScopeEntry) {
+	s.funcs[key] = entry
 }
 
-func (s *Scope) GetFunc(k string) (e Entry, ok bool) {
+func (s *Scope) GetFunc(key string) (ScopeEntry, bool) {
 	cur := s
 	for {
-		if e, ok = cur.funcs[k]; ok || cur.Parent == nil {
-			return
+		if entry, ok := cur.funcs[key]; ok || cur.parent == nil {
+			return entry, ok
 		}
-		cur = cur.Parent
+		cur = cur.parent
 	}
 }

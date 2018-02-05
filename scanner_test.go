@@ -18,31 +18,31 @@ func TestScanner(t *testing.T) {
 			token Token
 			value string
 		}{
-			{T_ADD, "+"},
-			{T_SUBTRACT, "-"},
-			{T_MULTIPLY, "*"},
-			{T_DIVIDE, "/"},
-			{T_MODULO, "%"},
-			{T_ASSIGN, ":="},
-			{T_COLON, ":"},
-			{T_EQUAL, "="},
-			{T_LESS, "<"},
-			{T_LESS_EQ, "<="},
-			{T_GREATER, ">"},
-			{T_GREATER_EQ, ">="},
-			{T_AND, "&&"},
-			{T_UNKNOWN, "&"},
-			{T_OR, "||"},
-			{T_UNKNOWN, "|"},
-			{T_NOT, "~"},
-			{T_NOT_EQUAL, "~="},
-			{T_LPAREN, "("},
-			{T_RPAREN, ")"},
-			{T_LBRACE, "{"},
-			{T_RBRACE, "}"},
-			{T_COMMA, ","},
-			{T_UNKNOWN, "?"},
-			{T_EOF, ""},
+			{TkAdd, "+"},
+			{TkSubtract, "-"},
+			{TkMultiply, "*"},
+			{TkDivide, "/"},
+			{TkModulo, "%"},
+			{TkAssign, ":="},
+			{TkColon, ":"},
+			{TkEqual, "="},
+			{TkLess, "<"},
+			{TkLessEq, "<="},
+			{TkGreater, ">"},
+			{TkGreaterEq, ">="},
+			{TkAnd, "&&"},
+			{TkUnknown, "&"},
+			{TkOr, "||"},
+			{TkUnknown, "|"},
+			{TkIf, "~"},
+			{TkNotEqual, "~="},
+			{TkLParen, "("},
+			{TkRParent, ")"},
+			{TkLBrace, "{"},
+			{TkRBrace, "}"},
+			{TkComma, ","},
+			{TkUnknown, "?"},
+			{TkEof, ""},
 		}
 
 		for _, expected := range tokens {
@@ -60,15 +60,15 @@ func TestScanner(t *testing.T) {
 			token Token
 			value string
 		}{
-			{T_FUNC, "func"},
-			{T_IF, "if"},
-			{T_ELSE, "else"},
-			{T_RETURN, "return"},
-			{T_WHILE, "while"},
-			{T_BOOL, "TRUE"},
-			{T_BOOL, "FALSE"},
-			{T_IDENTIFIER, "if"},
-			{T_IDENTIFIER, "ident"},
+			{TkFunc, "func"},
+			{TkIf, "if"},
+			{TkElse, "else"},
+			{TkReturn, "return"},
+			{TkWhile, "while"},
+			{TkBool, "TRUE"},
+			{TkBool, "FALSE"},
+			{TkIdentifier, "if"},
+			{TkIdentifier, "ident"},
 		}
 
 		for _, expected := range tokens {
@@ -89,10 +89,10 @@ func TestScanner(t *testing.T) {
 			token Token
 			value string
 		}{
-			{T_STRING, "abc"},
-			{T_STRING, ""},
-			{T_STRING, "\\\"\r\n\t\\x"},
-			{T_UNKNOWN, "broken"},
+			{TkString, "abc"},
+			{TkString, ""},
+			{TkString, "\\\"\r\n\t\\x"},
+			{TkUnknown, "broken"},
 		}
 
 		for _, expected := range tokens {
@@ -115,7 +115,7 @@ func TestScanner(t *testing.T) {
 
 		for _, expected := range tokens {
 			actual1, actual2 := s.Scan()
-			assert.Equal(t, T_COMMENT, actual1)
+			assert.Equal(t, TkComment, actual1)
 			assert.Equal(t, expected.value, actual2)
 		}
 	})
@@ -130,9 +130,9 @@ func TestScanner(t *testing.T) {
 			token Token
 			value string
 		}{
-			{T_COMMENT, "/**/"},
-			{T_COMMENT, "/* a /* nested */ comment */"},
-			{T_UNKNOWN, "/* broken"},
+			{TkComment, "/**/"},
+			{TkComment, "/* a /* nested */ comment */"},
+			{TkUnknown, "/* broken"},
 		}
 
 		for _, expected := range tokens {
@@ -150,9 +150,9 @@ func TestScanner(t *testing.T) {
 			token Token
 			value string
 		}{
-			{T_NUMBER, "123"},
-			{T_NUMBER, "0.123"},
-			{T_NUMBER, "1."},
+			{TkNumber, "123"},
+			{TkNumber, "0.123"},
+			{TkNumber, "1."},
 		}
 
 		for _, expected := range tokens {

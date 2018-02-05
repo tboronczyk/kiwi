@@ -6,100 +6,100 @@ import "strconv"
 type Token uint
 
 const (
-	T_UNKNOWN Token = iota
-	T_EOF
+	TkUnknown Token = iota
+	TkEof
 
 	addop_start
 	// addition-level operators
-	T_ADD
-	T_SUBTRACT
+	TkAdd
+	TkSubtract
 	addop_end
 
 	mulop_start
 	// multiplication-level operators
-	T_MULTIPLY
-	T_DIVIDE
-	T_MODULO
+	TkMultiply
+	TkDivide
+	TkModulo
 	mulop_end
 
 	cmpop_start
 	// comparision operators
-	T_EQUAL
-	T_NOT_EQUAL
-	T_GREATER
-	T_GREATER_EQ
-	T_LESS
-	T_LESS_EQ
+	TkEqual
+	TkNotEqual
+	TkGreater
+	TkGreaterEq
+	TkLess
+	TkLessEq
 	cmpop_end
 
 	logop_start
 	// logic operators
-	T_AND
-	T_OR
-	T_NOT
+	TkAnd
+	TkOr
+	TkNot
 	logop_end
 
 	stmtkwd_start
 	// statement keywords
-	T_IF
-	T_FUNC
-	T_RETURN
-	T_WHILE
+	TkIf
+	TkFunc
+	TkReturn
+	TkWhile
 	stmtkwd_end
 
 	lit_start
 	// literal values
-	T_BOOL
-	T_IDENTIFIER
-	T_NUMBER
-	T_STRING
+	TkBool
+	TkIdentifier
+	TkNumber
+	TkString
 	lit_end
 
-	T_ASSIGN
-	T_LBRACE
-	T_RBRACE
-	T_COLON
-	T_COMMA
-	T_COMMENT
-	T_ELSE
-	T_LPAREN
-	T_RPAREN
+	TkAssign
+	TkLBrace
+	TkRBrace
+	TkColon
+	TkComma
+	TkComment
+	TkElse
+	TkLParen
+	TkRParent
 )
 
 var tokens = []string{
-	T_UNKNOWN:    "UNKNOWN",
-	T_EOF:        "EOF",
-	T_ADD:        "+",
-	T_SUBTRACT:   "-",
-	T_MULTIPLY:   "*",
-	T_DIVIDE:     "/",
-	T_MODULO:     "%",
-	T_EQUAL:      "=",
-	T_NOT_EQUAL:  "~=",
-	T_GREATER:    ">",
-	T_GREATER_EQ: ">=",
-	T_LESS:       "<",
-	T_LESS_EQ:    "<=",
-	T_AND:        "&&",
-	T_OR:         "||",
-	T_NOT:        "~",
-	T_IF:         "if",
-	T_FUNC:       "func",
-	T_RETURN:     "return",
-	T_WHILE:      "while",
-	T_BOOL:       "BOOL",
-	T_IDENTIFIER: "IDENTIFIER",
-	T_NUMBER:     "NUMBER",
-	T_STRING:     "STRING",
-	T_ASSIGN:     ":=",
-	T_LBRACE:     "{",
-	T_RBRACE:     "}",
-	T_COLON:      ":",
-	T_COMMA:      ",",
-	T_COMMENT:    "COMMENT",
-	T_ELSE:       "else",
-	T_LPAREN:     "(",
-	T_RPAREN:     ")",
+	TkUnknown:    "Unknown",
+	TkEof:        "eof",
+	TkAdd:        "+",
+	TkSubtract:   "-",
+	TkMultiply:   "*",
+	TkDivide:     "/",
+	TkModulo:     "%",
+	TkEqual:      "=",
+	TkNotEqual:   "~=",
+	TkGreater:    ">",
+	TkGreaterEq:  ">=",
+	TkLess:       "<",
+	TkLessEq:     "<=",
+	TkAnd:        "&&",
+	TkOr:         "||",
+	TkNot:        "~",
+	TkIf:         "if",
+	TkFunc:       "func",
+	TkReturn:     "return",
+	TkWhile:      "while",
+	TkBool:       "Bool",
+	TkIdentifier: "Identifier",
+	TkNumber:     "Number",
+	TkString:     "String",
+	TkAssign:     ":=",
+	TkLBrace:     "{",
+	TkRBrace:     "}",
+	TkColon:      ":",
+	TkComma:      ",",
+	TkComment:    "Comment",
+	TkElse:       "else",
+	TkLParen:     "(",
+	TkRParent:    ")",
 }
 
 // String returns the string representation of a token.
@@ -159,14 +159,13 @@ func (t Token) IsLogOp() bool {
 // IsBinOp returns bool to indicate whether the token represents a left-binding
 // binary operator.
 func (t Token) IsBinOp() bool {
-	return (t.IsAddOp() || t.IsMulOp() || t.IsCmpOp() || t.IsLogOp()) &&
-		t != T_NOT
+	return (t.IsAddOp() || t.IsMulOp() || t.IsCmpOp() || t.IsLogOp()) && t != TkNot
 }
 
 // IsUnaryOp returns bool to indicate whether the token represents a
 // right-binding operator.
 func (t Token) IsUnaryOp() bool {
-	return t.IsAddOp() || t == T_NOT
+	return t.IsAddOp() || t == TkNot
 }
 
 // IsStmtKeyword returns bool to indicate whether the token represents a keyword

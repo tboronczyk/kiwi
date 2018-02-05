@@ -18,9 +18,7 @@ type Scanner struct {
 
 // NewScanner returns a new scanner that reads from r.
 func NewScanner(r io.Reader) *Scanner {
-	return &Scanner{
-		r: bufio.NewReader(r),
-	}
+	return &Scanner{bufio.NewReader(r)}
 }
 
 // read manages the scanner's buffer and returns runes from it.
@@ -45,13 +43,13 @@ func (s *Scanner) Scan() (Token, string) {
 
 	switch ch {
 	case eof:
-		return T_EOF, ""
+		return TkEof, ""
 	case '+':
-		return T_ADD, "+"
+		return TkAdd, "+"
 	case '-':
-		return T_SUBTRACT, "-"
+		return TkSubtract, "-"
 	case '*':
-		return T_MULTIPLY, "*"
+		return TkMultiply, "*"
 	case '/':
 		ch = s.read()
 		if ch == '/' {
@@ -61,63 +59,63 @@ func (s *Scanner) Scan() (Token, string) {
 			return s.scanMultiComment()
 		}
 		s.unread()
-		return T_DIVIDE, "/"
+		return TkDivide, "/"
 	case '%':
-		return T_MODULO, "%"
+		return TkModulo, "%"
 	case ':':
 		ch = s.read()
 		if ch == '=' {
-			return T_ASSIGN, ":="
+			return TkAssign, ":="
 		}
 		s.unread()
-		return T_COLON, ":"
+		return TkColon, ":"
 	case '=':
-		return T_EQUAL, "="
+		return TkEqual, "="
 	case '<':
 		ch = s.read()
 		if ch == '=' {
-			return T_LESS_EQ, "<="
+			return TkLessEq, "<="
 		}
 		s.unread()
-		return T_LESS, "<"
+		return TkLess, "<"
 	case '>':
 		ch = s.read()
 		if ch == '=' {
-			return T_GREATER_EQ, ">="
+			return TkGreaterEq, ">="
 		}
 		s.unread()
-		return T_GREATER, ">"
+		return TkGreater, ">"
 	case '&':
 		ch = s.read()
 		if ch == '&' {
-			return T_AND, "&&"
+			return TkAnd, "&&"
 		}
 		s.unread()
-		return T_UNKNOWN, "&"
+		return TkUnknown, "&"
 	case '|':
 		ch = s.read()
 		if ch == '|' {
-			return T_OR, "||"
+			return TkOr, "||"
 		}
 		s.unread()
-		return T_UNKNOWN, "|"
+		return TkUnknown, "|"
 	case '~':
 		ch = s.read()
 		if ch == '=' {
-			return T_NOT_EQUAL, "~="
+			return TkNotEqual, "~="
 		}
 		s.unread()
-		return T_NOT, "~"
+		return TkIf, "~"
 	case '(':
-		return T_LPAREN, "("
+		return TkLParen, "("
 	case ')':
-		return T_RPAREN, ")"
+		return TkRParent, ")"
 	case '{':
-		return T_LBRACE, "{"
+		return TkLBrace, "{"
 	case '}':
-		return T_RBRACE, "}"
+		return TkRBrace, "}"
 	case ',':
-		return T_COMMA, ","
+		return TkComma, ","
 	case '"':
 		return s.scanString()
 	case '`':
@@ -134,7 +132,7 @@ func (s *Scanner) Scan() (Token, string) {
 		return s.scanNumber()
 	}
 
-	return T_UNKNOWN, string(ch)
+	return TkUnknown, string(ch)
 }
 
 // skipWhitespace consumes whitespace by reading up to the first
@@ -156,7 +154,7 @@ func (s *Scanner) scanString() (Token, string) {
 		if ch := s.read(); ch != '"' {
 			// must have a closing quote
 			if ch == eof {
-				return T_UNKNOWN, buf.String()
+				return TkUnknown, buf.String()
 			}
 			if ch == '\\' {
 				switch s.read() {
@@ -184,7 +182,7 @@ func (s *Scanner) scanString() (Token, string) {
 			break
 		}
 	}
-	return T_STRING, buf.String()
+	return TkString, buf.String()
 }
 
 // scanIdent consumes an identifier lexeme and returns its token and value. An
@@ -210,22 +208,22 @@ func (s *Scanner) scanIdent() (Token, string) {
 	} else {
 		switch strings.ToUpper(str) {
 		case "ELSE":
-			return T_ELSE, str
+			return TkElse, str
 		case "FALSE":
-			return T_BOOL, strings.ToUpper(str)
+			return TkBool, strings.ToUpper(str)
 		case "FUNC":
-			return T_FUNC, str
+			return TkFunc, str
 		case "IF":
-			return T_IF, str
+			return TkIf, str
 		case "RETURN":
-			return T_RETURN, str
+			return TkReturn, str
 		case "TRUE":
-			return T_BOOL, strings.ToUpper(str)
+			return TkBool, strings.ToUpper(str)
 		case "WHILE":
-			return T_WHILE, str
+			return TkWhile, str
 		}
 	}
-	return T_IDENTIFIER, str
+	return TkIdentifier, str
 }
 
 // scanNumber consumes a numeric lexeme and returns its token and value. The
@@ -255,7 +253,7 @@ func (s *Scanner) scanNumber() (Token, string) {
 	}
 	s.unread()
 
-	return T_NUMBER, buf.String()
+	return TkNumber, buf.String()
 }
 
 // scanLineComment consumes a full-line comment and returns its token and
@@ -271,7 +269,7 @@ func (s *Scanner) scanLineComment() (Token, string) {
 		}
 		buf.WriteRune(ch)
 	}
-	return T_COMMENT, buf.String()
+	return TkComment, buf.String()
 }
 
 // scanMultiComment consumes a muti-line comment and returns its token and
@@ -285,7 +283,7 @@ func (s *Scanner) scanMultiComment() (Token, string) {
 	for {
 		// must have a proper closing
 		if ch1 == eof {
-			return T_UNKNOWN, buf.String()
+			return TkUnknown, buf.String()
 		}
 		if ch1 == '*' && ch2 == '/' {
 			buf.WriteString("*/")
@@ -302,5 +300,5 @@ func (s *Scanner) scanMultiComment() (Token, string) {
 		ch1 = ch2
 		ch2 = s.read()
 	}
-	return T_COMMENT, buf.String()
+	return TkComment, buf.String()
 }

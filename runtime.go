@@ -1,4 +1,3 @@
-// Package runtime provides runtime support for executing Kiwi programs.
 package main
 
 import (
@@ -10,45 +9,41 @@ import (
 
 type (
 	Runtime struct {
-		stack      Stack
 		curScope   *Scope
+		stack      Stack
 		scopeStack Stack
 	}
 
-	params []Entry
+	params []ScopeEntry
 )
 
 func NewRuntime() *Runtime {
-	r := &Runtime{
-		stack:      NewStack(),
-		curScope:   NewScope(),
-		scopeStack: NewStack(),
-	}
+	r := &Runtime{NewScope(), NewStack(), NewStack()}
 
-	for n, f := range builtins {
-		r.curScope.SetFunc(n, Entry{Value: f, DataType: BUILTIN})
+	for name, fn := range builtins {
+		r.curScope.SetFunc(name, ScopeEntry{TypBuiltin, fn})
 	}
 	return r
 }
 
 func (r *Runtime) VisitAddNode(n *AstAddNode) {
 	n.Left.Accept(r)
-	left := r.stack.Pop().(Entry)
+	left := r.stack.Pop().(ScopeEntry)
 
 	n.Right.Accept(r)
-	right := r.stack.Pop().(Entry)
+	right := r.stack.Pop().(ScopeEntry)
 
-	if left.DataType == NUMBER && right.DataType == NUMBER {
-		r.stack.Push(Entry{
-			Value:    left.Value.(float64) + right.Value.(float64),
-			DataType: NUMBER,
+	if left.DataType == TypNumber && right.DataType == TypNumber {
+		r.stack.Push(ScopeEntry{
+			TypNumber,
+			left.Value.(float64) + right.Value.(float64),
 		})
 		return
 	}
-	if left.DataType == STRING && right.DataType == STRING {
-		r.stack.Push(Entry{
-			Value:    left.Value.(string) + right.Value.(string),
-			DataType: STRING,
+	if left.DataType == TypString && right.DataType == TypString {
+		r.stack.Push(ScopeEntry{
+			TypString,
+			left.Value.(string) + right.Value.(string),
 		})
 		return
 	}
@@ -57,23 +52,20 @@ func (r *Runtime) VisitAddNode(n *AstAddNode) {
 
 func (r *Runtime) VisitAndNode(n *AstAndNode) {
 	n.Left.Accept(r)
-	left := r.stack.Pop().(Entry)
+	left := r.stack.Pop().(ScopeEntry)
 	// short-circuit if false
-	if left.DataType == BOOL && !left.Value.(bool) {
-		r.stack.Push(Entry{
-			Value:    false,
-			DataType: BOOL,
-		})
+	if left.DataType == TypBool && !left.Value.(bool) {
+		r.stack.Push(ScopeEntry{TypBool, false})
 		return
 	}
 
 	n.Right.Accept(r)
-	right := r.stack.Pop().(Entry)
+	right := r.stack.Pop().(ScopeEntry)
 
-	if left.DataType == BOOL && right.DataType == BOOL {
-		r.stack.Push(Entry{
-			Value:    left.Value.(bool) == right.Value.(bool),
-			DataType: BOOL,
+	if left.DataType == TypBool && right.DataType == TypBool {
+		r.stack.Push(ScopeEntry{
+			TypBool,
+			left.Value.(bool) == right.Value.(bool),
 		})
 		return
 	}
@@ -82,7 +74,7 @@ func (r *Runtime) VisitAndNode(n *AstAndNode) {
 
 func (r *Runtime) VisitAssignNode(n *AstAssignNode) {
 	n.Expr.Accept(r)
-	v := r.stack.Pop().(Entry)
+	v := r.stack.Pop().(ScopeEntry)
 
 	// preserve datatype if the variable is already set
 	e, ok := r.curScope.GetVar(n.Name)
@@ -95,40 +87,37 @@ func (r *Runtime) VisitAssignNode(n *AstAssignNode) {
 }
 
 func (r *Runtime) VisitBoolNode(n *AstBoolNode) {
-	r.stack.Push(Entry{
-		Value:    n.Value,
-		DataType: BOOL,
-	})
+	r.stack.Push(ScopeEntry{TypBool, n.Value})
 }
 
 func (r *Runtime) VisitCastNode(n *AstCastNode) {
 	n.Term.Accept(r)
-	e := r.stack.Pop().(Entry)
+	e := r.stack.Pop().(ScopeEntry)
 	switch strings.ToUpper(n.Cast) {
 	case "STR":
 		switch e.DataType {
-		case STRING:
+		case TypString:
 			break
-		case NUMBER:
+		case TypNumber:
 			val := fmt.Sprintf("%f", e.Value.(float64))
 			val = strings.TrimRight(val, "0")
 			val = strings.TrimRight(val, ".")
 			e.Value = val
 			break
-		case BOOL:
+		case TypBool:
 			e.Value = strconv.FormatBool(e.Value.(bool))
 			break
 		}
-		e.DataType = STRING
+		e.DataType = TypString
 		break
 	case "NUM":
 		switch e.DataType {
-		case STRING:
+		case TypString:
 			e.Value, _ = strconv.ParseFloat(e.Value.(string), 64)
 			break
-		case NUMBER:
+		case TypNumber:
 			break
-		case BOOL:
+		case TypBool:
 			val := 0.0
 			if e.Value.(bool) {
 				val = 1.0
@@ -136,22 +125,22 @@ func (r *Runtime) VisitCastNode(n *AstCastNode) {
 			e.Value = val
 			break
 		}
-		e.DataType = NUMBER
+		e.DataType = TypNumber
 		break
 	case "BOOL":
 		switch e.DataType {
-		case STRING:
+		case TypString:
 			value := strings.ToUpper(e.Value.(string)) != "FALSE" &&
 				strings.TrimSpace(e.Value.(string)) != ""
 			e.Value = value
 			break
-		case NUMBER:
+		case TypNumber:
 			e.Value = e.Value.(float64) != 0.0
 			break
-		case BOOL:
+		case TypBool:
 			break
 		}
-		e.DataType = BOOL
+		e.DataType = TypBool
 		break
 	}
 	r.stack.Push(e)
@@ -159,15 +148,15 @@ func (r *Runtime) VisitCastNode(n *AstCastNode) {
 
 func (r *Runtime) VisitDivideNode(n *AstDivideNode) {
 	n.Left.Accept(r)
-	left := r.stack.Pop().(Entry)
+	left := r.stack.Pop().(ScopeEntry)
 
 	n.Right.Accept(r)
-	right := r.stack.Pop().(Entry)
+	right := r.stack.Pop().(ScopeEntry)
 
-	if left.DataType == NUMBER && right.DataType == NUMBER {
-		r.stack.Push(Entry{
-			Value:    left.Value.(float64) / right.Value.(float64),
-			DataType: NUMBER,
+	if left.DataType == TypNumber && right.DataType == TypNumber {
+		r.stack.Push(ScopeEntry{
+			TypNumber,
+			left.Value.(float64) / right.Value.(float64),
 		})
 		return
 	}
@@ -176,15 +165,15 @@ func (r *Runtime) VisitDivideNode(n *AstDivideNode) {
 
 func (r *Runtime) VisitEqualNode(n *AstEqualNode) {
 	n.Left.Accept(r)
-	left := r.stack.Pop().(Entry)
+	left := r.stack.Pop().(ScopeEntry)
 
 	n.Right.Accept(r)
-	right := r.stack.Pop().(Entry)
+	right := r.stack.Pop().(ScopeEntry)
 
 	if left.DataType == right.DataType {
-		r.stack.Push(Entry{
-			Value:    left.Value == right.Value,
-			DataType: BOOL,
+		r.stack.Push(ScopeEntry{
+			TypBool,
+			left.Value == right.Value,
 		})
 		return
 	}
@@ -200,10 +189,10 @@ func (r *Runtime) VisitFuncCallNode(n *AstFuncCallNode) {
 	var p params
 	for _, arg := range n.Args {
 		arg.Accept(r)
-		p = append(p, r.stack.Pop().(Entry))
+		p = append(p, r.stack.Pop().(ScopeEntry))
 	}
 
-	if e.DataType == BUILTIN {
+	if e.DataType == TypBuiltin {
 		builtins[n.Name](&r.stack, p)
 		return
 	}
@@ -233,15 +222,15 @@ func (r *Runtime) VisitFuncDefNode(n *AstFuncDefNode) {
 
 func (r *Runtime) VisitGreaterEqualNode(n *AstGreaterEqualNode) {
 	n.Left.Accept(r)
-	left := r.stack.Pop().(Entry)
+	left := r.stack.Pop().(ScopeEntry)
 
 	n.Right.Accept(r)
-	right := r.stack.Pop().(Entry)
+	right := r.stack.Pop().(ScopeEntry)
 
-	if left.DataType == NUMBER && right.DataType == NUMBER {
-		r.stack.Push(Entry{
-			Value:    left.Value.(float64) >= right.Value.(float64),
-			DataType: BOOL,
+	if left.DataType == TypNumber && right.DataType == TypNumber {
+		r.stack.Push(ScopeEntry{
+			TypBool,
+			left.Value.(float64) >= right.Value.(float64),
 		})
 		return
 	}
@@ -250,15 +239,15 @@ func (r *Runtime) VisitGreaterEqualNode(n *AstGreaterEqualNode) {
 
 func (r *Runtime) VisitGreaterNode(n *AstGreaterNode) {
 	n.Left.Accept(r)
-	left := r.stack.Pop().(Entry)
+	left := r.stack.Pop().(ScopeEntry)
 
 	n.Right.Accept(r)
-	right := r.stack.Pop().(Entry)
+	right := r.stack.Pop().(ScopeEntry)
 
-	if left.DataType == NUMBER && right.DataType == NUMBER {
-		r.stack.Push(Entry{
-			Value:    left.Value.(float64) > right.Value.(float64),
-			DataType: BOOL,
+	if left.DataType == TypNumber && right.DataType == TypNumber {
+		r.stack.Push(ScopeEntry{
+			TypBool,
+			left.Value.(float64) > right.Value.(float64),
 		})
 		return
 	}
@@ -267,8 +256,8 @@ func (r *Runtime) VisitGreaterNode(n *AstGreaterNode) {
 
 func (r *Runtime) VisitIfNode(n *AstIfNode) {
 	n.Cond.Accept(r)
-	cond := r.stack.Pop().(Entry)
-	if cond.DataType != BOOL {
+	cond := r.stack.Pop().(ScopeEntry)
+	if cond.DataType != TypBool {
 		panic("non-bool expression used as condition")
 	}
 	if cond.Value.(bool) {
@@ -290,15 +279,15 @@ func (r *Runtime) VisitIfNode(n *AstIfNode) {
 
 func (r *Runtime) VisitLessEqualNode(n *AstLessEqualNode) {
 	n.Left.Accept(r)
-	left := r.stack.Pop().(Entry)
+	left := r.stack.Pop().(ScopeEntry)
 
 	n.Right.Accept(r)
-	right := r.stack.Pop().(Entry)
+	right := r.stack.Pop().(ScopeEntry)
 
-	if left.DataType == NUMBER && right.DataType == NUMBER {
-		r.stack.Push(Entry{
-			Value:    left.Value.(float64) <= right.Value.(float64),
-			DataType: BOOL,
+	if left.DataType == TypNumber && right.DataType == TypNumber {
+		r.stack.Push(ScopeEntry{
+			TypBool,
+			left.Value.(float64) <= right.Value.(float64),
 		})
 		return
 	}
@@ -307,15 +296,15 @@ func (r *Runtime) VisitLessEqualNode(n *AstLessEqualNode) {
 
 func (r *Runtime) VisitLessNode(n *AstLessNode) {
 	n.Left.Accept(r)
-	left := r.stack.Pop().(Entry)
+	left := r.stack.Pop().(ScopeEntry)
 
 	n.Right.Accept(r)
-	right := r.stack.Pop().(Entry)
+	right := r.stack.Pop().(ScopeEntry)
 
-	if left.DataType == NUMBER && right.DataType == NUMBER {
-		r.stack.Push(Entry{
-			Value:    left.Value.(float64) < right.Value.(float64),
-			DataType: BOOL,
+	if left.DataType == TypNumber && right.DataType == TypNumber {
+		r.stack.Push(ScopeEntry{
+			TypBool,
+			left.Value.(float64) < right.Value.(float64),
 		})
 		return
 	}
@@ -324,15 +313,15 @@ func (r *Runtime) VisitLessNode(n *AstLessNode) {
 
 func (r *Runtime) VisitModuloNode(n *AstModuloNode) {
 	n.Left.Accept(r)
-	left := r.stack.Pop().(Entry)
+	left := r.stack.Pop().(ScopeEntry)
 
 	n.Right.Accept(r)
-	right := r.stack.Pop().(Entry)
+	right := r.stack.Pop().(ScopeEntry)
 
-	if left.DataType == NUMBER && right.DataType == NUMBER {
-		r.stack.Push(Entry{
-			Value:    math.Mod(left.Value.(float64), right.Value.(float64)),
-			DataType: NUMBER,
+	if left.DataType == TypNumber && right.DataType == TypNumber {
+		r.stack.Push(ScopeEntry{
+			TypNumber,
+			math.Mod(left.Value.(float64), right.Value.(float64)),
 		})
 		return
 	}
@@ -341,15 +330,15 @@ func (r *Runtime) VisitModuloNode(n *AstModuloNode) {
 
 func (r *Runtime) VisitMultiplyNode(n *AstMultiplyNode) {
 	n.Left.Accept(r)
-	left := r.stack.Pop().(Entry)
+	left := r.stack.Pop().(ScopeEntry)
 
 	n.Right.Accept(r)
-	right := r.stack.Pop().(Entry)
+	right := r.stack.Pop().(ScopeEntry)
 
-	if left.DataType == NUMBER && right.DataType == NUMBER {
-		r.stack.Push(Entry{
-			Value:    left.Value.(float64) * right.Value.(float64),
-			DataType: NUMBER,
+	if left.DataType == TypNumber && right.DataType == TypNumber {
+		r.stack.Push(ScopeEntry{
+			TypNumber,
+			left.Value.(float64) * right.Value.(float64),
 		})
 		return
 	}
@@ -358,13 +347,10 @@ func (r *Runtime) VisitMultiplyNode(n *AstMultiplyNode) {
 
 func (r *Runtime) VisitNegativeNode(n *AstNegativeNode) {
 	n.Term.Accept(r)
-	e := r.stack.Pop().(Entry)
+	e := r.stack.Pop().(ScopeEntry)
 
-	if e.DataType == NUMBER {
-		r.stack.Push(Entry{
-			Value:    -e.Value.(float64),
-			DataType: NUMBER,
-		})
+	if e.DataType == TypNumber {
+		r.stack.Push(ScopeEntry{TypNumber, -e.Value.(float64)})
 		return
 	}
 	panic("operation not permitted with type")
@@ -372,15 +358,15 @@ func (r *Runtime) VisitNegativeNode(n *AstNegativeNode) {
 
 func (r *Runtime) VisitNotEqualNode(n *AstNotEqualNode) {
 	n.Left.Accept(r)
-	left := r.stack.Pop().(Entry)
+	left := r.stack.Pop().(ScopeEntry)
 
 	n.Right.Accept(r)
-	right := r.stack.Pop().(Entry)
+	right := r.stack.Pop().(ScopeEntry)
 
 	if left.DataType == right.DataType {
-		r.stack.Push(Entry{
-			Value:    left.Value != right.Value,
-			DataType: BOOL,
+		r.stack.Push(ScopeEntry{
+			TypBool,
+			left.Value != right.Value,
 		})
 		return
 	}
@@ -389,44 +375,35 @@ func (r *Runtime) VisitNotEqualNode(n *AstNotEqualNode) {
 
 func (r *Runtime) VisitNotNode(n *AstNotNode) {
 	n.Term.Accept(r)
-	e := r.stack.Pop().(Entry)
+	e := r.stack.Pop().(ScopeEntry)
 
-	if e.DataType == BOOL {
-		r.stack.Push(Entry{
-			Value:    !e.Value.(bool),
-			DataType: BOOL,
-		})
+	if e.DataType == TypBool {
+		r.stack.Push(ScopeEntry{TypBool, !e.Value.(bool)})
 		return
 	}
 	panic("operation not permitted with type")
 }
 
 func (r *Runtime) VisitNumberNode(n *AstNumberNode) {
-	r.stack.Push(Entry{
-		Value:    n.Value,
-		DataType: NUMBER,
-	})
+	r.stack.Push(ScopeEntry{TypNumber, n.Value})
 }
 
 func (r *Runtime) VisitOrNode(n *AstOrNode) {
 	n.Left.Accept(r)
-	left := r.stack.Pop().(Entry)
+	left := r.stack.Pop().(ScopeEntry)
 	// short-circuit if true
-	if left.DataType == BOOL && left.Value.(bool) {
-		r.stack.Push(Entry{
-			Value:    true,
-			DataType: BOOL,
-		})
+	if left.DataType == TypBool && left.Value.(bool) {
+		r.stack.Push(ScopeEntry{TypBool, true})
 		return
 	}
 
 	n.Right.Accept(r)
-	right := r.stack.Pop().(Entry)
+	right := r.stack.Pop().(ScopeEntry)
 
-	if left.DataType == BOOL && right.DataType == BOOL {
-		r.stack.Push(Entry{
-			Value:    left.Value.(bool) || right.Value.(bool),
-			DataType: BOOL,
+	if left.DataType == TypBool && right.DataType == TypBool {
+		r.stack.Push(ScopeEntry{
+			TypBool,
+			left.Value.(bool) || right.Value.(bool),
 		})
 		return
 	}
@@ -435,20 +412,17 @@ func (r *Runtime) VisitOrNode(n *AstOrNode) {
 
 func (r *Runtime) VisitPositiveNode(n *AstPositiveNode) {
 	n.Term.Accept(r)
-	e := r.stack.Pop().(Entry)
+	e := r.stack.Pop().(ScopeEntry)
 
-	if e.DataType == NUMBER {
-		r.stack.Push(Entry{
-			Value:    math.Abs(e.Value.(float64)),
-			DataType: NUMBER,
-		})
+	if e.DataType == TypNumber {
+		r.stack.Push(ScopeEntry{TypNumber, math.Abs(e.Value.(float64))})
 		return
 	}
 	panic("operation not permitted with type")
 }
 
 func (r *Runtime) VisitProgramNode(n *AstProgramNode) {
-	n.Scope.Parent = r.curScope
+	n.Scope.parent = r.curScope
 	r.scopeStack.Push(r.curScope)
 	r.curScope = n.Scope
 
@@ -464,23 +438,20 @@ func (r *Runtime) VisitReturnNode(n *AstReturnNode) {
 }
 
 func (r *Runtime) VisitStringNode(n *AstStringNode) {
-	r.stack.Push(Entry{
-		Value:    n.Value,
-		DataType: STRING,
-	})
+	r.stack.Push(ScopeEntry{TypString, n.Value})
 }
 
 func (r *Runtime) VisitSubtractNode(n *AstSubtractNode) {
 	n.Left.Accept(r)
-	left := r.stack.Pop().(Entry)
+	left := r.stack.Pop().(ScopeEntry)
 
 	n.Right.Accept(r)
-	right := r.stack.Pop().(Entry)
+	right := r.stack.Pop().(ScopeEntry)
 
-	if left.DataType == NUMBER && right.DataType == NUMBER {
-		r.stack.Push(Entry{
-			Value:    left.Value.(float64) - right.Value.(float64),
-			DataType: NUMBER,
+	if left.DataType == TypNumber && right.DataType == TypNumber {
+		r.stack.Push(ScopeEntry{
+			TypNumber,
+			left.Value.(float64) - right.Value.(float64),
 		})
 		return
 	}
@@ -498,8 +469,8 @@ func (r *Runtime) VisitVariableNode(n *AstVariableNode) {
 func (r *Runtime) VisitWhileNode(n *AstWhileNode) {
 	for {
 		n.Cond.Accept(r)
-		cond := r.stack.Pop().(Entry)
-		if cond.DataType != BOOL {
+		cond := r.stack.Pop().(ScopeEntry)
+		if cond.DataType != TypBool {
 			panic("non-bool expression used as condition")
 		}
 		if !cond.Value.(bool) {
