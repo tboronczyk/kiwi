@@ -11,7 +11,7 @@ issues in language design.
 Kiwi probably won’t be useful to anyone other than me, especially at the rate I
 get to work on it, but my code is available as free software. You can do
 whatever you want with it under the terms of the license provided in the
-LICENSE file. Just don’t come after me if it melts down your computer.
+LICENSE file. Oh... and don’t come after me if it melts down your computer.
 
 ## Code Examples
 
