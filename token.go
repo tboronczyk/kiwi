@@ -2,7 +2,6 @@ package main
 
 import "strconv"
 
-// Token represents the token types used to represent Kiwi lexemes.
 type Token uint
 
 const (
@@ -67,8 +66,8 @@ const (
 )
 
 var tokens = []string{
-	TkUnknown:    "Unknown",
-	TkEof:        "eof",
+	TkUnknown:    "TkUnknown",
+	TkEof:        "TkEof",
 	TkAdd:        "+",
 	TkSubtract:   "-",
 	TkMultiply:   "*",
@@ -87,35 +86,28 @@ var tokens = []string{
 	TkFunc:       "func",
 	TkReturn:     "return",
 	TkWhile:      "while",
-	TkBool:       "Bool",
-	TkIdentifier: "Identifier",
-	TkNumber:     "Number",
-	TkString:     "String",
+	TkBool:       "TkBool",
+	TkIdentifier: "TkIdentifier",
+	TkNumber:     "TkNumber",
+	TkString:     "TkString",
 	TkAssign:     ":=",
 	TkLBrace:     "{",
 	TkRBrace:     "}",
 	TkColon:      ":",
 	TkComma:      ",",
-	TkComment:    "Comment",
+	TkComment:    "TkComment",
 	TkElse:       "else",
 	TkLParen:     "(",
 	TkRParent:    ")",
 }
 
-// String returns the string representation of a token.
 func (t Token) String() string {
-	str := ""
-	if t >= 0 && t < Token(len(tokens)) {
-		str = tokens[t]
+	if t < Token(len(tokens)) {
+		return tokens[t]
 	}
-	if str == "" {
-		str = "Token(" + strconv.Itoa(int(t)) + ")"
-	}
-	return str
+	return "Token(" + strconv.Itoa(int(t)) + ")"
 }
 
-// Precedence returns the relative precedence of an operator. A higher value
-// is a higher precedence.
 func Precedence(t Token) int {
 	if t.IsLogOp() {
 		return 1
@@ -129,53 +121,37 @@ func Precedence(t Token) int {
 	if t.IsMulOp() {
 		return 4
 	}
-	return 0
+	panic("token is not an operator")
 }
 
-// IsAddOp returns bool to indicate whether the token represents an
-// addition-level operator.
 func (t Token) IsAddOp() bool {
 	return t > addop_start && t < addop_end
 }
 
-// IsMulOp returns bool to indicate whether the token represents a
-// multiplication-level operator.
 func (t Token) IsMulOp() bool {
 	return t > mulop_start && t < mulop_end
 }
 
-// IsCmpOp returns bool to indicate whether the token represents a comparision
-// operator.
 func (t Token) IsCmpOp() bool {
 	return t > cmpop_start && t < cmpop_end
 }
 
-// IsLogOp returns bool to indicate whether the token represents a logic
-// operator.
 func (t Token) IsLogOp() bool {
 	return t > logop_start && t < logop_end
 }
 
-// IsBinOp returns bool to indicate whether the token represents a left-binding
-// binary operator.
 func (t Token) IsBinOp() bool {
 	return (t.IsAddOp() || t.IsMulOp() || t.IsCmpOp() || t.IsLogOp()) && t != TkNot
 }
 
-// IsUnaryOp returns bool to indicate whether the token represents a
-// right-binding operator.
 func (t Token) IsUnaryOp() bool {
 	return t.IsAddOp() || t == TkNot
 }
 
-// IsStmtKeyword returns bool to indicate whether the token represents a keyword
-// that may begin a statement.
 func (t Token) IsStmtKeyword() bool {
 	return t > stmtkwd_start && t < stmtkwd_end
 }
 
-// IsLiteral returns bool to indicate whether the token represents a literal
-// value.
 func (t Token) IsLiteral() bool {
 	return t > lit_start && t < lit_end
 }

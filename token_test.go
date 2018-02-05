@@ -11,8 +11,8 @@ func TestTokens(t *testing.T) {
 
 	t.Run("Test token to string", func(t *testing.T) {
 		tokens := []struct{ actual, expected string }{
-			{TkUnknown.String(), "Unknown"},
-			{TkEof.String(), "eof"},
+			{TkUnknown.String(), "TkUnknown"},
+			{TkEof.String(), "TkEof"},
 			{TkAdd.String(), "+"},
 			{TkSubtract.String(), "-"},
 			{TkMultiply.String(), "*"},
@@ -31,16 +31,16 @@ func TestTokens(t *testing.T) {
 			{TkFunc.String(), "func"},
 			{TkReturn.String(), "return"},
 			{TkWhile.String(), "while"},
-			{TkBool.String(), "Bool"},
-			{TkIdentifier.String(), "Identifier"},
-			{TkNumber.String(), "Number"},
-			{TkString.String(), "String"},
+			{TkBool.String(), "TkBool"},
+			{TkIdentifier.String(), "TkIdentifier"},
+			{TkNumber.String(), "TkNumber"},
+			{TkString.String(), "TkString"},
 			{TkAssign.String(), ":="},
 			{TkLBrace.String(), "{"},
 			{TkRBrace.String(), "}"},
 			{TkColon.String(), ":"},
 			{TkComma.String(), ","},
-			{TkComment.String(), "Comment"},
+			{TkComment.String(), "TkComment"},
 			{TkElse.String(), "else"},
 			{TkLParen.String(), "("},
 			{TkRParent.String(), ")"},
@@ -77,8 +77,9 @@ func TestTokens(t *testing.T) {
 	t.Run("Test IsCmpOp", func(t *testing.T) {
 		for i := 0; i < len(tokens); i++ {
 			tkn := Token(i)
-			if tkn == TkEqual || tkn == TkNotEqual || tkn == TkLess ||
-				tkn == TkLessEq || tkn == TkGreater || tkn == TkGreaterEq {
+			if tkn == TkEqual || tkn == TkNotEqual ||
+				tkn == TkLess || tkn == TkLessEq ||
+				tkn == TkGreater || tkn == TkGreaterEq {
 				assert.True(t, tkn.IsCmpOp(), tkn.String())
 			} else {
 				assert.False(t, tkn.IsCmpOp(), tkn.String())
@@ -160,7 +161,8 @@ func TestTokens(t *testing.T) {
 	})
 
 	t.Run("Test precedence of non-operator", func(t *testing.T) {
-		i := Precedence(TkIf)
-		assert.Equal(t, 0, i)
+		assert.Panics(t, func() {
+			Precedence(TkIf)
+		})
 	})
 }
