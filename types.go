@@ -23,14 +23,9 @@ var types = []string{
 	TypString:  "String",
 }
 
-// String returns the string representation of a type.
 func (dt DataType) String() string {
-	str := ""
-	if dt >= 0 && dt < DataType(len(types)) {
-		str = types[dt]
+	if dt < DataType(len(types)) {
+		return types[dt]
 	}
-	if str == "" {
-		str = "DataType(" + strconv.Itoa(int(dt)) + ")"
-	}
-	return str
+	return "DataType(" + strconv.Itoa(int(dt)) + ")"
 }
