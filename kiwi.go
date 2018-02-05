@@ -38,7 +38,7 @@ func main() {
 	}
 
 	p := NewParser(NewScanner(bufio.NewReader(in)))
-	r := NewRuntime()
+	r := NewRuntime(os.Stdin, os.Stdout, os.Stderr)
 	v := NewAstPrinter()
 
 	n, err := p.Parse()

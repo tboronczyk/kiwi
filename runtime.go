@@ -3,25 +3,34 @@ package main
 import (
 	"fmt"
 	"math"
+	"os"
 	"strconv"
 	"strings"
 )
 
 type (
 	Runtime struct {
-		curScope   *Scope
 		stack      Stack
 		scopeStack Stack
+		currScope  *Scope
+		stdin      *os.File
+		stdout     *os.File
+		stderr     *os.File
 	}
 
 	params []ScopeEntry
 )
 
-func NewRuntime() *Runtime {
-	r := &Runtime{NewScope(), NewStack(), NewStack()}
+func NewRuntime(stdin, stdout, stderr *os.File) *Runtime {
+	r := &Runtime{
+		NewStack(),
+		NewStack(),
+		NewScope(),
+		stdin, stdout, stderr,
+	}
 
 	for name, fn := range builtins {
-		r.curScope.SetFunc(name, ScopeEntry{TypBuiltin, fn})
+		r.currScope.SetFunc(name, ScopeEntry{TypBuiltin, fn})
 	}
 	return r
 }
@@ -77,13 +86,13 @@ func (r *Runtime) VisitAssignNode(n *AstAssignNode) {
 	v := r.stack.Pop().(ScopeEntry)
 
 	// preserve datatype if the variable is already set
-	e, ok := r.curScope.GetVar(n.Name)
+	e, ok := r.currScope.GetVar(n.Name)
 	if ok {
 		if e.DataType != v.DataType {
 			panic("value type does not match variable type")
 		}
 	}
-	r.curScope.SetVar(n.Name, v)
+	r.currScope.SetVar(n.Name, v)
 }
 
 func (r *Runtime) VisitBoolNode(n *AstBoolNode) {
@@ -181,7 +190,7 @@ func (r *Runtime) VisitEqualNode(n *AstEqualNode) {
 }
 
 func (r *Runtime) VisitFuncCallNode(n *AstFuncCallNode) {
-	e, ok := r.curScope.GetFunc(n.Name)
+	e, ok := r.currScope.GetFunc(n.Name)
 	if !ok {
 		panic("Function not defined")
 	}
@@ -193,7 +202,7 @@ func (r *Runtime) VisitFuncCallNode(n *AstFuncCallNode) {
 	}
 
 	if e.DataType == TypBuiltin {
-		builtins[n.Name](&r.stack, p)
+		builtins[n.Name](&r.stack, p, r.stdin, r.stdout, r.stderr)
 		return
 	}
 
@@ -202,10 +211,10 @@ func (r *Runtime) VisitFuncCallNode(n *AstFuncCallNode) {
 		panic("wrong number of arguments in function call")
 	}
 
-	r.scopeStack.Push(r.curScope)
-	r.curScope = f.Scope.EmptyVarCopy()
+	r.scopeStack.Push(r.currScope)
+	r.currScope = f.Scope.EmptyVarCopy()
 	for i, arg := range f.Args {
-		r.curScope.SetVar(arg, p[i])
+		r.currScope.SetVar(arg, p[i])
 	}
 	for _, stmt := range f.Body {
 		stmt.Accept(r)
@@ -213,7 +222,7 @@ func (r *Runtime) VisitFuncCallNode(n *AstFuncCallNode) {
 			break
 		}
 	}
-	r.curScope = r.scopeStack.Pop().(*Scope)
+	r.currScope = r.scopeStack.Pop().(*Scope)
 }
 
 func (r *Runtime) VisitFuncDefNode(n *AstFuncDefNode) {
@@ -422,15 +431,15 @@ func (r *Runtime) VisitPositiveNode(n *AstPositiveNode) {
 }
 
 func (r *Runtime) VisitProgramNode(n *AstProgramNode) {
-	n.Scope.parent = r.curScope
-	r.scopeStack.Push(r.curScope)
-	r.curScope = n.Scope
+	n.Scope.parent = r.currScope
+	r.scopeStack.Push(r.currScope)
+	r.currScope = n.Scope
 
 	for _, stmt := range n.Stmts {
 		stmt.Accept(r)
 	}
 
-	r.curScope = r.scopeStack.Pop().(*Scope)
+	r.currScope = r.scopeStack.Pop().(*Scope)
 }
 
 func (r *Runtime) VisitReturnNode(n *AstReturnNode) {
@@ -459,7 +468,7 @@ func (r *Runtime) VisitSubtractNode(n *AstSubtractNode) {
 }
 
 func (r *Runtime) VisitVariableNode(n *AstVariableNode) {
-	expr, ok := r.curScope.GetVar(n.Name)
+	expr, ok := r.currScope.GetVar(n.Name)
 	if !ok {
 		panic("variable is not defined")
 	}
