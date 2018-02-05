@@ -33,4 +33,18 @@ func TestScope(t *testing.T) {
 		assert.Equal(t, 42, entry.Value)
 		assert.True(t, ok)
 	})
+
+	t.Run("Test empty variable copy", func(t *testing.T) {
+		s := NewScope()
+		s.SetVar("foo", ScopeEntry{TypNumber, 42})
+		s.SetFunc("foo", ScopeEntry{TypNumber, 42})
+
+		s2 := s.EmptyVarCopy()
+		entry, ok := s2.GetVar("foo")
+		assert.False(t, ok)
+
+		entry, ok = s2.GetFunc("foo")
+		assert.Equal(t, 42, entry.Value)
+		assert.True(t, ok)
+	})
 }

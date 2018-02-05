@@ -203,7 +203,7 @@ func (r *Runtime) VisitFuncCallNode(n *AstFuncCallNode) {
 	}
 
 	r.scopeStack.Push(r.curScope)
-	r.curScope = NewScopeClone(f.Scope)
+	r.curScope = f.Scope.EmptyVarCopy()
 	for i, arg := range f.Args {
 		r.curScope.SetVar(arg, p[i])
 	}

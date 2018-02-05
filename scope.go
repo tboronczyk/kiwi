@@ -29,10 +29,12 @@ func NewScopeWithParent(p *Scope) *Scope {
 	return s
 }
 
-func NewScopeClone(s *Scope) *Scope {
+// EmptyVarCopy returns a copy of the scope with a empty var table but funcs
+// still defined.
+func (s *Scope) EmptyVarCopy() *Scope {
 	s2 := NewScope()
-	s2.funcs = s.funcs
 	s2.parent = s.parent
+	s2.funcs = s.funcs
 	return s2
 }
 
