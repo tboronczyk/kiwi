@@ -79,10 +79,10 @@ func TestScanner(t *testing.T) {
 	})
 
 	t.Run("Test scan strings", func(t *testing.T) {
-		str := "\"abc\"" +
-			"\"\"" +
-			"\"\\\\\\\"\\r\\n\\t\\x\"" +
-			"\"broken"
+		str := `"abc"` +
+			`""` +
+			`"\\\"` + "\r\n\t" + `\x"` +
+			`"broken`
 		s := NewScanner(strings.NewReader(str))
 
 		tokens := []struct {
