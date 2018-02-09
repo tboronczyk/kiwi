@@ -1,3 +1,4 @@
-profile.out
-coverage.txt
 kiwi
+coverage.txt
+profile.out
+vendor

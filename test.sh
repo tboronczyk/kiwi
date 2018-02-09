@@ -1,5 +1,8 @@
-#!/usr/bin/env sh
+#!/bin/bash
 set -e
+
+dep ensure -v
+
 for d in $(go list ./...); do
     go test -race -coverprofile=profile.out -covermode=atomic $d;
     if [ -f profile.out ]; then
