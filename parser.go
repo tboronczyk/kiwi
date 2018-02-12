@@ -64,7 +64,7 @@ func (p *Parser) Parse() (prog *AstProgramNode, err error) {
 
 	prog = &AstProgramNode{Scope: p.scope}
 	for {
-		if p.curToken == TkEof {
+		if p.curToken == TkEOF {
 			return prog, nil
 		}
 		prog.Stmts = append(prog.Stmts, p.stmt())

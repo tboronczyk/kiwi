@@ -9,51 +9,8 @@ import (
 func TestTokens(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Test token to string", func(t *testing.T) {
-		tokens := []struct{ actual, expected string }{
-			{TkUnknown.String(), "TkUnknown"},
-			{TkEof.String(), "TkEof"},
-			{TkAdd.String(), "+"},
-			{TkSubtract.String(), "-"},
-			{TkMultiply.String(), "*"},
-			{TkDivide.String(), "/"},
-			{TkModulo.String(), "%"},
-			{TkEqual.String(), "="},
-			{TkNotEqual.String(), "~="},
-			{TkLess.String(), "<"},
-			{TkLessEq.String(), "<="},
-			{TkGreater.String(), ">"},
-			{TkGreaterEq.String(), ">="},
-			{TkAnd.String(), "&&"},
-			{TkOr.String(), "||"},
-			{TkNot.String(), "~"},
-			{TkIf.String(), "if"},
-			{TkFunc.String(), "func"},
-			{TkReturn.String(), "return"},
-			{TkWhile.String(), "while"},
-			{TkBool.String(), "TkBool"},
-			{TkIdentifier.String(), "TkIdentifier"},
-			{TkNumber.String(), "TkNumber"},
-			{TkString.String(), "TkString"},
-			{TkAssign.String(), ":="},
-			{TkLBrace.String(), "{"},
-			{TkRBrace.String(), "}"},
-			{TkColon.String(), ":"},
-			{TkComma.String(), ","},
-			{TkComment.String(), "TkComment"},
-			{TkElse.String(), "else"},
-			{TkLParen.String(), "("},
-			{TkRParent.String(), ")"},
-			{Token(254).String(), "Token(254)"},
-		}
-
-		for _, tkn := range tokens {
-			assert.Equal(t, tkn.actual, tkn.expected)
-		}
-	})
-
 	t.Run("Test IsAddOp", func(t *testing.T) {
-		for i := 0; i < len(tokens); i++ {
+		for i := 0; i < int(endTokens); i++ {
 			tkn := Token(i)
 			if tkn == TkAdd || tkn == TkSubtract {
 				assert.True(t, tkn.IsAddOp(), tkn.String())
@@ -64,7 +21,7 @@ func TestTokens(t *testing.T) {
 	})
 
 	t.Run("Test IsMulOp", func(t *testing.T) {
-		for i := 0; i < len(tokens); i++ {
+		for i := 0; i < int(endTokens); i++ {
 			tkn := Token(i)
 			if tkn == TkMultiply || tkn == TkDivide || tkn == TkModulo {
 				assert.True(t, tkn.IsMulOp(), tkn.String())
@@ -75,7 +32,7 @@ func TestTokens(t *testing.T) {
 	})
 
 	t.Run("Test IsCmpOp", func(t *testing.T) {
-		for i := 0; i < len(tokens); i++ {
+		for i := 0; i < int(endTokens); i++ {
 			tkn := Token(i)
 			if tkn == TkEqual || tkn == TkNotEqual ||
 				tkn == TkLess || tkn == TkLessEq ||
@@ -88,7 +45,7 @@ func TestTokens(t *testing.T) {
 	})
 
 	t.Run("Test IsLogOp", func(t *testing.T) {
-		for i := 0; i < len(tokens); i++ {
+		for i := 0; i < int(endTokens); i++ {
 			tkn := Token(i)
 			if tkn == TkAnd || tkn == TkOr || tkn == TkNot {
 				assert.True(t, tkn.IsLogOp(), tkn.String())
@@ -99,7 +56,7 @@ func TestTokens(t *testing.T) {
 	})
 
 	t.Run("Test IsBinOp", func(t *testing.T) {
-		for i := 0; i < len(tokens); i++ {
+		for i := 0; i < int(endTokens); i++ {
 			tkn := Token(i)
 			if tkn == TkAdd || tkn == TkSubtract ||
 				tkn == TkMultiply || tkn == TkDivide || tkn == TkModulo ||
@@ -115,7 +72,7 @@ func TestTokens(t *testing.T) {
 	})
 
 	t.Run("Test IsUnaryOp", func(t *testing.T) {
-		for i := 0; i < len(tokens); i++ {
+		for i := 0; i < int(endTokens); i++ {
 			tkn := Token(i)
 			if tkn == TkAdd || tkn == TkSubtract || tkn == TkNot {
 				assert.True(t, tkn.IsUnaryOp(), tkn.String())
@@ -126,7 +83,7 @@ func TestTokens(t *testing.T) {
 	})
 
 	t.Run("Test IsStmtKeyword", func(t *testing.T) {
-		for i := 0; i < len(tokens); i++ {
+		for i := 0; i < int(endTokens); i++ {
 			tkn := Token(i)
 			if tkn == TkIf || tkn == TkWhile || tkn == TkFunc || tkn == TkReturn {
 				assert.True(t, tkn.IsStmtKeyword(), tkn.String())
@@ -137,7 +94,7 @@ func TestTokens(t *testing.T) {
 	})
 
 	t.Run("Test IsLiteral", func(t *testing.T) {
-		for i := 0; i < len(tokens); i++ {
+		for i := 0; i < int(endTokens); i++ {
 			tkn := Token(i)
 			if tkn == TkIdentifier || tkn == TkBool || tkn == TkNumber ||
 				tkn == TkString {

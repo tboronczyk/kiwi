@@ -16,7 +16,7 @@ var builtins = map[string]func(*Stack, params, io.Reader, io.Writer, io.Writer){
 
 	// write - prints a value
 	"write": func(s *Stack, p params, stdin io.Reader, stdout, stderr io.Writer) {
-		for i, _ := range p {
+		for i := range p {
 			fmt.Fprint(stdout, p[i].Value)
 		}
 	},

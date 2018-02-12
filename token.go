@@ -1,27 +1,25 @@
 package main
 
-import "strconv"
-
 type Token uint
 
 const (
 	TkUnknown Token = iota
-	TkEof
+	TkEOF
 
-	addop_start
+	addopStart
 	// addition-level operators
 	TkAdd
 	TkSubtract
-	addop_end
+	addopEnd
 
-	mulop_start
+	mulopStart
 	// multiplication-level operators
 	TkMultiply
 	TkDivide
 	TkModulo
-	mulop_end
+	mulopEnd
 
-	cmpop_start
+	cmpopStart
 	// comparision operators
 	TkEqual
 	TkNotEqual
@@ -29,30 +27,30 @@ const (
 	TkGreaterEq
 	TkLess
 	TkLessEq
-	cmpop_end
+	cmpopEnd
 
-	logop_start
+	logopStart
 	// logic operators
 	TkAnd
 	TkOr
 	TkNot
-	logop_end
+	logopEnd
 
-	stmtkwd_start
+	stmtkwdStart
 	// statement keywords
 	TkIf
 	TkFunc
 	TkReturn
 	TkWhile
-	stmtkwd_end
+	stmtkwdEnd
 
-	lit_start
+	litStart
 	// literal values
 	TkBool
 	TkIdentifier
 	TkNumber
 	TkString
-	lit_end
+	litEnd
 
 	TkAssign
 	TkLBrace
@@ -63,50 +61,10 @@ const (
 	TkElse
 	TkLParen
 	TkRParent
+
+	// end of tokens
+	endTokens
 )
-
-var tokens = []string{
-	TkUnknown:    "TkUnknown",
-	TkEof:        "TkEof",
-	TkAdd:        "+",
-	TkSubtract:   "-",
-	TkMultiply:   "*",
-	TkDivide:     "/",
-	TkModulo:     "%",
-	TkEqual:      "=",
-	TkNotEqual:   "~=",
-	TkGreater:    ">",
-	TkGreaterEq:  ">=",
-	TkLess:       "<",
-	TkLessEq:     "<=",
-	TkAnd:        "&&",
-	TkOr:         "||",
-	TkNot:        "~",
-	TkIf:         "if",
-	TkFunc:       "func",
-	TkReturn:     "return",
-	TkWhile:      "while",
-	TkBool:       "TkBool",
-	TkIdentifier: "TkIdentifier",
-	TkNumber:     "TkNumber",
-	TkString:     "TkString",
-	TkAssign:     ":=",
-	TkLBrace:     "{",
-	TkRBrace:     "}",
-	TkColon:      ":",
-	TkComma:      ",",
-	TkComment:    "TkComment",
-	TkElse:       "else",
-	TkLParen:     "(",
-	TkRParent:    ")",
-}
-
-func (t Token) String() string {
-	if t < Token(len(tokens)) {
-		return tokens[t]
-	}
-	return "Token(" + strconv.Itoa(int(t)) + ")"
-}
 
 func Precedence(t Token) int {
 	if t.IsLogOp() {
@@ -125,19 +83,19 @@ func Precedence(t Token) int {
 }
 
 func (t Token) IsAddOp() bool {
-	return t > addop_start && t < addop_end
+	return t > addopStart && t < addopEnd
 }
 
 func (t Token) IsMulOp() bool {
-	return t > mulop_start && t < mulop_end
+	return t > mulopStart && t < mulopEnd
 }
 
 func (t Token) IsCmpOp() bool {
-	return t > cmpop_start && t < cmpop_end
+	return t > cmpopStart && t < cmpopEnd
 }
 
 func (t Token) IsLogOp() bool {
-	return t > logop_start && t < logop_end
+	return t > logopStart && t < logopEnd
 }
 
 func (t Token) IsBinOp() bool {
@@ -149,9 +107,9 @@ func (t Token) IsUnaryOp() bool {
 }
 
 func (t Token) IsStmtKeyword() bool {
-	return t > stmtkwd_start && t < stmtkwd_end
+	return t > stmtkwdStart && t < stmtkwdEnd
 }
 
 func (t Token) IsLiteral() bool {
-	return t > lit_start && t < lit_end
+	return t > litStart && t < litEnd
 }

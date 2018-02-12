@@ -42,7 +42,7 @@ func TestScanner(t *testing.T) {
 			{TkRBrace, "}"},
 			{TkComma, ","},
 			{TkUnknown, "?"},
-			{TkEof, ""},
+			{TkEOF, ""},
 		}
 
 		for _, expected := range tokens {

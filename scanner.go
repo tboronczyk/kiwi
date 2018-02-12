@@ -43,7 +43,7 @@ func (s *Scanner) Scan() (Token, string) {
 
 	switch ch {
 	case eof:
-		return TkEof, ""
+		return TkEOF, ""
 	case '+':
 		return TkAdd, "+"
 	case '-':
