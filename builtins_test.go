@@ -8,40 +8,43 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func testRuntimeEnv(str string) *RuntimeEnv {
+	return &RuntimeEnv{
+		strings.NewReader(str),
+		bytes.NewBuffer([]byte{}),
+		bytes.NewBuffer([]byte{}),
+	}
+}
+
 func TestBuiltins(t *testing.T) {
 	t.Parallel()
 
+	greeting := ScopeEntry{TypString, "hello world"}
+
 	t.Run("strlen", func(t *testing.T) {
 		s := &Stack{}
-		p := []ScopeEntry{
-			ScopeEntry{TypString, "hello world"},
-		}
+		p := []ScopeEntry{greeting}
+		env := testRuntimeEnv("")
 
-		builtins["strlen"](s, p, nil)
-		result := s.Pop().(ScopeEntry)
-		assert.Equal(t, 11, result.Value)
-		assert.Equal(t, TypNumber, result.DataType)
+		builtins["strlen"](s, p, env)
+		assert.Equal(t, ScopeEntry{TypNumber, 11}, s.Pop().(ScopeEntry))
 	})
 
 	t.Run("write", func(t *testing.T) {
 		s := &Stack{}
-		p := []ScopeEntry{
-			ScopeEntry{TypString, "hello world"},
-		}
-		out := bytes.NewBuffer([]byte{})
-		builtins["write"](s, p, &RuntimeEnv{nil, out, nil})
-		assert.Equal(t, "hello world", out.String())
+		p := []ScopeEntry{greeting}
+		env := testRuntimeEnv(greeting.Value.(string))
+
+		builtins["write"](s, p, env)
+		assert.Equal(t, greeting.Value.(string), env.stdout.(*bytes.Buffer).String())
 	})
 
 	t.Run("read", func(t *testing.T) {
 		s := &Stack{}
-		p := []ScopeEntry{
-			ScopeEntry{TypString, "hello world"},
-		}
-		in := strings.NewReader("hello world")
-		builtins["read"](s, p, &RuntimeEnv{in, nil, nil})
-		result := s.Pop().(ScopeEntry)
-		assert.Equal(t, "hello world", result.Value)
-		assert.Equal(t, TypString, result.DataType)
+		p := []ScopeEntry{greeting}
+		env := testRuntimeEnv(greeting.Value.(string))
+
+		builtins["read"](s, p, env)
+		assert.Equal(t, greeting, s.Pop().(ScopeEntry))
 	})
 }
