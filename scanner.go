@@ -109,7 +109,7 @@ func (s *Scanner) Scan() (Token, string) {
 	case '(':
 		return TkLParen, "("
 	case ')':
-		return TkRParent, ")"
+		return TkRParen, ")"
 	case '{':
 		return TkLBrace, "{"
 	case '}':

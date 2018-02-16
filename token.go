@@ -60,7 +60,7 @@ const (
 	TkComment
 	TkElse
 	TkLParen
-	TkRParent
+	TkRParen
 
 	// end of tokens
 	endTokens

@@ -37,7 +37,7 @@ func TestScanner(t *testing.T) {
 			{TkIf, "~"},
 			{TkNotEqual, "~="},
 			{TkLParen, "("},
-			{TkRParent, ")"},
+			{TkRParen, ")"},
 			{TkLBrace, "{"},
 			{TkRBrace, "}"},
 			{TkComma, ","},

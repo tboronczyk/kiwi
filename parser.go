@@ -160,7 +160,7 @@ func (p *Parser) term() AstNode {
 	case TkLParen:
 		p.advance()
 		node := p.expr()
-		p.consume(TkRParent)
+		p.consume(TkRParen)
 		return node
 	case TkAdd:
 		p.advance()
@@ -197,11 +197,11 @@ func (p *Parser) term() AstNode {
 
 // paren-expr-list = "(" [expr *("," expr)] ")"
 func (p *Parser) parenExprList() []AstNode {
-	defer p.consume(TkRParent)
+	defer p.consume(TkRParen)
 	p.consume(TkLParen)
 
 	var list []AstNode
-	if p.match(TkRParent) {
+	if p.match(TkRParen) {
 		return list
 	}
 	for {
