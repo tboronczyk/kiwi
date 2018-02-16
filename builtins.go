@@ -2,28 +2,27 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"strings"
 )
 
 // built-in functions, [name]func{implementation}
-var builtins = map[string]func(*Stack, params, io.Reader, io.Writer, io.Writer){
+var builtins = map[string]func(*Stack, params, *RuntimeEnv){
 	// strlen - returns the length of a string
-	"strlen": func(s *Stack, p params, stdin io.Reader, stdout, stderr io.Writer) {
+	"strlen": func(s *Stack, p params, env *RuntimeEnv) {
 		s.Push(ScopeEntry{TypNumber, len(p[0].Value.(string))})
 	},
 
 	// write - prints a value
-	"write": func(s *Stack, p params, stdin io.Reader, stdout, stderr io.Writer) {
+	"write": func(s *Stack, p params, env *RuntimeEnv) {
 		for i := range p {
-			fmt.Fprint(stdout, p[i].Value)
+			fmt.Fprint(env.stdout, p[i].Value)
 		}
 	},
 
 	// read - read a string
-	"read": func(s *Stack, p params, stdin io.Reader, stdout, stderr io.Writer) {
-		b, err := ioutil.ReadAll(stdin)
+	"read": func(s *Stack, p params, env *RuntimeEnv) {
+		b, err := ioutil.ReadAll(env.stdin)
 		if err != nil {
 			panic(err)
 		}

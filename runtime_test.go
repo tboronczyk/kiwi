@@ -17,7 +17,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{42},
 				Right: &AstNumberNode{73},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, 115.0, e.Value)
@@ -29,7 +29,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstStringNode{"foo"},
 				Right: &AstStringNode{"bar"},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, "foobar", e.Value)
@@ -41,7 +41,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{42},
 				Right: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			assert.Panics(t, func() {
 				n.Accept(r)
 			})
@@ -56,7 +56,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstBoolNode{true},
 				Right: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, true, e.Value)
@@ -67,7 +67,7 @@ func TestRuntime(t *testing.T) {
 			n := &AstAndNode{
 				Left: &AstBoolNode{false},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, false, e.Value)
@@ -79,7 +79,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{42},
 				Right: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			assert.Panics(t, func() {
 				n.Accept(r)
 			})
@@ -94,7 +94,7 @@ func TestRuntime(t *testing.T) {
 				Name: "foo",
 				Expr: &AstStringNode{"bar"},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 
 			e, _ := r.currScope.GetVar("foo")
@@ -107,7 +107,7 @@ func TestRuntime(t *testing.T) {
 				Name: "foo",
 				Expr: &AstStringNode{"bar"},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 
 			n.Expr = &AstNumberNode{42}
@@ -145,7 +145,7 @@ func TestRuntime(t *testing.T) {
 					Cast: d.cast,
 					Term: d.term,
 				}
-				r := NewRuntime(nil, nil, nil)
+				r := NewRuntime(nil)
 				n.Accept(r)
 
 				e := r.stack.Pop().(ScopeEntry)
@@ -163,7 +163,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{110},
 				Right: &AstNumberNode{4},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, 27.5, e.Value)
@@ -175,7 +175,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{42},
 				Right: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			assert.Panics(t, func() {
 				n.Accept(r)
 			})
@@ -190,7 +190,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstBoolNode{true},
 				Right: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, true, e.Value)
@@ -202,7 +202,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{42},
 				Right: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			assert.Panics(t, func() {
 				n.Accept(r)
 			})
@@ -217,7 +217,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{1984},
 				Right: &AstNumberNode{1776},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, true, e.Value)
@@ -229,7 +229,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{42},
 				Right: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			assert.Panics(t, func() {
 				n.Accept(r)
 			})
@@ -244,7 +244,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{1984},
 				Right: &AstNumberNode{1776},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, true, e.Value)
@@ -256,7 +256,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{42},
 				Right: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(&RuntimeEnv{nil, nil, nil})
 			assert.Panics(t, func() {
 				n.Accept(r)
 			})
@@ -271,7 +271,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{1984},
 				Right: &AstNumberNode{1776},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, false, e.Value)
@@ -283,7 +283,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{42},
 				Right: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			assert.Panics(t, func() {
 				n.Accept(r)
 			})
@@ -298,7 +298,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{1984},
 				Right: &AstNumberNode{1776},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, false, e.Value)
@@ -310,7 +310,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{42},
 				Right: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			assert.Panics(t, func() {
 				n.Accept(r)
 			})
@@ -325,7 +325,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{73},
 				Right: &AstNumberNode{42},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, 31.0, e.Value)
@@ -337,7 +337,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{42},
 				Right: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			assert.Panics(t, func() {
 				n.Accept(r)
 			})
@@ -352,7 +352,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{21},
 				Right: &AstNumberNode{2},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, 42.0, e.Value)
@@ -364,7 +364,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{42},
 				Right: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			assert.Panics(t, func() {
 				n.Accept(r)
 			})
@@ -376,7 +376,7 @@ func TestRuntime(t *testing.T) {
 
 		t.Run("Evaluate NegativeNode", func(t *testing.T) {
 			n := &AstNegativeNode{&AstNumberNode{42}}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, -42.0, e.Value)
@@ -385,7 +385,7 @@ func TestRuntime(t *testing.T) {
 
 		t.Run("Evaluate NegativeNode with type error", func(t *testing.T) {
 			n := &AstNegativeNode{&AstBoolNode{true}}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			assert.Panics(t, func() {
 				n.Accept(r)
 			})
@@ -400,7 +400,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstBoolNode{true},
 				Right: &AstBoolNode{false},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, true, e.Value)
@@ -412,7 +412,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{42},
 				Right: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			assert.Panics(t, func() {
 				n.Accept(r)
 			})
@@ -424,7 +424,7 @@ func TestRuntime(t *testing.T) {
 
 		t.Run("Evaluate NotNode", func(t *testing.T) {
 			n := &AstNotNode{&AstBoolNode{false}}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, true, e.Value)
@@ -433,7 +433,7 @@ func TestRuntime(t *testing.T) {
 
 		t.Run("Evaluate NotNode with type error", func(t *testing.T) {
 			n := &AstNotNode{&AstNumberNode{42}}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			assert.Panics(t, func() {
 				n.Accept(r)
 			})
@@ -448,7 +448,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstBoolNode{false},
 				Right: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, true, e.Value)
@@ -459,7 +459,7 @@ func TestRuntime(t *testing.T) {
 			n := &AstOrNode{
 				Left: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, true, e.Value)
@@ -471,7 +471,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{42},
 				Right: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			assert.Panics(t, func() {
 				n.Accept(r)
 			})
@@ -483,7 +483,7 @@ func TestRuntime(t *testing.T) {
 
 		t.Run("Evaluate PositiveNode", func(t *testing.T) {
 			n := &AstPositiveNode{&AstNumberNode{-42}}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, 42.0, e.Value)
@@ -492,7 +492,7 @@ func TestRuntime(t *testing.T) {
 
 		t.Run("Evaluate PositiveNode with type error", func(t *testing.T) {
 			n := &AstPositiveNode{&AstBoolNode{true}}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			assert.Panics(t, func() {
 				n.Accept(r)
 			})
@@ -506,7 +506,7 @@ func TestRuntime(t *testing.T) {
 			n := &AstReturnNode{
 				Expr: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, true, e.Value)
@@ -522,7 +522,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{73},
 				Right: &AstNumberNode{42},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			n.Accept(r)
 			e := r.stack.Pop().(ScopeEntry)
 			assert.Equal(t, 31.0, e.Value)
@@ -534,7 +534,7 @@ func TestRuntime(t *testing.T) {
 				Left:  &AstNumberNode{42},
 				Right: &AstBoolNode{true},
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			assert.Panics(t, func() {
 				n.Accept(r)
 			})
@@ -548,7 +548,7 @@ func TestRuntime(t *testing.T) {
 			n := &AstVariableNode{
 				Name: "foo",
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 			r.currScope.SetVar("foo", ScopeEntry{TypString, "bar"})
 			n.Accept(r)
 
@@ -561,7 +561,7 @@ func TestRuntime(t *testing.T) {
 			n := &AstVariableNode{
 				Name: "foo",
 			}
-			r := NewRuntime(nil, nil, nil)
+			r := NewRuntime(nil)
 
 			assert.Panics(t, func() {
 				n.Accept(r)

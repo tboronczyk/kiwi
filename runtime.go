@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"math"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -13,20 +13,24 @@ type (
 		stack      Stack
 		scopeStack Stack
 		currScope  *Scope
-		stdin      *os.File
-		stdout     *os.File
-		stderr     *os.File
+		env        *RuntimeEnv
+	}
+
+	RuntimeEnv struct {
+		stdin  io.Reader
+		stdout io.Writer
+		stderr io.Writer
 	}
 
 	params []ScopeEntry
 )
 
-func NewRuntime(stdin, stdout, stderr *os.File) *Runtime {
+func NewRuntime(env *RuntimeEnv) *Runtime {
 	r := &Runtime{
 		NewStack(),
 		NewStack(),
 		NewScope(),
-		stdin, stdout, stderr,
+		env,
 	}
 
 	for name, fn := range builtins {
@@ -202,7 +206,7 @@ func (r *Runtime) VisitFuncCallNode(n *AstFuncCallNode) {
 	}
 
 	if e.DataType == TypBuiltin {
-		builtins[n.Name](&r.stack, p, r.stdin, r.stdout, r.stderr)
+		builtins[n.Name](&r.stack, p, r.env)
 		return
 	}
 

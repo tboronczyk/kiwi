@@ -17,7 +17,7 @@ func TestBuiltins(t *testing.T) {
 			ScopeEntry{TypString, "hello world"},
 		}
 
-		builtins["strlen"](s, p, nil, nil, nil)
+		builtins["strlen"](s, p, nil)
 		result := s.Pop().(ScopeEntry)
 		assert.Equal(t, 11, result.Value)
 		assert.Equal(t, TypNumber, result.DataType)
@@ -29,7 +29,7 @@ func TestBuiltins(t *testing.T) {
 			ScopeEntry{TypString, "hello world"},
 		}
 		out := bytes.NewBuffer([]byte{})
-		builtins["write"](s, p, nil, out, nil)
+		builtins["write"](s, p, &RuntimeEnv{nil, out, nil})
 		assert.Equal(t, "hello world", out.String())
 	})
 
@@ -39,7 +39,7 @@ func TestBuiltins(t *testing.T) {
 			ScopeEntry{TypString, "hello world"},
 		}
 		in := strings.NewReader("hello world")
-		builtins["read"](s, p, in, nil, nil)
+		builtins["read"](s, p, &RuntimeEnv{in, nil, nil})
 		result := s.Pop().(ScopeEntry)
 		assert.Equal(t, "hello world", result.Value)
 		assert.Equal(t, TypString, result.DataType)

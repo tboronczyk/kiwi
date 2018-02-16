@@ -48,7 +48,7 @@ func main() {
 		if *tree {
 			n.Accept(NewAstPrinter())
 		} else {
-			n.Accept(NewRuntime(os.Stdin, os.Stdout, os.Stderr))
+			n.Accept(NewRuntime(&RuntimeEnv{os.Stdin, os.Stdout, os.Stderr}))
 		}
 	}
 	app.Run(os.Args)
