@@ -122,4 +122,47 @@ func TestTokens(t *testing.T) {
 			Precedence(TkIf)
 		})
 	})
+
+	t.Run("Test token to string", func(t *testing.T) {
+		tokens := map[Token]string{
+			TkUnknown:    "TkUnknown",
+			TkEOF:        "TkEOF",
+			TkAdd:        "TkAdd",
+			TkSubtract:   "TkSubtract",
+			TkMultiply:   "TkMultiply",
+			TkDivide:     "TkDivide",
+			TkModulo:     "TkModulo",
+			TkEqual:      "TkEqual",
+			TkNotEqual:   "TkNotEqual",
+			TkGreater:    "TkGreater",
+			TkGreaterEq:  "TkGreaterEq",
+			TkLess:       "TkLess",
+			TkLessEq:     "TkLessEq",
+			TkAnd:        "TkAnd",
+			TkOr:         "TkOr",
+			TkNot:        "TkNot",
+			TkIf:         "TkIf",
+			TkFunc:       "TkFunc",
+			TkReturn:     "TkReturn",
+			TkWhile:      "TkWhile",
+			TkBool:       "TkBool",
+			TkIdentifier: "TkIdentifier",
+			TkNumber:     "TkNumber",
+			TkString:     "TkString",
+			TkAssign:     "TkAssign",
+			TkLBrace:     "TkLBrace",
+			TkRBrace:     "TkRBrace",
+			TkColon:      "TkColon",
+			TkComma:      "TkComma",
+			TkComment:    "TkComment",
+			TkElse:       "TkElse",
+			TkLParen:     "TkLParen",
+			TkRParen:     "TkRParen",
+			Token(255):   "Token(255)",
+		}
+
+		for token, str := range tokens {
+			assert.Equal(t, str, token.String())
+		}
+	})
 }
