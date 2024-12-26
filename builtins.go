@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"strings"
 )
 
@@ -22,7 +22,7 @@ var builtins = map[string]func(*Stack, params, *RuntimeEnv){
 
 	// read - read a string
 	"read": func(s *Stack, p params, env *RuntimeEnv) {
-		b, err := ioutil.ReadAll(env.stdin)
+		b, err := io.ReadAll(env.stdin)
 		if err != nil {
 			panic(err)
 		}
